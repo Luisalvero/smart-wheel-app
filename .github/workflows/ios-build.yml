@@ -41,6 +41,20 @@ jobs:
       # Regenerated on the runner so the committed ios/ folder can never drift
       # from app.json. This is what applies the BLE config plugin and writes
       # NSBluetoothAlwaysUsageDescription into Info.plist.
+      # EXPO_PUBLIC_* values are read at bundle time, so they must be present
+      # here or the built app sees `undefined` and every Supabase call fails.
+      # They come from repository secrets rather than a committed file, because
+      # this repo is public and the key grants access under the current RLS.
+      - name: Write .env for the bundler
+        run: |
+          {
+            echo "EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}"
+            echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}"
+          } > .env
+          # Print only whether they are set, never the values.
+          echo "url set: $([ -n "${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}" ] && echo yes || echo NO)"
+          echo "key set: $([ -n "${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}" ] && echo yes || echo NO)"
+
       - name: Expo prebuild
         run: npx expo prebuild --platform ios --clean
 
