@@ -7,11 +7,28 @@
 import { getDatabase } from './database';
 import { uuidv4, type TelemetryPacket } from '../ble/protocol';
 
+export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
+
 export type DriverProfile = {
   id: string;
+  /** Team-assigned identifier (e.g. subject code), distinct from the UUID. */
+  custom_id: string | null;
   display_name: string;
+  weight_kg: number | null;
+  age: number | null;
+  height_cm: number | null;
+  gender: Gender | null;
   created_at: string;
   updated_at: string;
+};
+
+export type NewProfileInput = {
+  custom_id?: string | null;
+  display_name: string;
+  weight_kg?: number | null;
+  age?: number | null;
+  height_cm?: number | null;
+  gender?: Gender | null;
 };
 
 export type SessionStatus = 'active' | 'completed' | 'interrupted';
@@ -21,6 +38,8 @@ export type DriveSession = {
   profile_id: string;
   started_at: string;
   ended_at: string | null;
+  /** Wall-clock length, computed once on end so reports need no date math. */
+  duration_seconds: number | null;
   status: SessionStatus;
   sync_status: string;
 };
@@ -30,9 +49,25 @@ export type TelemetryEvent = {
   session_id: string;
   sequence_number: number | null;
   event_type: string;
+  /** Promoted out of raw_payload so the dashboard can query without parsing. */
+  bpm: number | null;
+  spo2: number | null;
+  signal_quality: number | null;
+  battery: number | null;
   received_at: string;
   raw_payload: string | null;
   sync_status: string;
+};
+
+/** Aggregate physiological stats for one session. */
+export type SessionStats = {
+  samples: number;
+  bpm_min: number | null;
+  bpm_max: number | null;
+  bpm_avg: number | null;
+  spo2_min: number | null;
+  spo2_max: number | null;
+  spo2_avg: number | null;
 };
 
 export type SessionSummary = DriveSession & {
@@ -54,22 +89,41 @@ export async function listProfiles(): Promise<DriverProfile[]> {
   );
 }
 
-export async function createProfile(displayName: string): Promise<DriverProfile> {
-  const name = displayName.trim();
+export async function createProfile(
+  input: NewProfileInput,
+): Promise<DriverProfile> {
+  const name = input.display_name.trim();
   if (!name) {
     throw new Error('Driver name cannot be empty');
   }
   const db = await getDatabase();
   const profile: DriverProfile = {
     id: uuidv4(),
+    custom_id: input.custom_id?.trim() || null,
     display_name: name,
+    weight_kg: input.weight_kg ?? null,
+    age: input.age ?? null,
+    height_cm: input.height_cm ?? null,
+    gender: input.gender ?? null,
     created_at: nowIso(),
     updated_at: nowIso(),
   };
   await db.runAsync(
-    `INSERT INTO driver_profiles (id, display_name, created_at, updated_at)
-     VALUES (?, ?, ?, ?)`,
-    [profile.id, profile.display_name, profile.created_at, profile.updated_at],
+    `INSERT INTO driver_profiles
+       (id, custom_id, display_name, weight_kg, age, height_cm, gender,
+        created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      profile.id,
+      profile.custom_id,
+      profile.display_name,
+      profile.weight_kg,
+      profile.age,
+      profile.height_cm,
+      profile.gender,
+      profile.created_at,
+      profile.updated_at,
+    ],
   );
   return profile;
 }
@@ -89,6 +143,7 @@ export async function startSession(profileId: string): Promise<DriveSession> {
     profile_id: profileId,
     started_at: nowIso(),
     ended_at: null,
+    duration_seconds: null,
     status: 'active',
     sync_status: 'local',
   };
@@ -114,10 +169,19 @@ export async function endSession(session: DriveSession): Promise<DriveSession> {
     ...session,
     ended_at: nowIso(),
     status: 'completed',
+    duration_seconds: null,
   };
+  ended.duration_seconds = Math.max(
+    0,
+    Math.round(
+      (new Date(ended.ended_at!).getTime() -
+        new Date(ended.started_at).getTime()) / 1000,
+    ),
+  );
   await db.runAsync(
-    'UPDATE drive_sessions SET ended_at = ?, status = ? WHERE id = ?',
-    [ended.ended_at, ended.status, ended.id],
+    `UPDATE drive_sessions
+     SET ended_at = ?, status = ?, duration_seconds = ? WHERE id = ?`,
+    [ended.ended_at, ended.status, ended.duration_seconds, ended.id],
   );
   return ended;
 }
@@ -182,16 +246,23 @@ export async function storePacket(
   receivedAt: Date = new Date(),
 ): Promise<StoreResult> {
   const db = await getDatabase();
+  const num = (v: unknown): number | null =>
+    typeof v === 'number' && Number.isFinite(v) ? v : null;
+
   const result = await db.runAsync(
     `INSERT OR IGNORE INTO telemetry_events
-       (id, session_id, sequence_number, event_type, received_at,
-        raw_payload, sync_status)
-     VALUES (?, ?, ?, ?, ?, ?, 'local')`,
+       (id, session_id, sequence_number, event_type, bpm, spo2,
+        signal_quality, battery, received_at, raw_payload, sync_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local')`,
     [
       uuidv4(),
       sessionId,
       packet.sequence,
       packet.type,
+      num(packet.extra.bpm),
+      num(packet.extra.spo2),
+      num(packet.extra.signal_quality),
+      num(packet.extra.battery),
       receivedAt.toISOString(),
       packet.rawPayload,
     ],
@@ -228,5 +299,32 @@ export async function eventsForSession(
     `SELECT * FROM telemetry_events WHERE session_id = ?
      ORDER BY received_at DESC LIMIT ?`,
     [sessionId, limit],
+  );
+}
+
+
+/** Min/max/average heart rate and SpO2 across a session. */
+export async function sessionStats(sessionId: string): Promise<SessionStats> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<SessionStats>(
+    `SELECT COUNT(bpm) AS samples,
+            MIN(bpm) AS bpm_min,  MAX(bpm) AS bpm_max,
+            ROUND(AVG(bpm), 1) AS bpm_avg,
+            MIN(spo2) AS spo2_min, MAX(spo2) AS spo2_max,
+            ROUND(AVG(spo2), 1) AS spo2_avg
+     FROM telemetry_events
+     WHERE session_id = ? AND bpm IS NOT NULL`,
+    [sessionId],
+  );
+  return (
+    row ?? {
+      samples: 0,
+      bpm_min: null,
+      bpm_max: null,
+      bpm_avg: null,
+      spo2_min: null,
+      spo2_max: null,
+      spo2_avg: null,
+    }
   );
 }

@@ -17,11 +17,12 @@ import {
 
 import { useDriveSession } from '../lib/hooks/useDriveSession';
 import * as repo from '../lib/db/repositories';
-import type { DriverProfile } from '../lib/db/repositories';
+import type { DriverProfile, Gender } from '../lib/db/repositories';
 import {
   SMART_WHEEL_SERVICE_UUID,
   TELEMETRY_CHAR_UUID,
 } from '../lib/ble/protocol';
+import { pendingCount, syncToSupabase } from '../lib/db/sync';
 
 const CONNECTION_LABEL: Record<string, string> = {
   idle: 'Disconnected',
@@ -36,7 +37,16 @@ const CONNECTION_LABEL: Record<string, string> = {
 export default function SmartWheelScreen() {
   const drive = useDriveSession();
   const [profiles, setProfiles] = useState<DriverProfile[]>([]);
-  const [newName, setNewName] = useState('');
+  const [form, setForm] = useState({
+    custom_id: '',
+    display_name: '',
+    weight_kg: '',
+    age: '',
+    height_cm: '',
+  });
+  const [gender, setGender] = useState<Gender | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -58,12 +68,56 @@ export default function SmartWheelScreen() {
     }
   }, []);
 
-  async function addProfile() {
-    if (!newName.trim()) return;
-    await repo.createProfile(newName);
-    setNewName('');
-    await reload();
+  // Blank stays null rather than becoming 0: an unrecorded weight and a weight
+  // of zero are different facts, and the dashboard must be able to tell them
+  // apart.
+  function optionalNumber(raw: string, label: string): number | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isFinite(n) || n <= 0) {
+      throw new Error(`${label} must be a positive number.`);
+    }
+    return n;
   }
+
+  async function addProfile() {
+    try {
+      setFormError(null);
+      if (!form.display_name.trim()) {
+        setFormError('Name is required.');
+        return;
+      }
+      await repo.createProfile({
+        custom_id: form.custom_id,
+        display_name: form.display_name,
+        weight_kg: optionalNumber(form.weight_kg, 'Weight'),
+        age: optionalNumber(form.age, 'Age'),
+        height_cm: optionalNumber(form.height_cm, 'Height'),
+        gender,
+      });
+      setForm({ custom_id: '', display_name: '', weight_kg: '', age: '', height_cm: '' });
+      setGender(null);
+      await reload();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  const field = (
+    key: keyof typeof form,
+    placeholder: string,
+    numeric = false,
+  ) => (
+    <TextInput
+      key={key}
+      style={styles.input}
+      placeholder={placeholder}
+      keyboardType={numeric ? 'decimal-pad' : 'default'}
+      value={form[key]}
+      onChangeText={(v) => setForm((f) => ({ ...f, [key]: v }))}
+    />
+  );
 
   if (loading) {
     return (
@@ -84,16 +138,43 @@ export default function SmartWheelScreen() {
         {profiles.map((p) => (
           <View key={p.id} style={styles.row}>
             <Button title={p.display_name} onPress={() => drive.selectDriver(p)} />
-            <Text style={styles.uuid}>{p.id}</Text>
+            <Text style={styles.uuid}>
+              {p.custom_id ? `${p.custom_id} · ` : ''}
+              {[
+                p.age ? `${p.age}y` : null,
+                p.weight_kg ? `${p.weight_kg}kg` : null,
+                p.height_cm ? `${p.height_cm}cm` : null,
+                p.gender,
+              ]
+                .filter(Boolean)
+                .join(' · ') || p.id}
+            </Text>
           </View>
         ))}
-        <TextInput
-          style={styles.input}
-          placeholder="New driver name"
-          value={newName}
-          onChangeText={setNewName}
-          onSubmitEditing={addProfile}
-        />
+
+        <Text style={styles.sectionTitle}>NEW DRIVER</Text>
+        {field('custom_id', 'Custom ID (e.g. SUBJ-001)')}
+        {field('display_name', 'Name *')}
+        {field('age', 'Age (years)', true)}
+        {field('weight_kg', 'Weight (kg)', true)}
+        {field('height_cm', 'Height (cm)', true)}
+
+        <Text style={styles.inlineLabel}>Gender</Text>
+        <View style={styles.genderRow}>
+          {(['male', 'female', 'other', 'prefer_not_to_say'] as Gender[]).map(
+            (g) => (
+              <View key={g} style={styles.genderBtn}>
+                <Button
+                  title={g === 'prefer_not_to_say' ? 'n/a' : g}
+                  color={gender === g ? '#2563eb' : '#9ca3af'}
+                  onPress={() => setGender(gender === g ? null : g)}
+                />
+              </View>
+            ),
+          )}
+        </View>
+
+        {formError ? <Text style={styles.error}>{formError}</Text> : null}
         <Button title="+ Create Profile" onPress={addProfile} />
       </ScrollView>
     );
@@ -171,6 +252,30 @@ export default function SmartWheelScreen() {
         />
       )}
 
+      <View style={styles.syncBox}>
+        <Button
+          title={busy ? 'SYNCING…' : 'UPLOAD TO SUPABASE'}
+          disabled={busy}
+          onPress={() =>
+            guard(async () => {
+              const pending = await pendingCount();
+              if (pending.sessions === 0 && pending.events === 0) {
+                setSyncStatus('Nothing to upload — end a session first.');
+                return;
+              }
+              setSyncStatus(`Uploading ${pending.events} readings…`);
+              const r = await syncToSupabase();
+              setSyncStatus(
+                r.errors.length
+                  ? `Upload failed: ${r.errors[0]}`
+                  : `Uploaded ${r.sessions} session(s), ${r.events} readings.`,
+              );
+            })
+          }
+        />
+        {syncStatus ? <Text style={styles.field}>{syncStatus}</Text> : null}
+      </View>
+
       {drive.ignoredNoSessionCount > 0 && !drive.hasActiveSession ? (
         <Text style={styles.notice}>
           BLE is working: {drive.ignoredNoSessionCount} ping(s) arrived before a
@@ -214,6 +319,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   row: { marginVertical: 4 },
+  sectionTitle: {
+    fontSize: 12, letterSpacing: 2, color: '#6b7280', marginTop: 20,
+  },
+  inlineLabel: { fontSize: 12, color: '#6b7280', marginTop: 6 },
+  genderRow: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
+  genderBtn: { flex: 1, minWidth: 70 },
+  syncBox: { marginTop: 20, gap: 6 },
   uuid: { fontSize: 10, color: '#6b7280' },
   muted: { color: '#6b7280' },
   error: { color: '#b91c1c', fontSize: 13 },
