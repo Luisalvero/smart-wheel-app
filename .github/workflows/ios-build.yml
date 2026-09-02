@@ -1,0 +1,82 @@
+# Builds an UNSIGNED iOS .ipa for the Expo app on GitHub's macOS runners.
+#
+# Needed because react-native-ble-plx is native code, so the app can no longer
+# run in Expo Go, and iOS binaries can only be produced by Xcode (macOS only).
+# macOS runner minutes are free on public repositories.
+#
+# The artifact is unsigned on purpose: iloader signs it on-device with a free
+# Apple ID, so no Apple Developer Program membership and no signing secrets in
+# CI are required.
+
+name: Build iOS IPA (unsigned)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, "luis/**"]
+
+defaults:
+  run:
+    working-directory: mobile-app
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      # Regenerated on the runner so the committed ios/ folder can never drift
+      # from app.json. This is what applies the BLE config plugin and writes
+      # NSBluetoothAlwaysUsageDescription into Info.plist.
+      - name: Expo prebuild
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Install CocoaPods
+        run: pod install
+        working-directory: mobile-app/ios
+
+      # CODE_SIGNING_ALLOWED=NO is what lets this build with no Apple account.
+      - name: Build unsigned .app
+        working-directory: mobile-app/ios
+        run: |
+          xcodebuild \
+            -workspace mobileapp.xcworkspace \
+            -scheme mobileapp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | tail -40
+
+      # An .ipa is a zip with the .app inside a top-level Payload/ folder.
+      - name: Package as IPA
+        working-directory: mobile-app/ios
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "packaging $APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry SmartWheelApp.ipa Payload
+          ls -lh SmartWheelApp.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SmartWheelApp-unsigned-ipa
+          path: mobile-app/ios/SmartWheelApp.ipa
+          retention-days: 30
+          if-no-files-found: error
