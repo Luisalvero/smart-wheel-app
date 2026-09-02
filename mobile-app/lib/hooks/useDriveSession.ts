@@ -14,8 +14,17 @@ import * as repo from '../db/repositories';
 import type { DriveSession, DriverProfile } from '../db/repositories';
 import { recoverInterruptedSessions } from '../db/repositories';
 
+/** Latest physiological reading, for live display. */
+export type Vitals = {
+  bpm: number | null;
+  spo2: number | null;
+  signalQuality: number | null;
+  battery: number | null;
+};
+
 type State = {
   connection: ConnectionState;
+  vitals: Vitals;
   error: string | null;
   driver: DriverProfile | null;
   session: DriveSession | null;
@@ -31,14 +40,27 @@ type Action =
   | { type: 'connection'; state: ConnectionState; error?: string }
   | { type: 'driver'; driver: DriverProfile }
   | { type: 'session'; session: DriveSession | null }
-  | { type: 'stored'; sequence: number; receivedAt: string }
+  | {
+      type: 'stored';
+      sequence: number;
+      receivedAt: string;
+      vitals: Vitals | null;
+    }
   | { type: 'duplicate' }
   | { type: 'rejected'; error: string }
   | { type: 'ignored' }
   | { type: 'resetCounters' };
 
+const emptyVitals: Vitals = {
+  bpm: null,
+  spo2: null,
+  signalQuality: null,
+  battery: null,
+};
+
 const initialState: State = {
   connection: 'idle',
+  vitals: emptyVitals,
   error: null,
   driver: null,
   session: null,
@@ -51,6 +73,7 @@ const initialState: State = {
 };
 
 const emptyCounters = {
+  vitals: emptyVitals,
   pingCount: 0,
   lastSequence: null,
   lastReceivedAt: null,
@@ -78,6 +101,9 @@ function reducer(state: State, action: Action): State {
             ? action.sequence
             : state.lastSequence,
         lastReceivedAt: action.receivedAt,
+        // A ping carries no vitals; keep the last reading rather than blanking
+        // the display every time a plain ping arrives.
+        vitals: action.vitals ?? state.vitals,
         error: null,
       };
     case 'duplicate':
@@ -98,6 +124,24 @@ function reducer(state: State, action: Action): State {
     default:
       return state;
   }
+}
+
+/** Pulls physiological fields out of a packet's extra map, if present. */
+function extractVitals(packet: {
+  type: string;
+  extra: Record<string, unknown>;
+}): Vitals | null {
+  if (packet.type !== 'vitals') {
+    return null;
+  }
+  const num = (v: unknown): number | null =>
+    typeof v === 'number' && Number.isFinite(v) ? v : null;
+  return {
+    bpm: num(packet.extra.bpm),
+    spo2: num(packet.extra.spo2),
+    signalQuality: num(packet.extra.signal_quality),
+    battery: num(packet.extra.battery),
+  };
 }
 
 export function useDriveSession() {
@@ -162,6 +206,7 @@ export function useDriveSession() {
           type: 'stored',
           sequence: packet.sequence,
           receivedAt: receivedAt.toISOString(),
+          vitals: extractVitals(packet),
         });
       })
       // A failure must not poison the chain and stall every later packet.
