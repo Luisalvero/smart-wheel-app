@@ -13,6 +13,13 @@ import * as SQLite from 'expo-sqlite';
 
 export const DB_NAME = 'smart_wheel.db';
 
+/**
+ * Bumped whenever the schema changes. Migrations run in order from whatever
+ * version the device is on, so an existing install keeps its recorded drives
+ * instead of being wiped.
+ */
+export const SCHEMA_VERSION = 2;
+
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 /** Opens (once) and migrates the database. Safe to call from anywhere. */
@@ -74,7 +81,54 @@ async function openAndMigrate(): Promise<SQLite.SQLiteDatabase> {
       ON drive_sessions (profile_id);
   `);
 
+  await migrate(db);
   return db;
+}
+
+/**
+ * Incremental migrations keyed on SQLite's own `user_version`.
+ *
+ * Additive only -- columns are added, never dropped or retyped -- so a phone
+ * holding unsynced drives can upgrade without losing them.
+ */
+async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
+  const row = await db.getFirstAsync<{ user_version: number }>(
+    'PRAGMA user_version',
+  );
+  const current = row?.user_version ?? 0;
+
+  if (current < 2) {
+    // v2: driver demographics, and physiological values promoted out of
+    // raw_payload into real columns so the dashboard can query them directly
+    // rather than parsing JSON on every read.
+    const addColumn = async (table: string, ddl: string) => {
+      try {
+        await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+      } catch {
+        // Column already present (a partially-applied migration); safe to skip.
+      }
+    };
+
+    await addColumn('driver_profiles', 'custom_id TEXT');
+    await addColumn('driver_profiles', 'weight_kg REAL');
+    await addColumn('driver_profiles', 'age INTEGER');
+    await addColumn('driver_profiles', 'height_cm REAL');
+    await addColumn('driver_profiles', 'gender TEXT');
+
+    await addColumn('drive_sessions', 'duration_seconds INTEGER');
+
+    await addColumn('telemetry_events', 'bpm INTEGER');
+    await addColumn('telemetry_events', 'spo2 INTEGER');
+    await addColumn('telemetry_events', 'signal_quality INTEGER');
+    await addColumn('telemetry_events', 'battery INTEGER');
+
+    await db.execAsync(
+      'CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ' +
+        'ON driver_profiles (custom_id)',
+    );
+  }
+
+  await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 }
 
 /** Development helper: row counts for the debug panel. */
