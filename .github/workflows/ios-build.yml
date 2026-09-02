@@ -49,12 +49,25 @@ jobs:
         working-directory: mobile-app/ios
 
       # CODE_SIGNING_ALLOWED=NO is what lets this build with no Apple account.
+      #
+      # The workspace name is derived, not hardcoded: `expo prebuild` names the
+      # Xcode project after expo.name in app.json, so hardcoding it breaks
+      # silently the moment anyone renames the app.
+      #
+      # pipefail matters: without it the exit status of `xcodebuild | tail` is
+      # tail's, so a failed build reports success and only surfaces later as a
+      # confusing "no .app found" error.
       - name: Build unsigned .app
         working-directory: mobile-app/ios
+        shell: bash
         run: |
+          set -euo pipefail
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          echo "workspace=$WORKSPACE scheme=$SCHEME"
           xcodebuild \
-            -workspace mobileapp.xcworkspace \
-            -scheme mobileapp \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
@@ -66,13 +79,23 @@ jobs:
       # An .ipa is a zip with the .app inside a top-level Payload/ folder.
       - name: Package as IPA
         working-directory: mobile-app/ios
+        shell: bash
         run: |
+          set -euo pipefail
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::no .app was produced by xcodebuild"
+            exit 1
+          fi
           echo "packaging $APP"
           mkdir -p Payload
           cp -R "$APP" Payload/
           zip -qry SmartWheelApp.ipa Payload
           ls -lh SmartWheelApp.ipa
+          # Confirm the Bluetooth usage string survived into the built bundle;
+          # without it iOS terminates the app on its first BLE scan.
+          /usr/libexec/PlistBuddy -c "Print :NSBluetoothAlwaysUsageDescription" \
+            "$APP/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:
