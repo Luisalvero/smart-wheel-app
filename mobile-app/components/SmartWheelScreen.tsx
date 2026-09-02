@@ -110,7 +110,33 @@ export default function SmartWheelScreen() {
       </Text>
       {drive.error ? <Text style={styles.error}>{drive.error}</Text> : null}
 
-      <Text style={styles.caption}>PINGS RECEIVED</Text>
+      <View style={styles.vitalsRow}>
+        <View style={styles.vitalBox}>
+          <Text style={styles.vitalLabel}>HEART RATE</Text>
+          <Text style={[styles.vitalValue, styles.bpm]}>
+            {drive.vitals.bpm ?? '--'}
+          </Text>
+          <Text style={styles.vitalUnit}>BPM</Text>
+        </View>
+        <View style={styles.vitalBox}>
+          <Text style={styles.vitalLabel}>OXYGEN</Text>
+          <Text style={[styles.vitalValue, styles.spo2]}>
+            {drive.vitals.spo2 ?? '--'}
+          </Text>
+          <Text style={styles.vitalUnit}>% SpO2</Text>
+        </View>
+      </View>
+
+      <Text style={styles.field}>
+        Signal quality:{' '}
+        {drive.vitals.signalQuality === null
+          ? '--'
+          : `${drive.vitals.signalQuality}%`}
+        {'   '}Battery:{' '}
+        {drive.vitals.battery === null ? '--' : `${drive.vitals.battery}%`}
+      </Text>
+
+      <Text style={styles.caption}>PACKETS RECEIVED</Text>
       <Text
         style={[styles.counter, drive.hasActiveSession && styles.counterActive]}
       >
@@ -171,7 +197,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
   field: { fontSize: 15 },
   caption: { fontSize: 12, letterSpacing: 2, color: '#666', marginTop: 16 },
-  counter: { fontSize: 72, fontWeight: 'bold', color: '#9ca3af' },
+  counter: { fontSize: 56, fontWeight: 'bold', color: '#9ca3af' },
+  vitalsRow: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 18 },
+  vitalBox: { alignItems: 'center', flex: 1 },
+  vitalLabel: { fontSize: 11, letterSpacing: 1.5, color: '#6b7280' },
+  vitalValue: { fontSize: 64, fontWeight: 'bold', lineHeight: 70 },
+  vitalUnit: { fontSize: 12, color: '#6b7280' },
+  bpm: { color: '#dc2626' },
+  spo2: { color: '#2563eb' },
   counterActive: { color: '#16a34a' },
   input: {
     borderWidth: 1,
