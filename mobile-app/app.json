@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mobile-app",
+    "name": "SmartWheel",
     "slug": "mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSBluetoothAlwaysUsageDescription": "Smart Wheel uses Bluetooth to receive live telemetry from the steering wheel."
-      }
+      },
+      "bundleIdentifier": "com.luisalvero.smartwheel"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +29,8 @@
       "permissions": [
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT"
-      ]
+      ],
+      "package": "com.luisalvero.smartwheel"
     },
     "web": {
       "favicon": "./assets/favicon.png"
