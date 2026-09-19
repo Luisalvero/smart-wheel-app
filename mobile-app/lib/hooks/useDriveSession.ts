@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { WheelConnection, type ConnectionState, type RelayStatus, type Source } from '../ble/bleService';
 import { Deframer, SeqTracker, type Frame } from '../ble/protocol';
+import { LiveUploader, type LiveStatus } from '../db/liveSync';
 import * as repo from '../db/repositories';
 import type { DriveSession, DriverProfile } from '../db/repositories';
 
@@ -45,6 +46,8 @@ type State = {
   /** Sessions auto-started because the ESP32 restarted (new ignition cycle). */
   rollovers: number;
   notice: string | null;
+  /** Live upload of the active session to Supabase (for the team website). */
+  live: LiveStatus | null;
 };
 
 type Action =
@@ -59,7 +62,8 @@ type Action =
   | { type: 'ignored' }
   | { type: 'storeError'; error: string }
   | { type: 'rollover'; session: DriveSession }
-  | { type: 'resetSession' };
+  | { type: 'resetSession' }
+  | { type: 'live'; live: LiveStatus };
 
 const initial: State = {
   connection: 'idle',
@@ -85,6 +89,7 @@ const initial: State = {
   ignoredNoSession: 0,
   rollovers: 0,
   notice: null,
+  live: null,
 };
 
 const trim = (s: Point[], now: number) => s.filter((p) => now - p.t <= CHART_SECONDS * 1000);
@@ -143,6 +148,8 @@ function reducer(s: State, a: Action): State {
         rollovers: s.rollovers + 1,
         notice: `Sensor restarted at ${new Date().toLocaleTimeString()} — continued in a new session.`,
       };
+    case 'live':
+      return { ...s, live: a.live };
     case 'resetSession':
       return { ...s, stored: 0, duplicates: 0, ignoredNoSession: 0 };
     default:
@@ -162,6 +169,8 @@ export function useDriveSession() {
   const seen = useRef<Set<number>>(new Set());
   // Serialises database writes so back-to-back frames cannot interleave.
   const queue = useRef<Promise<void>>(Promise.resolve());
+  // Streams the active session to Supabase; local storage never waits on it.
+  const live = useMemo(() => new LiveUploader((l) => dispatch({ type: 'live', live: l })), []);
 
   const onBytes = useCallback((bytes: Uint8Array) => {
     const rx = new Date(); // stamped on arrival, before any queueing
@@ -200,6 +209,8 @@ export function useDriveSession() {
             sessionRef.current = next;
             seen.current.clear();
             dispatch({ type: 'rollover', session: next });
+            void live.finish(old.id);
+            live.follow(next.id);
           }
           const session = sessionRef.current;
           if (!session || session.status !== 'active') {
@@ -222,7 +233,7 @@ export function useDriveSession() {
         })
         .catch(() => undefined);
     }
-  }, []);
+  }, [live]);
 
   const connection = useMemo(
     () =>
@@ -243,8 +254,11 @@ export function useDriveSession() {
 
   useEffect(() => {
     void repo.recoverInterruptedSessions();
-    return () => void connection.stop();
-  }, [connection]);
+    return () => {
+      void connection.stop();
+      live.stop();
+    };
+  }, [connection, live]);
 
   // In the car nobody should have to tap "connect": as soon as a driver is
   // chosen the app keeps a link to the Pi up, reconnecting on its own.
@@ -268,7 +282,8 @@ export function useDriveSession() {
     const session = await repo.startSession(state.driver.id);
     sessionRef.current = session;
     dispatch({ type: 'session', session });
-  }, [state.driver]);
+    live.follow(session.id);
+  }, [state.driver, live]);
 
   const endSession = useCallback(async () => {
     const session = sessionRef.current;
@@ -276,7 +291,8 @@ export function useDriveSession() {
     const ended = await repo.endSession(session);
     sessionRef.current = null;
     dispatch({ type: 'session', session: ended });
-  }, []);
+    void live.finish(ended.id);
+  }, [live]);
 
   return {
     ...state,

@@ -11,9 +11,9 @@
  *    failure re-sends the same rows harmlessly; no duplicates, no ID remapping.
  * 3. **Parents before children.** Profiles, then sessions, then telemetry, so a
  *    foreign key never points at a row that has not landed yet.
- * 4. **Never called automatically.** The caller decides when to sync, which
- *    keeps the offline guarantee honest: the app is fully usable with the radio
- *    off and only touches the network when someone asks it to.
+ * 4. **Manual catch-up.** The active session is streamed by liveSync.ts; this
+ *    uploads whatever that missed (drives recorded offline, failed pushes).
+ *    The app stays fully usable with the radio off either way.
  */
 import { supabase } from '../supabase';
 import { getDatabase } from './database';
