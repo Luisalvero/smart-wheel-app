@@ -42,6 +42,9 @@ type State = {
   crcErrors: number;
   duplicates: number;
   ignoredNoSession: number;
+  /** Sessions auto-started because the ESP32 restarted (new ignition cycle). */
+  rollovers: number;
+  notice: string | null;
 };
 
 type Action =
@@ -55,6 +58,7 @@ type Action =
   | { type: 'duplicate' }
   | { type: 'ignored' }
   | { type: 'storeError'; error: string }
+  | { type: 'rollover'; session: DriveSession }
   | { type: 'resetSession' };
 
 const initial: State = {
@@ -79,6 +83,8 @@ const initial: State = {
   crcErrors: 0,
   duplicates: 0,
   ignoredNoSession: 0,
+  rollovers: 0,
+  notice: null,
 };
 
 const trim = (s: Point[], now: number) => s.filter((p) => now - p.t <= CHART_SECONDS * 1000);
@@ -128,6 +134,15 @@ function reducer(s: State, a: Action): State {
       return { ...s, ignoredNoSession: s.ignoredNoSession + 1 };
     case 'storeError':
       return { ...s, error: a.error };
+    case 'rollover':
+      return {
+        ...s,
+        session: a.session,
+        stored: 0,
+        duplicates: 0,
+        rollovers: s.rollovers + 1,
+        notice: `Sensor restarted at ${new Date().toLocaleTimeString()} — continued in a new session.`,
+      };
     case 'resetSession':
       return { ...s, stored: 0, duplicates: 0, ignoredNoSession: 0 };
     default:
@@ -151,7 +166,14 @@ export function useDriveSession() {
   const onBytes = useCallback((bytes: Uint8Array) => {
     const rx = new Date(); // stamped on arrival, before any queueing
     for (const f of deframer.current.feed(bytes)) {
+      const resetsBefore = seq.current.resets;
       const lost = (seq.current.update(f.seq), seq.current.lost);
+      // The ESP32's sequence restarts at 0 whenever it reboots -- every
+      // ignition cycle in the car. Without handling this, the new numbers
+      // collide with ones already stored in this session: the duplicate guard
+      // and the UNIQUE(session_id, sequence_number) index would silently
+      // discard every frame until the count passed the old maximum.
+      const esp32Restarted = seq.current.resets > resetsBefore;
       if (f.usable) {
         avgBpm.current = [...avgBpm.current, f.heartRate].slice(-AVG_WINDOW);
         avgSpo2.current = [...avgSpo2.current, f.spo2].slice(-AVG_WINDOW);
@@ -169,6 +191,16 @@ export function useDriveSession() {
 
       queue.current = queue.current
         .then(async () => {
+          if (esp32Restarted && sessionRef.current?.status === 'active') {
+            // A restart is a new drive segment: close this session and carry on
+            // in a fresh one for the same driver, so no data is dropped.
+            const old = sessionRef.current;
+            await repo.endSession(old);
+            const next = await repo.startSession(old.profile_id);
+            sessionRef.current = next;
+            seen.current.clear();
+            dispatch({ type: 'rollover', session: next });
+          }
           const session = sessionRef.current;
           if (!session || session.status !== 'active') {
             // Never attribute data to no session or to a previous one.
@@ -211,8 +243,15 @@ export function useDriveSession() {
 
   useEffect(() => {
     void repo.recoverInterruptedSessions();
-    return () => void connection.disconnect();
+    return () => void connection.stop();
   }, [connection]);
+
+  // In the car nobody should have to tap "connect": as soon as a driver is
+  // chosen the app keeps a link to the Pi up, reconnecting on its own.
+  const driverId = state.driver?.id;
+  useEffect(() => {
+    if (driverId) connection.start();
+  }, [driverId, connection]);
 
   const selectDriver = useCallback((driver: DriverProfile) => {
     sessionRef.current = null;
@@ -244,8 +283,9 @@ export function useDriveSession() {
     isConnected: state.connection === 'connected',
     hasActiveSession: state.session?.status === 'active',
     selectDriver,
-    connect: useCallback(() => connection.connect(), [connection]),
-    disconnect: useCallback(() => connection.disconnect(), [connection]),
+    autoConnect: useCallback(() => connection.start(), [connection]),
+    stopConnecting: useCallback(() => connection.stop(), [connection]),
+    setAllowDirect: useCallback((v: boolean) => connection.setAllowDirect(v), [connection]),
     startSession,
     endSession,
   };

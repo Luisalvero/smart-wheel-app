@@ -1,14 +1,20 @@
 /**
- * BLE transport: finds the Raspberry Pi relay (or, failing that, the ESP32
- * itself), subscribes to frames and reports link state. Assigns bytes no
- * meaning -- decoding lives in protocol.ts.
+ * BLE transport: finds the Raspberry Pi relay, subscribes to frames, reports
+ * link state, and keeps reconnecting on its own. Assigns bytes no meaning --
+ * decoding lives in protocol.ts.
  *
- * Scan preference: the Pi relay if it is advertising, since that is the real
- * system path (ESP32 -> Pi -> phone). The ESP32 is accepted as a fallback so
- * the phone can still be tested without the Pi. Both send identical frames,
- * because the Pi forwards the ESP32's bytes unchanged.
+ * Auto-reconnect: in the car the phone must recover without the driver
+ * touching it -- the Pi takes 20-30 s to boot after ignition, and any dropout
+ * mid-drive must heal by itself. start() keeps trying (with backoff) until
+ * stop(); returning the app to the foreground retries immediately.
+ *
+ * Direct-to-ESP32 is OFF by default. The ESP32 accepts one connection, and it
+ * is ready within a second of ignition while the Pi is still booting; a phone
+ * allowed to fall back would take the ESP32 first and lock the Pi out, so the
+ * drive would never be logged. It remains available for bench testing
+ * without a Pi via setAllowDirect(true).
  */
-import { PermissionsAndroid, Platform } from 'react-native';
+import { AppState, PermissionsAndroid, Platform, type NativeEventSubscription } from 'react-native';
 import { BleManager, State, type Device, type Subscription } from 'react-native-ble-plx';
 
 import {
@@ -27,6 +33,7 @@ export type ConnectionState =
   | 'discovering'
   | 'connected'
   | 'disconnected'
+  | 'waiting'   // between automatic retries
   | 'failed';
 
 export type Source = 'relay' | 'esp32';
@@ -78,13 +85,84 @@ export class WheelConnection {
   private subs: Subscription[] = [];
   private statusTimer: ReturnType<typeof setInterval> | null = null;
 
+  // Auto-reconnect state.
+  private wanted = false;
+  private busy = false;
+  private attempt = 0;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private appStateSub: NativeEventSubscription | null = null;
+  private allowDirect = false;
+  private cancelScan: (() => void) | null = null;
+
   constructor(private readonly cb: BleCallbacks) {}
 
-  async connect(scanMs = 12000): Promise<void> {
+  /** Bench testing only: also accept the ESP32 when no Pi relay is found. */
+  setAllowDirect(allow: boolean) {
+    this.allowDirect = allow;
+  }
+
+  /** Keeps a link to the relay up until stop() -- connects, and reconnects
+   *  after any failure or drop without user action. */
+  start() {
+    if (this.wanted) return;
+    this.wanted = true;
+    this.attempt = 0;
+    // Back in the foreground (e.g. screen unlocked): retry now, not after backoff.
+    this.appStateSub = AppState.addEventListener('change', (st) => {
+      if (st === 'active' && this.wanted && !this.device) this.retryNow();
+    });
+    void this.cycle();
+  }
+
+  async stop(): Promise<void> {
+    this.wanted = false;
+    this.appStateSub?.remove();
+    this.appStateSub = null;
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+    this.cancelScan?.(); // an in-flight scan would otherwise report "not found" after pausing
+    await this.disconnect();
+    this.cb.onStateChange('idle');
+  }
+
+  get isAutoConnecting() {
+    return this.wanted;
+  }
+
+  private retryNow() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+    this.attempt = 0;
+    void this.cycle();
+  }
+
+  private async cycle() {
+    if (!this.wanted || this.busy || this.device) return;
+    this.busy = true;
+    const ok = await this.connect();
+    this.busy = false;
+    if (ok) this.attempt = 0;
+    else this.scheduleRetry();
+  }
+
+  private scheduleRetry() {
+    if (!this.wanted || this.retryTimer) return;
+    // 1 s, 2 s, 4 s, then every 8 s: quick after a blip, gentle while the Pi boots.
+    const delay = Math.min(8000, 1000 * 2 ** this.attempt);
+    this.attempt += 1;
+    this.cb.onStateChange('waiting', `Searching again in ${Math.round(delay / 1000)} s…`);
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null;
+      void this.cycle();
+    }, delay);
+  }
+
+  /** One attempt. Returns true when connected and subscribed. */
+  private async connect(scanMs = 12000): Promise<boolean> {
     await this.disconnect();
     if (!(await requestPermissions())) {
       this.cb.onStateChange('failed', 'Bluetooth permission denied.');
-      return;
+      return false;
     }
     const ble = getManager();
     const state = await ble.state();
@@ -95,7 +173,7 @@ export class WheelConnection {
           ? 'Bluetooth permission was denied. Enable it in Settings.'
           : 'Bluetooth is off. Turn it on and try again.',
       );
-      return;
+      return false;
     }
 
     this.cb.onStateChange('scanning');
@@ -103,19 +181,28 @@ export class WheelConnection {
     try {
       found = await this.scan(ble, scanMs);
     } catch (e) {
-      this.cb.onStateChange('failed', e instanceof Error ? e.message : String(e));
-      return;
+      // Stopped while scanning: stay quiet, the UI already shows "paused".
+      if (this.wanted) this.cb.onStateChange('failed', e instanceof Error ? e.message : String(e));
+      return false;
     }
 
     try {
       this.cb.onStateChange('connecting');
       // requestMTU: iOS negotiates its own MTU and ignores this; Android uses it.
       const device = await found.device.connect({ timeout: 20000, requestMTU: 247 });
+      if (!this.wanted) {
+        // Paused while the connection was being made.
+        await device.cancelConnection().catch(() => undefined);
+        return false;
+      }
       this.device = device;
       this.subs.push(
         device.onDisconnected(() => {
           this.clearSession();
-          this.cb.onStateChange('disconnected', 'Bluetooth disconnected.');
+          this.cb.onStateChange('disconnected', 'Link lost — reconnecting…');
+          // A drop mid-drive should heal fast: start from the shortest backoff.
+          this.attempt = 0;
+          this.scheduleRetry();
         }),
       );
 
@@ -146,9 +233,13 @@ export class WheelConnection {
         at: new Date(),
       });
       this.cb.onStateChange('connected');
+      return true;
     } catch (e) {
-      this.cb.onStateChange('failed', `Connection failed: ${e instanceof Error ? e.message : String(e)}`);
+      if (this.wanted) {
+        this.cb.onStateChange('failed', `Connection failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
       await this.disconnect();
+      return false;
     }
   }
 
@@ -160,24 +251,36 @@ export class WheelConnection {
       const finish = (fn: () => void) => {
         if (settled) return;
         settled = true;
+        this.cancelScan = null;
         ble.stopDeviceScan();
         clearTimeout(timer);
         clearTimeout(fallback);
         fn();
       };
+      this.cancelScan = () => finish(() => reject(new Error('cancelled')));
       const timer = setTimeout(
-        () => finish(() => reject(new Error('No Raspberry Pi relay or ESP32 found. Check both are powered on.'))),
+        () =>
+          finish(() =>
+            reject(
+              new Error(
+                this.allowDirect
+                  ? 'No Raspberry Pi relay or ESP32 found.'
+                  : 'Raspberry Pi not found yet (it takes ~30 s to boot).',
+              ),
+            ),
+          ),
         scanMs,
       );
       let fallback: ReturnType<typeof setTimeout> | undefined;
 
-      ble.startDeviceScan([RELAY_SERVICE_UUID, ESP32_SERVICE_UUID], { allowDuplicates: false }, (err, d) => {
+      const services = this.allowDirect ? [RELAY_SERVICE_UUID, ESP32_SERVICE_UUID] : [RELAY_SERVICE_UUID];
+      ble.startDeviceScan(services, { allowDuplicates: false }, (err, d) => {
         if (err) return finish(() => reject(err));
         if (!d) return;
         const uuids = (d.serviceUUIDs ?? []).map((u) => u.toLowerCase());
         if (uuids.includes(RELAY_SERVICE_UUID)) {
           finish(() => resolve({ device: d, source: 'relay' }));
-        } else if (uuids.includes(ESP32_SERVICE_UUID) && !esp32) {
+        } else if (this.allowDirect && uuids.includes(ESP32_SERVICE_UUID) && !esp32) {
           esp32 = d;
           fallback = setTimeout(() => finish(() => resolve({ device: esp32!, source: 'esp32' })), 3000);
         }

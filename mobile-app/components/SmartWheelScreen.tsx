@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Button,
   ScrollView,
+  Switch,
   StyleSheet,
   Text,
   TextInput,
@@ -27,7 +28,8 @@ const CONNECTION_LABEL: Record<string, string> = {
   discovering: 'Discovering services…',
   connected: 'Connected',
   disconnected: 'Disconnected',
-  failed: 'Error',
+  failed: 'Not found',
+  waiting: 'Searching…',
 };
 
 const fmtTime = (d: Date) =>
@@ -99,6 +101,8 @@ export default function SmartWheelScreen() {
   const [syncStatus, setSyncStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [autoOn, setAutoOn] = useState(true);
+  const [direct, setDirect] = useState(false);
   // Re-render once a second so "connected for" and "last packet" stay current.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -286,13 +290,25 @@ export default function SmartWheelScreen() {
         {drive.error ? <Text style={styles.error}>{drive.error}</Text> : null}
       </View>
 
-      {!drive.isConnected ? (
-        <Button
-          title={busy ? 'SEARCHING…' : 'CONNECT'}
-          disabled={busy}
-          onPress={() => guard(drive.connect)}
-        />
-      ) : null}
+      {/* Connection is automatic: the app keeps looking for the Pi and
+          reconnects by itself. The button only pauses/resumes that. */}
+      <Text style={styles.kv}>
+        {autoOn
+          ? drive.isConnected
+            ? 'Auto-connect on · reconnects by itself if the link drops'
+            : 'Auto-connect on · looking for the Raspberry Pi…'
+          : 'Auto-connect paused'}
+      </Text>
+      <Button
+        title={autoOn ? 'PAUSE CONNECTION' : 'RESUME AUTO-CONNECT'}
+        color={autoOn ? '#6b7280' : undefined}
+        onPress={() => {
+          if (autoOn) void drive.stopConnecting();
+          else drive.autoConnect();
+          setAutoOn(!autoOn);
+        }}
+      />
+      {drive.notice ? <Text style={styles.notice}>{drive.notice}</Text> : null}
 
       {/* ---- vitals ---- */}
       <Text style={[styles.signal, { color: signal.color }]}>{signal.text}</Text>
@@ -367,6 +383,21 @@ export default function SmartWheelScreen() {
       {/* ---- link health ---- */}
       <View style={styles.debug}>
         <Text style={styles.debugTitle}>LINK HEALTH</Text>
+        <View style={styles.cardRow}>
+          <Text style={styles.uuid}>
+            Direct to ESP32 (bench testing only — never in the car: it locks the Pi out)
+          </Text>
+          <Switch
+            value={direct}
+            onValueChange={(v) => {
+              setDirect(v);
+              drive.setAllowDirect(v);
+            }}
+          />
+        </View>
+        {drive.rollovers > 0 ? (
+          <Text style={styles.uuid}>sensor restarts this drive: {drive.rollovers} (new session each time)</Text>
+        ) : null}
         <Text style={styles.uuid}>
           packets {drive.packets} · lost {drive.lost} · CRC errors {drive.crcErrors} · duplicates {drive.duplicates}
         </Text>
