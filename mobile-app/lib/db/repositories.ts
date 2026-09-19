@@ -5,7 +5,7 @@
  * storage layer can change (or gain a Supabase sync step) without touching UI.
  */
 import { getDatabase } from './database';
-import { uuidv4, type TelemetryPacket } from '../ble/protocol';
+import { bytesToBase64, uuidv4, type Frame } from '../ble/protocol';
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
@@ -231,40 +231,36 @@ export async function listSessions(limit = 100): Promise<SessionSummary[]> {
 // --- telemetry -------------------------------------------------------------
 
 /**
- * Persists one packet.
+ * Persists one frame (one second of telemetry).
  *
  * `received_at` is stamped on the phone and is the authoritative reception
- * time; the wheel's `sent_at` stays inside raw_payload for drift analysis but
- * is never promoted to a column.
+ * time. BPM and SpO2 are stored only when the frame is usable (finger on,
+ * both values valid and plausible); otherwise they are NULL rather than the
+ * wheel's -999 "no result" marker, so charts and averages never ingest it.
+ * The verbatim frame is kept base64-encoded in raw_payload for re-analysis.
  *
  * INSERT OR IGNORE leans on the UNIQUE(session_id, sequence_number) index, so
  * a replayed sequence is dropped rather than raising.
  */
-export async function storePacket(
+export async function storeFrame(
   sessionId: string,
-  packet: TelemetryPacket,
+  frame: Frame,
   receivedAt: Date = new Date(),
 ): Promise<StoreResult> {
   const db = await getDatabase();
-  const num = (v: unknown): number | null =>
-    typeof v === 'number' && Number.isFinite(v) ? v : null;
-
   const result = await db.runAsync(
     `INSERT OR IGNORE INTO telemetry_events
        (id, session_id, sequence_number, event_type, bpm, spo2,
         signal_quality, battery, received_at, raw_payload, sync_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local')`,
+     VALUES (?, ?, ?, 'vitals', ?, ?, NULL, NULL, ?, ?, 'local')`,
     [
       uuidv4(),
       sessionId,
-      packet.sequence,
-      packet.type,
-      num(packet.extra.bpm),
-      num(packet.extra.spo2),
-      num(packet.extra.signal_quality),
-      num(packet.extra.battery),
+      frame.seq,
+      frame.usable ? frame.heartRate : null,
+      frame.usable ? frame.spo2 : null,
       receivedAt.toISOString(),
-      packet.rawPayload,
+      bytesToBase64(frame.raw),
     ],
   );
   return result.changes > 0 ? 'stored' : 'duplicate';

@@ -15,13 +15,9 @@ import {
   View,
 } from 'react-native';
 
-import { useDriveSession } from '../lib/hooks/useDriveSession';
+import { CHART_SECONDS, useDriveSession, type Point } from '../lib/hooks/useDriveSession';
 import * as repo from '../lib/db/repositories';
 import type { DriverProfile, Gender } from '../lib/db/repositories';
-import {
-  SMART_WHEEL_SERVICE_UUID,
-  TELEMETRY_CHAR_UUID,
-} from '../lib/ble/protocol';
 import { pendingCount, syncToSupabase } from '../lib/db/sync';
 
 const CONNECTION_LABEL: Record<string, string> = {
@@ -33,6 +29,60 @@ const CONNECTION_LABEL: Record<string, string> = {
   disconnected: 'Disconnected',
   failed: 'Error',
 };
+
+const fmtTime = (d: Date) =>
+  d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const fmtDuration = (ms: number) => {
+  const t = Math.max(0, Math.floor(ms / 1000));
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(Math.floor(t / 3600))}:${p(Math.floor((t % 3600) / 60))}:${p(t % 60)}`;
+};
+
+/**
+ * One bar per second over the last CHART_SECONDS, drawn with plain Views so no
+ * native charting module is needed. A missing bar is a second with no usable
+ * reading (no finger, or the estimator rejected a noisy window) -- shown as a
+ * gap rather than a misleading zero.
+ */
+function VitalChart(props: {
+  title: string;
+  points: Point[];
+  color: string;
+  min: number;
+  max: number;
+}) {
+  const H = 84;
+  const slots: (number | null)[] = new Array(CHART_SECONDS).fill(null);
+  const pts = props.points.slice(-CHART_SECONDS);
+  pts.forEach((p, i) => {
+    slots[CHART_SECONDS - pts.length + i] = p.v;
+  });
+  const vals = pts.map((p) => p.v).filter((v): v is number => v !== null);
+  const range = vals.length ? `${Math.min(...vals)}–${Math.max(...vals)}` : '—';
+  return (
+    <View style={styles.chart}>
+      <View style={styles.chartHead}>
+        <Text style={styles.chartTitle}>{props.title}</Text>
+        <Text style={styles.chartRange}>last {CHART_SECONDS / 60} min · {range}</Text>
+      </View>
+      <View style={[styles.chartBody, { height: H }]}>
+        {slots.map((v, i) => {
+          const f = v === null ? 0 : Math.min(1, Math.max(0, (v - props.min) / (props.max - props.min)));
+          return (
+            <View
+              key={i}
+              style={{ flex: 1, height: v === null ? 0 : Math.max(2, f * H), backgroundColor: props.color }}
+            />
+          );
+        })}
+      </View>
+      <View style={styles.chartAxis}>
+        <Text style={styles.axisText}>{props.min}</Text>
+        <Text style={styles.axisText}>{props.max}</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function SmartWheelScreen() {
   const drive = useDriveSession();
@@ -49,6 +99,12 @@ export default function SmartWheelScreen() {
   const [syncStatus, setSyncStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  // Re-render once a second so "connected for" and "last packet" stay current.
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((x) => x + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const reload = useCallback(async () => {
     setProfiles(await repo.listProfiles());
@@ -181,80 +237,112 @@ export default function SmartWheelScreen() {
   }
 
   // --- drive screen --------------------------------------------------------
+  const now = Date.now();
+  const link = drive.link;
+  const viaPi = link?.source === 'relay';
+  const lastAge = drive.lastRx ? (now - drive.lastRx.getTime()) / 1000 : null;
+  const signal = !drive.lastRx
+    ? { text: 'Waiting for data', color: '#6b7280' }
+    : !drive.finger
+      ? { text: 'No finger on sensor', color: '#b45309' }
+      : drive.bpm === null
+        ? { text: 'Reading pulse…', color: '#b45309' }
+        : { text: 'Good signal', color: '#15803d' };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>SMART WHEEL</Text>
-
       <Text style={styles.field}>Driver: {drive.driver.display_name}</Text>
-      <Text style={styles.field}>
-        Bluetooth: {CONNECTION_LABEL[drive.connection] ?? drive.connection}
-      </Text>
-      {drive.error ? <Text style={styles.error}>{drive.error}</Text> : null}
 
-      <View style={styles.vitalsRow}>
-        <View style={styles.vitalBox}>
-          <Text style={styles.vitalLabel}>HEART RATE</Text>
-          <Text style={[styles.vitalValue, styles.bpm]}>
-            {drive.vitals.bpm ?? '--'}
+      {/* ---- connection ---- */}
+      <View style={styles.card}>
+        <View style={styles.cardRow}>
+          <Text style={[styles.pill, { color: drive.isConnected ? '#15803d' : '#b91c1c' }]}>
+            ● {CONNECTION_LABEL[drive.connection] ?? drive.connection}
           </Text>
-          <Text style={styles.vitalUnit}>BPM</Text>
+          {link ? (
+            <Text style={[styles.source, { color: viaPi ? '#1d4ed8' : '#b45309' }]}>
+              {viaPi ? 'via Raspberry Pi' : 'ESP32 direct (no Pi)'}
+            </Text>
+          ) : null}
         </View>
-        <View style={styles.vitalBox}>
-          <Text style={styles.vitalLabel}>OXYGEN</Text>
-          <Text style={[styles.vitalValue, styles.spo2]}>
-            {drive.vitals.spo2 ?? '--'}
-          </Text>
-          <Text style={styles.vitalUnit}>% SpO2</Text>
-        </View>
+        {link ? (
+          <>
+            <Text style={styles.kv}>Device   {link.name}</Text>
+            <Text style={styles.kv}>Connected at   {link.connectedAt.toLocaleString()}</Text>
+            <Text style={styles.kv}>Connected for   {fmtDuration(now - link.connectedAt.getTime())}</Text>
+            {viaPi ? (
+              <Text style={[styles.kv, { color: drive.relay?.esp ? '#15803d' : '#b91c1c' }]}>
+                ESP32 → Pi   {drive.relay?.esp
+                  ? `up since ${drive.relay.espSince ? fmtTime(new Date(drive.relay.espSince * 1000)) : '?'}`
+                  : 'ESP32 not connected to Pi'}
+              </Text>
+            ) : null}
+            <Text style={[styles.kv, { color: lastAge !== null && lastAge < 2.5 ? '#15803d' : '#b91c1c' }]}>
+              Last packet   {lastAge === null ? '—' : `${lastAge.toFixed(1)} s ago (#${drive.lastSeq})`}
+            </Text>
+          </>
+        ) : null}
+        {drive.error ? <Text style={styles.error}>{drive.error}</Text> : null}
       </View>
-
-      <Text style={styles.field}>
-        Signal quality:{' '}
-        {drive.vitals.signalQuality === null
-          ? '--'
-          : `${drive.vitals.signalQuality}%`}
-        {'   '}Battery:{' '}
-        {drive.vitals.battery === null ? '--' : `${drive.vitals.battery}%`}
-      </Text>
-
-      <Text style={styles.caption}>PACKETS RECEIVED</Text>
-      <Text
-        style={[styles.counter, drive.hasActiveSession && styles.counterActive]}
-      >
-        {drive.pingCount}
-      </Text>
-
-      <Text style={styles.field}>
-        Last ping: {drive.lastSequence === null ? '--' : `#${drive.lastSequence}`}
-      </Text>
-      <Text style={styles.field}>
-        Session: {drive.hasActiveSession ? 'Active' : 'Not started'}
-      </Text>
 
       {!drive.isConnected ? (
         <Button
-          title={busy ? 'WORKING…' : 'CONNECT TO WHEEL'}
+          title={busy ? 'SEARCHING…' : 'CONNECT'}
           disabled={busy}
           onPress={() => guard(drive.connect)}
         />
-      ) : !drive.hasActiveSession ? (
+      ) : null}
+
+      {/* ---- vitals ---- */}
+      <Text style={[styles.signal, { color: signal.color }]}>{signal.text}</Text>
+      <View style={styles.vitalsRow}>
+        <View style={styles.vitalBox}>
+          <Text style={styles.vitalLabel}>HEART RATE</Text>
+          <Text style={[styles.vitalValue, styles.bpm, drive.bpm === null && styles.dim]}>
+            {drive.bpm ?? '--'}
+          </Text>
+          <Text style={styles.vitalUnit}>
+            BPM · avg {drive.avgBpm === null ? '--' : drive.avgBpm.toFixed(0)}
+          </Text>
+        </View>
+        <View style={styles.vitalBox}>
+          <Text style={styles.vitalLabel}>OXYGEN</Text>
+          <Text style={[styles.vitalValue, styles.spo2, drive.spo2 === null && styles.dim]}>
+            {drive.spo2 ?? '--'}
+          </Text>
+          <Text style={styles.vitalUnit}>
+            % SpO₂ · avg {drive.avgSpo2 === null ? '--' : drive.avgSpo2.toFixed(0)}
+          </Text>
+        </View>
+      </View>
+
+      <VitalChart title="HEART RATE (BPM)" points={drive.bpmSeries} color="#dc2626" min={40} max={140} />
+      <VitalChart title="SpO₂ (%)" points={drive.spo2Series} color="#2563eb" min={85} max={100} />
+
+      {/* ---- session ---- */}
+      <Text style={styles.sectionTitle}>SESSION</Text>
+      {!drive.hasActiveSession ? (
         <Button
           title="START SESSION"
-          disabled={busy}
+          disabled={busy || !drive.isConnected}
           onPress={() => guard(drive.startSession)}
         />
       ) : (
-        <Button
-          title="END SESSION"
-          color="#b91c1c"
-          disabled={busy}
-          onPress={() => guard(drive.endSession)}
-        />
+        <Button title="END SESSION" color="#b91c1c" disabled={busy} onPress={() => guard(drive.endSession)} />
       )}
+      <Text style={styles.kv}>
+        {drive.hasActiveSession ? `Recording · ${drive.stored} readings saved` : 'Not recording'}
+      </Text>
+      {drive.ignoredNoSession > 0 && !drive.hasActiveSession ? (
+        <Text style={styles.notice}>
+          Data is arriving ({drive.ignoredNoSession} packets) but is not saved until you start a session.
+        </Text>
+      ) : null}
 
       <View style={styles.syncBox}>
         <Button
-          title={busy ? 'SYNCING…' : 'UPLOAD TO SUPABASE'}
+          title={busy ? 'WORKING…' : 'UPLOAD TO SUPABASE'}
           disabled={busy}
           onPress={() =>
             guard(async () => {
@@ -276,21 +364,19 @@ export default function SmartWheelScreen() {
         {syncStatus ? <Text style={styles.field}>{syncStatus}</Text> : null}
       </View>
 
-      {drive.ignoredNoSessionCount > 0 && !drive.hasActiveSession ? (
-        <Text style={styles.notice}>
-          BLE is working: {drive.ignoredNoSessionCount} ping(s) arrived before a
-          session started, so they were not recorded.
-        </Text>
-      ) : null}
-
+      {/* ---- link health ---- */}
       <View style={styles.debug}>
-        <Text style={styles.debugTitle}>DEVELOPER</Text>
-        <Text style={styles.uuid}>Service: {SMART_WHEEL_SERVICE_UUID}</Text>
-        <Text style={styles.uuid}>Char: {TELEMETRY_CHAR_UUID}</Text>
-        <Text style={styles.uuid}>Driver UUID: {drive.driver.id}</Text>
-        <Text style={styles.uuid}>Session UUID: {drive.session?.id ?? '--'}</Text>
-        <Text style={styles.uuid}>Duplicates dropped: {drive.duplicateCount}</Text>
-        <Text style={styles.uuid}>Malformed rejected: {drive.rejectedCount}</Text>
+        <Text style={styles.debugTitle}>LINK HEALTH</Text>
+        <Text style={styles.uuid}>
+          packets {drive.packets} · lost {drive.lost} · CRC errors {drive.crcErrors} · duplicates {drive.duplicates}
+        </Text>
+        {viaPi && drive.relay ? (
+          <Text style={styles.uuid}>
+            Pi: received {drive.relay.rx} from ESP32 · lost {drive.relay.lost} · CRC errors {drive.relay.crc}
+          </Text>
+        ) : null}
+        <Text style={styles.uuid}>Driver {drive.driver.id}</Text>
+        <Text style={styles.uuid}>Session {drive.session?.id ?? '--'}</Text>
       </View>
     </ScrollView>
   );
@@ -332,4 +418,21 @@ const styles = StyleSheet.create({
   notice: { color: '#92400e', fontSize: 13 },
   debug: { marginTop: 28, borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 12 },
   debugTitle: { fontSize: 11, letterSpacing: 2, color: '#666', marginBottom: 6 },
+  card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, gap: 4 },
+  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  pill: { fontSize: 15, fontWeight: '700' },
+  source: { fontSize: 12, fontWeight: '600' },
+  kv: { fontSize: 13, color: '#374151', fontVariant: ['tabular-nums'] },
+  signal: { fontSize: 15, fontWeight: '700', marginTop: 12, textAlign: 'center' },
+  dim: { color: '#d1d5db' },
+  chart: { marginTop: 14 },
+  chartHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  chartTitle: { fontSize: 11, letterSpacing: 1.5, color: '#6b7280', fontWeight: '600' },
+  chartRange: { fontSize: 11, color: '#6b7280', fontVariant: ['tabular-nums'] },
+  chartBody: {
+    flexDirection: 'row', alignItems: 'flex-end', gap: 1,
+    backgroundColor: '#f9fafb', borderRadius: 6, overflow: 'hidden',
+  },
+  chartAxis: { flexDirection: 'row', justifyContent: 'space-between' },
+  axisText: { fontSize: 9, color: '#9ca3af' },
 });

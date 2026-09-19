@@ -1,189 +1,215 @@
 /**
- * Smart Wheel BLE telemetry protocol.
+ * PPG telemetry frame protocol v2 -- TypeScript twin of
+ * PPG_System/common/ppg_protocol.py and the ESP32's ppg_frame.h.
  *
- * This is the TypeScript twin of the laptop simulator's `ble_protocol.py`.
- * It owns the *meaning* of the bytes only -- it knows nothing about
- * react-native-ble-plx, SQLite or React. Keeping it transport-free is what
- * lets it be unit tested, and what lets the ESP32 firmware later replace the
- * simulator without a single change here.
+ * Frame: 104 bytes, little-endian, packed.
+ *   0  u16 magic 0xA55A      2 u8 version (2)     3 u8 sample_count
+ *   4  u32 seq               8 u32 start_ms      12 u32 end_ms
+ *  16  i16 heart_rate       18 i16 spo2          (-999 = no result)
+ *  20  u8 flags             21 u8 reserved
+ *  22  8 x { u16 dt_ms, u32 red, u32 ir }
+ * 102  u16 CRC-16/CCITT-FALSE over bytes 0..101
+ *
+ * The Pi relay forwards the ESP32's frames byte-for-byte, so the CRC checked
+ * here is the one the ESP32 computed: corruption anywhere on the
+ * ESP32 -> Pi -> phone path is detected.
+ *
+ * Transport-free: no react-native-ble-plx, no React, no storage.
  */
 
-/** Shared with the simulator. Changing either constant breaks discovery. */
-export const SMART_WHEEL_SERVICE_UUID = '7a1f0001-6e2b-4c91-9d5a-2f3c4b5a6001';
-export const TELEMETRY_CHAR_UUID = '7a1f0002-6e2b-4c91-9d5a-2f3c4b5a6001';
-export const SIMULATOR_ADVERTISED_NAME = 'SmartWheel-Simulator';
+// ESP32 (Nordic UART Service UUIDs).
+export const ESP32_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+export const ESP32_TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+// Raspberry Pi relay.
+export const RELAY_SERVICE_UUID = '5b1e0001-7c2d-4f6a-9e3b-8a4c2d1f6e01';
+export const RELAY_FRAME_UUID = '5b1e0002-7c2d-4f6a-9e3b-8a4c2d1f6e01';
+export const RELAY_STATUS_UUID = '5b1e0003-7c2d-4f6a-9e3b-8a4c2d1f6e01';
+export const RELAY_NAME = 'PPG-Relay-Pi';
 
-/** Highest protocol version this build understands. */
-export const SUPPORTED_PROTOCOL_VERSION = 1;
+export const MAGIC = 0xa55a;
+export const VERSION = 2;
+export const SAMPLES_PER_FRAME = 8;
+export const HEADER_SIZE = 22;
+export const SAMPLE_SIZE = 10;
+export const FRAME_SIZE = HEADER_SIZE + SAMPLES_PER_FRAME * SAMPLE_SIZE + 2; // 104
 
-export const EVENT_PING = 'ping';
-export const EVENT_VITALS = 'vitals';
+export const FLAG_HR_VALID = 0x01;
+export const FLAG_SPO2_VALID = 0x02;
+export const FLAG_FINGER = 0x04;
+export const FLAG_IN_RANGE = 0x08;
 
-export type TelemetryPacket = {
-  protocolVersion: number;
-  type: string;
-  sequence: number;
-  /** Wheel-side send time. Advisory only -- never used as reception time. */
-  sentAt: Date | null;
-  /** Everything else, so future vitals fields survive without a change here. */
-  extra: Record<string, unknown>;
-  /** Exact decoded text, kept for debugging bad packets. */
-  rawPayload: string;
+export type Sample = { dtMs: number; red: number; ir: number };
+
+export type Frame = {
+  seq: number;
+  startMs: number;
+  endMs: number;
+  heartRate: number;
+  spo2: number;
+  flags: number;
+  samples: Sample[];
+  finger: boolean;
+  /** Both vitals valid, physiologically plausible, finger on the sensor. */
+  usable: boolean;
+  raw: Uint8Array;
 };
 
-export class ProtocolError extends Error {
-  readonly raw?: string;
-  constructor(message: string, raw?: string) {
-    super(message);
-    this.name = 'ProtocolError';
-    this.raw = raw;
+/** CRC-16/CCITT-FALSE: poly 0x1021, init 0xFFFF. Check("123456789") = 0x29B1. */
+export function crc16(data: Uint8Array, len = data.length): number {
+  let crc = 0xffff;
+  for (let i = 0; i < len; i += 1) {
+    crc ^= data[i]! << 8;
+    for (let b = 0; b < 8; b += 1) {
+      crc = crc & 0x8000 ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+    }
   }
+  return crc;
 }
 
-/**
- * Decodes a base64 characteristic value into UTF-8 text.
- *
- * react-native-ble-plx hands notification values back as base64 strings, and
- * React Native has no dependable global `atob`. Implemented here rather than
- * pulling in a dependency, since it is a dozen lines.
- */
-export function base64ToUtf8(input: string): string {
-  const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  const clean = input.replace(/[^A-Za-z0-9+/=]/g, '');
-  const bytes: number[] = [];
-
+/** react-native-ble-plx delivers values as base64; RN has no reliable atob. */
+export function base64ToBytes(input: string): Uint8Array {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const lookup = new Int16Array(128).fill(-1);
+  for (let i = 0; i < chars.length; i += 1) lookup[chars.charCodeAt(i)] = i;
+  const clean = input.replace(/[^A-Za-z0-9+/]/g, '');
+  const out = new Uint8Array(Math.floor((clean.length * 3) / 4));
+  let o = 0;
   for (let i = 0; i < clean.length; i += 4) {
-    const e1 = chars.indexOf(clean[i]!);
-    const e2 = chars.indexOf(clean[i + 1]!);
-    const e3 = chars.indexOf(clean[i + 2]!);
-    const e4 = chars.indexOf(clean[i + 3]!);
-
-    bytes.push((e1 << 2) | (e2 >> 4));
-    if (e3 !== -1 && clean[i + 2] !== '=') {
-      bytes.push(((e2 & 15) << 4) | (e3 >> 2));
-    }
-    if (e4 !== -1 && clean[i + 3] !== '=') {
-      bytes.push(((e3 & 3) << 6) | e4);
-    }
+    const a = lookup[clean.charCodeAt(i)]!;
+    const b = lookup[clean.charCodeAt(i + 1)]!;
+    const c = i + 2 < clean.length ? lookup[clean.charCodeAt(i + 2)]! : -1;
+    const d = i + 3 < clean.length ? lookup[clean.charCodeAt(i + 3)]! : -1;
+    out[o++] = (a << 2) | (b >> 4);
+    if (c >= 0) out[o++] = ((b & 15) << 4) | (c >> 2);
+    if (d >= 0) out[o++] = ((c & 3) << 6) | d;
   }
+  return out.subarray(0, o);
+}
 
-  // Minimal UTF-8 decode. The payload is ASCII JSON in practice, but decoding
-  // properly means a stray multi-byte character cannot corrupt the parse.
+export function bytesToBase64(bytes: Uint8Array): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let out = '';
-  for (let i = 0; i < bytes.length; i += 1) {
-    const b = bytes[i]!;
-    if (b < 0x80) {
-      out += String.fromCharCode(b);
-    } else if (b >= 0xc0 && b < 0xe0) {
-      out += String.fromCharCode(((b & 0x1f) << 6) | (bytes[++i]! & 0x3f));
-      } else if (b >= 0xe0 && b < 0xf0) {
-      out += String.fromCharCode(
-        ((b & 0x0f) << 12) | ((bytes[++i]! & 0x3f) << 6) | (bytes[++i]! & 0x3f),
-      );
-    }
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i]! << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
+    out += chars[(n >> 18) & 63]! + chars[(n >> 12) & 63]!;
+    out += i + 1 < bytes.length ? chars[(n >> 6) & 63]! : '=';
+    out += i + 2 < bytes.length ? chars[n & 63]! : '=';
   }
   return out;
 }
 
-/**
- * Parses one notification payload.
- *
- * Throws {@link ProtocolError} for anything malformed. Callers are expected to
- * catch it and count the packet as rejected -- one bad packet must never tear
- * down an active drive session.
- */
-export function decodePacket(base64Value: string): TelemetryPacket {
-  if (!base64Value) {
-    throw new ProtocolError('empty notification payload');
+export class FrameError extends Error {}
+
+/** Decodes and verifies exactly one frame. Throws FrameError on any defect. */
+export function decodeFrame(buf: Uint8Array): Frame {
+  if (buf.length !== FRAME_SIZE) throw new FrameError(`length ${buf.length}`);
+  const v = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (v.getUint16(0, true) !== MAGIC) throw new FrameError('bad magic');
+  if (v.getUint8(2) !== VERSION) throw new FrameError(`version ${v.getUint8(2)}`);
+  const sent = v.getUint16(FRAME_SIZE - 2, true);
+  if (sent !== crc16(buf, FRAME_SIZE - 2)) throw new FrameError('CRC mismatch');
+  const count = v.getUint8(3);
+  if (count > SAMPLES_PER_FRAME) throw new FrameError(`sample_count ${count}`);
+
+  const samples: Sample[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const o = HEADER_SIZE + i * SAMPLE_SIZE;
+    samples.push({ dtMs: v.getUint16(o, true), red: v.getUint32(o + 2, true), ir: v.getUint32(o + 6, true) });
   }
-
-  const text = base64ToUtf8(base64Value);
-  if (!text) {
-    throw new ProtocolError('payload decoded to empty text', base64Value);
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    throw new ProtocolError('payload is not valid JSON', text);
-  }
-
-  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-    throw new ProtocolError('payload is not a JSON object', text);
-  }
-
-  const obj = parsed as Record<string, unknown>;
-
-  const type = obj.type;
-  if (typeof type !== 'string' || type.length === 0) {
-    throw new ProtocolError('missing or non-string "type"', text);
-  }
-
-  const sequence = obj.sequence;
-  if (typeof sequence !== 'number' || !Number.isInteger(sequence)) {
-    throw new ProtocolError('missing or non-integer "sequence"', text);
-  }
-  if (sequence < 0) {
-    throw new ProtocolError(`negative sequence: ${sequence}`, text);
-  }
-
-  // An absent version means v1: the field shipped with it, so a payload
-  // without it can only have come from a v1 peer.
-  const rawVersion = obj.protocol_version;
-  const protocolVersion =
-    typeof rawVersion === 'number' ? rawVersion : SUPPORTED_PROTOCOL_VERSION;
-  if (protocolVersion > SUPPORTED_PROTOCOL_VERSION) {
-    throw new ProtocolError(
-      `unsupported protocol_version ${protocolVersion} (this build understands ` +
-        `up to ${SUPPORTED_PROTOCOL_VERSION})`,
-      text,
-    );
-  }
-
-  // A bad clock on the wheel must not reject an otherwise valid packet.
-  let sentAt: Date | null = null;
-  if (typeof obj.sent_at === 'string') {
-    const parsedDate = new Date(obj.sent_at);
-    sentAt = Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
-  }
-
-  const extra: Record<string, unknown> = { ...obj };
-  delete extra.protocol_version;
-  delete extra.type;
-  delete extra.sequence;
-  delete extra.sent_at;
-
-  return { protocolVersion, type, sequence, sentAt, extra, rawPayload: text };
+  const flags = v.getUint8(20);
+  const finger = (flags & FLAG_FINGER) !== 0;
+  const usable =
+    finger && (flags & FLAG_HR_VALID) !== 0 && (flags & FLAG_SPO2_VALID) !== 0 && (flags & FLAG_IN_RANGE) !== 0;
+  return {
+    seq: v.getUint32(4, true),
+    startMs: v.getUint32(8, true),
+    endMs: v.getUint32(12, true),
+    heartRate: v.getInt16(16, true),
+    spo2: v.getInt16(18, true),
+    flags,
+    samples,
+    finger,
+    usable,
+    raw: buf.slice(),
+  };
 }
 
 /**
- * RFC 4122 v4 UUID.
- *
- * Generated on the phone so the same primary key can later land in Supabase
- * unchanged -- the sync step never has to invent replacement IDs. Uses the
- * platform CSPRNG when one is present and falls back to Math.random, which is
- * adequate for local record identity in a prototype.
+ * Reassembles frames from an arbitrarily chunked stream. The frame is larger
+ * than a default BLE notification, so it may arrive in pieces; after a corrupt
+ * candidate the deframer advances one byte and resynchronises on the magic.
+ */
+export class Deframer {
+  private buf = new Uint8Array(0);
+  framesOk = 0;
+  crcErrors = 0;
+
+  feed(chunk: Uint8Array): Frame[] {
+    const merged = new Uint8Array(this.buf.length + chunk.length);
+    merged.set(this.buf);
+    merged.set(chunk, this.buf.length);
+    let data = merged;
+    const out: Frame[] = [];
+    for (;;) {
+      let idx = -1;
+      for (let i = 0; i + 1 < data.length; i += 1) {
+        if (data[i] === 0x5a && data[i + 1] === 0xa5) {
+          idx = i;
+          break;
+        }
+      }
+      if (idx < 0) {
+        data = data.length && data[data.length - 1] === 0x5a ? data.slice(-1) : new Uint8Array(0);
+        break;
+      }
+      data = data.slice(idx);
+      if (data.length < FRAME_SIZE) break;
+      try {
+        out.push(decodeFrame(data.slice(0, FRAME_SIZE)));
+        this.framesOk += 1;
+        data = data.slice(FRAME_SIZE);
+      } catch {
+        this.crcErrors += 1;
+        data = data.slice(1);
+      }
+    }
+    this.buf = data.length > FRAME_SIZE * 8 ? data.slice(-FRAME_SIZE) : data;
+    return out;
+  }
+}
+
+/** Counts frames lost between received sequence numbers; a drop to a lower
+ *  number means the ESP32 rebooted, which is not loss. */
+export class SeqTracker {
+  last: number | null = null;
+  lost = 0;
+  resets = 0;
+
+  update(seq: number): number {
+    let missing = 0;
+    if (this.last !== null) {
+      const delta = (seq - this.last) >>> 0;
+      if (delta === 0) missing = 0;
+      else if (delta < 0x80000000) missing = delta - 1;
+      else this.resets += 1;
+    }
+    this.lost += missing;
+    this.last = seq;
+    return missing;
+  }
+}
+
+/**
+ * RFC 4122 v4 UUID, generated on the phone so the same primary key can later
+ * land in Supabase unchanged.
  */
 export function uuidv4(): string {
   const bytes = new Uint8Array(16);
   const cryptoObj = (globalThis as { crypto?: Crypto }).crypto;
-
-  if (cryptoObj?.getRandomValues) {
-    cryptoObj.getRandomValues(bytes);
-  } else {
-    for (let i = 0; i < 16; i += 1) {
-      bytes[i] = Math.floor(Math.random() * 256);
-    }
-  }
-
-  bytes[6] = (bytes[6]! & 0x0f) | 0x40; // version 4
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80; // variant 10
-
+  if (cryptoObj?.getRandomValues) cryptoObj.getRandomValues(bytes);
+  else for (let i = 0; i < 16; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
   const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  return (
-    `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-` +
-    `${hex.slice(16, 20)}-${hex.slice(20)}`
-  );
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }

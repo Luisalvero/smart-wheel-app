@@ -1,21 +1,23 @@
 /**
- * BLE *transport*. Moves bytes and reports link state; assigns them no meaning.
+ * BLE transport: finds the Raspberry Pi relay (or, failing that, the ESP32
+ * itself), subscribes to frames and reports link state. Assigns bytes no
+ * meaning -- decoding lives in protocol.ts.
  *
- * Decoding belongs to protocol.ts and persistence to the repositories, so
- * swapping the Python laptop simulator for ESP32 firmware changes nothing here.
+ * Scan preference: the Pi relay if it is advertising, since that is the real
+ * system path (ESP32 -> Pi -> phone). The ESP32 is accepted as a fallback so
+ * the phone can still be tested without the Pi. Both send identical frames,
+ * because the Pi forwards the ESP32's bytes unchanged.
  */
-import { Platform, PermissionsAndroid } from 'react-native';
-import {
-  BleManager,
-  State,
-  type Device,
-  type Subscription,
-} from 'react-native-ble-plx';
+import { PermissionsAndroid, Platform } from 'react-native';
+import { BleManager, State, type Device, type Subscription } from 'react-native-ble-plx';
 
 import {
-  SMART_WHEEL_SERVICE_UUID,
-  SIMULATOR_ADVERTISED_NAME,
-  TELEMETRY_CHAR_UUID,
+  ESP32_SERVICE_UUID,
+  ESP32_TX_UUID,
+  RELAY_FRAME_UUID,
+  RELAY_SERVICE_UUID,
+  RELAY_STATUS_UUID,
+  base64ToBytes,
 } from './protocol';
 
 export type ConnectionState =
@@ -27,76 +29,67 @@ export type ConnectionState =
   | 'disconnected'
   | 'failed';
 
-export type BleCallbacks = {
-  onStateChange: (state: ConnectionState, error?: string) => void;
-  /** Raw base64 notification value. The hook decodes and stores it. */
-  onPayload: (base64Value: string) => void;
+export type Source = 'relay' | 'esp32';
+
+/** What the Pi reports about its own link to the ESP32. */
+export type RelayStatus = {
+  esp: boolean;
+  espSince: number | null; // unix seconds
+  rx: number;
+  crc: number;
+  lost: number;
 };
 
-/** A single manager for the app's lifetime; creating several fights over the radio. */
+export type BleCallbacks = {
+  onStateChange: (state: ConnectionState, error?: string) => void;
+  onConnected: (info: { source: Source; name: string; id: string; at: Date }) => void;
+  onBytes: (bytes: Uint8Array) => void;
+  onRelayStatus: (status: RelayStatus) => void;
+};
+
 let manager: BleManager | null = null;
 export function getManager(): BleManager {
-  if (!manager) {
-    manager = new BleManager();
-  }
+  if (!manager) manager = new BleManager();
   return manager;
 }
 
-/**
- * Android 12+ needs runtime Bluetooth grants. iOS needs none at runtime -- it
- * prompts automatically from the Info.plist usage string.
- */
-export async function requestPermissions(): Promise<boolean> {
-  if (Platform.OS !== 'android') {
-    return true;
-  }
+async function requestPermissions(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true; // iOS prompts from Info.plist
   const api = typeof Platform.Version === 'number' ? Platform.Version : 0;
   if (api < 31) {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    );
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
+    const r = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+    return r === PermissionsAndroid.RESULTS.GRANTED;
   }
-  const result = await PermissionsAndroid.requestMultiple([
+  const r = await PermissionsAndroid.requestMultiple([
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
   ]);
-  return Object.values(result).every(
-    (v) => v === PermissionsAndroid.RESULTS.GRANTED,
-  );
+  return Object.values(r).every((v) => v === PermissionsAndroid.RESULTS.GRANTED);
+}
+
+function utf8(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 1) s += String.fromCharCode(bytes[i]!);
+  return s;
 }
 
 export class WheelConnection {
   private device: Device | null = null;
-  private notifySub: Subscription | null = null;
-  private disconnectSub: Subscription | null = null;
+  private subs: Subscription[] = [];
+  private statusTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly callbacks: BleCallbacks) {}
+  constructor(private readonly cb: BleCallbacks) {}
 
-  get connectedDevice(): Device | null {
-    return this.device;
-  }
-
-  /**
-   * Scans for the wheel, connects, and subscribes to telemetry.
-   *
-   * Filtering is by service UUID rather than name: the name lives in the scan
-   * response and is cosmetic, whereas the 128-bit service UUID is what actually
-   * identifies a Smart Wheel peripheral -- simulator or ESP32 alike.
-   */
-  async connect(timeoutMs = 15000): Promise<void> {
+  async connect(scanMs = 12000): Promise<void> {
     await this.disconnect();
-
-    const ok = await requestPermissions();
-    if (!ok) {
-      this.callbacks.onStateChange('failed', 'Bluetooth permission denied.');
+    if (!(await requestPermissions())) {
+      this.cb.onStateChange('failed', 'Bluetooth permission denied.');
       return;
     }
-
-    const bleManager = getManager();
-    const state = await bleManager.state();
+    const ble = getManager();
+    const state = await ble.state();
     if (state !== State.PoweredOn) {
-      this.callbacks.onStateChange(
+      this.cb.onStateChange(
         'failed',
         state === State.Unauthorized
           ? 'Bluetooth permission was denied. Enable it in Settings.'
@@ -105,113 +98,128 @@ export class WheelConnection {
       return;
     }
 
-    this.callbacks.onStateChange('scanning');
-
-    let found: Device;
+    this.cb.onStateChange('scanning');
+    let found: { device: Device; source: Source };
     try {
-      found = await this.scan(bleManager, timeoutMs);
-    } catch (err) {
-      this.callbacks.onStateChange(
-        'failed',
-        err instanceof Error ? err.message : String(err),
-      );
+      found = await this.scan(ble, scanMs);
+    } catch (e) {
+      this.cb.onStateChange('failed', e instanceof Error ? e.message : String(e));
       return;
     }
 
     try {
-      this.callbacks.onStateChange('connecting');
-      const device = await found.connect({ timeout: 20000 });
+      this.cb.onStateChange('connecting');
+      // requestMTU: iOS negotiates its own MTU and ignores this; Android uses it.
+      const device = await found.device.connect({ timeout: 20000, requestMTU: 247 });
       this.device = device;
+      this.subs.push(
+        device.onDisconnected(() => {
+          this.clearSession();
+          this.cb.onStateChange('disconnected', 'Bluetooth disconnected.');
+        }),
+      );
 
-      // A dropped link must not clear session data; the hook keeps the session
-      // and its stored events untouched.
-      this.disconnectSub = device.onDisconnected(() => {
-        this.notifySub?.remove();
-        this.notifySub = null;
-        this.device = null;
-        this.callbacks.onStateChange('disconnected', 'Bluetooth disconnected.');
-      });
-
-      this.callbacks.onStateChange('discovering');
+      this.cb.onStateChange('discovering');
       await device.discoverAllServicesAndCharacteristics();
 
-      this.notifySub = device.monitorCharacteristicForService(
-        SMART_WHEEL_SERVICE_UUID,
-        TELEMETRY_CHAR_UUID,
-        (error, characteristic) => {
-          if (error) {
-            // A disconnect surfaces here too; onDisconnected already handled it.
-            return;
-          }
-          const value = characteristic?.value;
-          if (value) {
-            this.callbacks.onPayload(value);
-          }
-        },
+      const [svc, chr] =
+        found.source === 'relay' ? [RELAY_SERVICE_UUID, RELAY_FRAME_UUID] : [ESP32_SERVICE_UUID, ESP32_TX_UUID];
+
+      if (found.source === 'relay') {
+        // Read status BEFORE subscribing: the read is how the Pi learns this
+        // link's MTU, so it can send each 104-byte frame in one notification.
+        await this.readStatus();
+        this.statusTimer = setInterval(() => void this.readStatus(), 2000);
+      }
+
+      this.subs.push(
+        device.monitorCharacteristicForService(svc, chr, (err, c) => {
+          if (err || !c?.value) return; // a disconnect surfaces here too; handled above
+          this.cb.onBytes(base64ToBytes(c.value));
+        }),
       );
 
-      this.callbacks.onStateChange('connected');
-    } catch (err) {
-      this.callbacks.onStateChange(
-        'failed',
-        `Connection failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      this.cb.onConnected({
+        source: found.source,
+        name: device.name ?? device.localName ?? (found.source === 'relay' ? 'Raspberry Pi' : 'ESP32'),
+        id: device.id,
+        at: new Date(),
+      });
+      this.cb.onStateChange('connected');
+    } catch (e) {
+      this.cb.onStateChange('failed', `Connection failed: ${e instanceof Error ? e.message : String(e)}`);
       await this.disconnect();
     }
   }
 
-  private scan(bleManager: BleManager, timeoutMs: number): Promise<Device> {
-    return new Promise<Device>((resolve, reject) => {
+  /** Prefers the Pi relay; takes the ESP32 only if no relay shows up within 3 s. */
+  private scan(ble: BleManager, scanMs: number): Promise<{ device: Device; source: Source }> {
+    return new Promise((resolve, reject) => {
+      let esp32: Device | null = null;
       let settled = false;
-
       const finish = (fn: () => void) => {
         if (settled) return;
         settled = true;
-        bleManager.stopDeviceScan();
+        ble.stopDeviceScan();
         clearTimeout(timer);
+        clearTimeout(fallback);
         fn();
       };
-
-      const timer = setTimeout(() => {
-        finish(() =>
-          reject(
-            new Error(
-              `${SIMULATOR_ADVERTISED_NAME} not found. Check the simulator is ` +
-                'running and advertising.',
-            ),
-          ),
-        );
-      }, timeoutMs);
-
-      bleManager.startDeviceScan(
-        [SMART_WHEEL_SERVICE_UUID],
-        { allowDuplicates: false },
-        (error, device) => {
-          if (error) {
-            finish(() => reject(error));
-            return;
-          }
-          if (device) {
-            finish(() => resolve(device));
-          }
-        },
+      const timer = setTimeout(
+        () => finish(() => reject(new Error('No Raspberry Pi relay or ESP32 found. Check both are powered on.'))),
+        scanMs,
       );
+      let fallback: ReturnType<typeof setTimeout> | undefined;
+
+      ble.startDeviceScan([RELAY_SERVICE_UUID, ESP32_SERVICE_UUID], { allowDuplicates: false }, (err, d) => {
+        if (err) return finish(() => reject(err));
+        if (!d) return;
+        const uuids = (d.serviceUUIDs ?? []).map((u) => u.toLowerCase());
+        if (uuids.includes(RELAY_SERVICE_UUID)) {
+          finish(() => resolve({ device: d, source: 'relay' }));
+        } else if (uuids.includes(ESP32_SERVICE_UUID) && !esp32) {
+          esp32 = d;
+          fallback = setTimeout(() => finish(() => resolve({ device: esp32!, source: 'esp32' })), 3000);
+        }
+      });
     });
   }
 
-  async disconnect(): Promise<void> {
-    this.notifySub?.remove();
-    this.notifySub = null;
-    this.disconnectSub?.remove();
-    this.disconnectSub = null;
+  private async readStatus(): Promise<void> {
+    const d = this.device;
+    if (!d) return;
+    try {
+      const c = await d.readCharacteristicForService(RELAY_SERVICE_UUID, RELAY_STATUS_UUID);
+      if (!c.value) return;
+      const j = JSON.parse(utf8(base64ToBytes(c.value))) as Record<string, unknown>;
+      this.cb.onRelayStatus({
+        esp: Boolean(j.esp),
+        espSince: typeof j.esp_since === 'number' ? j.esp_since : null,
+        rx: Number(j.rx ?? 0),
+        crc: Number(j.crc ?? 0),
+        lost: Number(j.lost ?? 0),
+      });
+    } catch {
+      // Status is informational; a failed read must not drop the link.
+    }
+  }
 
-    const device = this.device;
+  private clearSession() {
+    if (this.statusTimer) clearInterval(this.statusTimer);
+    this.statusTimer = null;
+    for (const s of this.subs) s.remove();
+    this.subs = [];
     this.device = null;
-    if (device) {
+  }
+
+  async disconnect(): Promise<void> {
+    const d = this.device;
+    this.clearSession();
+    if (d) {
       try {
-        await device.cancelConnection();
+        await d.cancelConnection();
       } catch {
-        // Already gone; nothing to clean up.
+        // already gone
       }
     }
   }
