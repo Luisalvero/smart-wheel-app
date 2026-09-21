@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+esp32/**/build/
+logs/
+*.log

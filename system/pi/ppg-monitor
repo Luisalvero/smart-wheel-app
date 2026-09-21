@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Opens the PPG terminal dashboard.
+#   In a terminal already (console, SSH):  runs the dashboard right here.
+#   From the desktop / autostart:         opens it in a terminal window.
+# The dashboard only reads the relay's state, so closing it never stops the
+# relay; it keeps logging and forwarding as a systemd service.
+DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+CMD="$DIR/venv/bin/python $DIR/ppg_monitor.py"
+
+if [[ -t 1 ]]; then
+  exec $CMD
+fi
+for term in lxterminal x-terminal-emulator xfce4-terminal gnome-terminal konsole xterm; do
+  command -v "$term" >/dev/null || continue
+  case "$term" in
+    lxterminal)     exec lxterminal --title="PPG Monitor" --geometry=120x42 -e "$CMD" ;;
+    gnome-terminal) exec gnome-terminal --title="PPG Monitor" -- $CMD ;;
+    *)              exec "$term" -e "$CMD" ;;
+  esac
+done
+echo "ppg-monitor: no terminal emulator found; run it from a terminal instead" >&2
+exit 1
