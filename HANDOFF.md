@@ -34,7 +34,8 @@ system/                         hardware side (Python + Arduino C++)
   laptop/ppg_viewer.py          PySide6 bench viewer (--demo, --direct)
   tests/                        python unittest + host-compiled C++ tests
 mobile-app/                     Expo SDK 54 app (TypeScript)
-  components/                   SmartWheelScreen (shell), DriverPicker, DriveView, HistoryView, SettingsView, ui, charts
+  components/                   SmartWheelScreen (shell + global VoiceCheckModal), DriverPicker (create/edit, long-press),
+                                DriveView, HistoryView, SettingsView (safety card, demo, voice), VoicePicker, ui, charts
   lib/ble/                      bleService.ts (auto-reconnect to Pi), protocol.ts (TS twin of the protocol)
   lib/hooks/useDriveSession.ts  THE integration point: BLE -> decode -> SQLite -> alerts -> live upload
   lib/db/                       database.ts (SQLite + migrations), repositories.ts (all SQL), liveSync.ts, sync.ts
@@ -115,6 +116,23 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
   - Answer model: "ok" needs P ≥ 0.75, "not_ok" P ≥ 0.5, and urgent words
     override. `tests/intent.test.ts` enforces **zero** not_ok→ok errors on
     the held-out set. If you retrain, keep it at zero.
+  - **"I'm OK" learning** (`Ack` in flagEngine.ts): an OK answer to a
+    WARNING-level heart-rate check moves that warning line to peak ± 5 BPM.
+    It is capped at 125 and floored at 43, never applies to critical or
+    oxygen, and is stored per driver as app_settings `ack:<profileId>`.
+    Settings has a reset.
+  - **COPD oxygen** is relative to the driver's awake baseline: warning at a
+    fall of more than 4 points, critical at ≤ 85 % (Little 1999). Everyone
+    else uses NEWS2 Scale 1.
+  - **Demo** (`SafetyController.simulate`) plays fabricated readings through
+    a *fresh* engine and runs the voice check in rehearsal mode. It must
+    never save, upload or learn (tested in tests/safetyController.test.ts).
+  - **Speech audio:** prompts use the iOS session playback / voicePrompt /
+    duckOthers (loud, and they play even on silent); listening uses
+    playAndRecord + defaultToSpeaker + Bluetooth. The voice choice is stored
+    as app_settings `voice:en` / `voice:es`. Premium voices are detected by
+    `.premium.` in the identifier, because expo-speech reports them as
+    "Default".
 
 ## 4. Commands
 
@@ -182,6 +200,8 @@ left `~/PPG_Logger/backup-*`.
   Use `strings -e l` as well as `strings`.
 - **Free Apple ID signing expires every 7 days.** Then the app says "no
   longer available" and must be reinstalled.
+- **iOS 26 renamed** Accessibility → Spoken Content to **Read & Speak**
+  (where Premium/Enhanced voices are downloaded).
 - **Node:** tests use native TypeScript stripping, so no parameter properties
   or enums in files that tests import. Relative imports inside
   `lib/analysis` use explicit `.ts` extensions.
@@ -196,7 +216,7 @@ left `~/PPG_Logger/backup-*`.
 - The ESP32↔Pi link is steady with the Pi's Wi-Fi off.
 - The website is deployed at https://smart-wheel-dashboard.vercel.app.
 - `v3_dashboard.sql` was validated on Postgres 17 (PGlite).
-- All unit tests pass: Python 20, TypeScript 38, C++ vitals.
+- All unit tests pass: Python 20, TypeScript 42, C++ vitals.
 - The iOS bundle compiles with Metro and Hermes.
 
 **Not yet verified on real devices** (do these next):
