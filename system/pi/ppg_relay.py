@@ -466,11 +466,25 @@ class Relay:
                         lambda c, d: self._on_esp_data(deframer, c, d))
                     # Wait on the disconnect event instead of polling every
                     # second, so a drop is noticed and retried immediately.
-                    stop = asyncio.create_task(self.stopping.wait())
-                    lost = asyncio.create_task(gone.wait())
-                    await asyncio.wait({stop, lost}, return_when=asyncio.FIRST_COMPLETED)
-                    stop.cancel()
-                    lost.cancel()
+                    # BlueZ can report Connected=false for an attempt it
+                    # retried during the handshake, and bleak 3 passes that to
+                    # disconnected_callback even though the link is up. Acting
+                    # on it made the relay hang up (HCI 0x13) ~3 s after every
+                    # connect, which was the endless reconnect loop. The link
+                    # counts as lost only when the client agrees.
+                    while not self.stopping.is_set():
+                        stop = asyncio.create_task(self.stopping.wait())
+                        lost = asyncio.create_task(gone.wait())
+                        await asyncio.wait({stop, lost}, return_when=asyncio.FIRST_COMPLETED)
+                        stop.cancel()
+                        lost.cancel()
+                        if not gone.is_set():
+                            break                 # stopping
+                        await asyncio.sleep(0.5)  # let BlueZ settle the property
+                        if not client.is_connected:
+                            break
+                        log.info("ignored stale disconnect event; ESP32 link is up")
+                        gone.clear()
             except Exception as e:  # noqa: BLE001 -- any BLE failure means reconnect
                 log.warning("ESP32 link error: %r", e)
             finally:
