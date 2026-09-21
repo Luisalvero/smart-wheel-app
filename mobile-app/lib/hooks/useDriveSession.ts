@@ -263,6 +263,7 @@ export function useDriveSession() {
         releaseAudio,
         save: repo.saveAlert,
         saveAck: repo.setAck,
+        saveSnapshot: repo.saveSnapshot,
         haptic: (k) =>
           void Haptics.notificationAsync(
             k === 'error' ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Warning,
@@ -448,9 +449,9 @@ export function useDriveSession() {
   }, [driverId, connection]);
 
   const loadBaseline = useCallback(
-    async (driver: DriverProfile) => {
+    async (driver: DriverProfile, reason = 'drive') => {
       const b = await repo.driverBaseline(driver.id);
-      safety.configure(driver, b, await repo.getAck(driver.id));
+      safety.configure(driver, b, await repo.getAck(driver.id), reason);
       const trend = computeTrend(await repo.driveMedians(driver.id), Date.now());
       dispatch({ type: 'baseline', baseline: b, trend });
       return trend;
@@ -466,7 +467,7 @@ export function useDriveSession() {
       avgBpm.current = [];
       avgSpo2.current = [];
       dispatch({ type: 'driver', driver });
-      void loadBaseline(driver);
+      void loadBaseline(driver, 'profile');
     },
     [loadBaseline],
   );
@@ -517,9 +518,9 @@ export function useDriveSession() {
             started_at: new Date().toISOString(), prompted_at: null, response: null, responded_at: null,
             escalated: 0, level: 'notice', channel: null, answer_confidence: null,
           });
-          void live.finish(ended.id); // re-push: uploads the new advisory row
         }
       }
+      void live.finish(ended.id); // re-push: uploads the new snapshot / advisory rows
     }
   }, [live, safety, loadBaseline, state.driver]);
 

@@ -1,6 +1,6 @@
 // Drivers (#/drivers): each driver with their baseline — the usual heart-rate
 // range learned from their finished drives (driver_baselines view).
-import { fetchBaselines, fetchProfiles, fetchSessionCounts } from '../lib/data.js'
+import { fetchBaselines, fetchProfiles, fetchSessionCounts, fetchThresholdHistory } from '../lib/data.js'
 import { schema } from '../lib/schema.js'
 import { esc, num } from '../lib/format.js'
 import { errorBox, infoTip, loading } from '../lib/ui.js'
@@ -27,6 +27,41 @@ function baselineHtml(b, v3) {
     <p class="fine">${num(b.readings)} readings from ${num(b.sessions)} finished drive${b.sessions == 1 ? '' : 's'}</p>`
 }
 
+const REASON = { drive: 'after a drive', ok_answer: 'after an “I’m OK”', profile: 'profile loaded', reset: 'reset' }
+
+/**
+ * How the phone's warning lines for this driver moved over time: high and
+ * low warning lines and the expected heart rate, one point per snapshot.
+ * Inline SVG (small multiples, no library needed).
+ */
+function historyHtml(rows) {
+  if (!rows?.length) return ''
+  const W = 320, H = 110, P = 26
+  const vals = rows.flatMap((r) => [r.high_warn, r.low_warn, Number(r.mean)])
+  const lo = Math.min(...vals) - 5, hi = Math.max(...vals) + 5
+  const x = (i) => P + (rows.length === 1 ? (W - 2 * P) / 2 : (i * (W - 2 * P)) / (rows.length - 1))
+  const y = (v) => H - 14 - ((v - lo) / (hi - lo)) * (H - 28)
+  const line = (key, cls) =>
+    `<polyline class="${cls}" fill="none" points="${rows.map((r, i) => `${x(i).toFixed(1)},${y(Number(r[key])).toFixed(1)}`).join(' ')}" />`
+  const first = rows[0], last = rows[rows.length - 1]
+  const tick = (v) => `<text x="2" y="${(y(v) + 4).toFixed(1)}" class="hist-tick">${Math.round(v)}</text>`
+  return `
+    <div class="history">
+      <h3>How the phone adapted</h3>
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Warning lines over time: high from ${first.high_warn} to ${last.high_warn} bpm">
+        ${tick(last.high_warn)}${tick(last.low_warn)}
+        ${line('high_warn', 'hist-high')}${line('mean', 'hist-mean')}${line('low_warn', 'hist-low')}
+      </svg>
+      <p class="fine">
+        <span class="key key-high"></span>warn above <b>${first.high_warn} → ${last.high_warn}</b> ·
+        <span class="key key-low"></span>below <b>${first.low_warn} → ${last.low_warn}</b> ·
+        <span class="key key-mean"></span>expected <b>${Math.round(first.mean)} → ${Math.round(last.mean)}</b> bpm.
+        Now ${Math.round(Number(last.learned) * 100)}% learned from ${last.drives} drive${last.drives == 1 ? '' : 's'}
+        (last change ${esc(REASON[last.reason] ?? last.reason)}).
+      </p>
+    </div>`
+}
+
 export function mount(el) {
   let alive = true
   el.innerHTML = `
@@ -36,10 +71,11 @@ export function mount(el) {
 
   ;(async () => {
     try {
-      const [profiles, counts, baselines] = await Promise.all([
+      const [profiles, counts, baselines, history] = await Promise.all([
         fetchProfiles(),
         fetchSessionCounts(),
         schema.v3 === false ? null : fetchBaselines().catch((err) => (err.missing ? null : Promise.reject(err))),
+        fetchThresholdHistory(),
       ])
       if (!alive) return
       const v3 = !!baselines
@@ -57,6 +93,7 @@ export function mount(el) {
                   <div class="card-head"><div class="who"><h2 class="driver-name">${esc(p.display_name)}</h2>${p.custom_id ? `<span class="custom-id">${esc(p.custom_id)}</span>` : ''}</div>
                   <span class="muted">${n} drive${n === 1 ? '' : 's'}</span></div>
                   ${baselineHtml(baselines?.get(p.id), v3)}
+                  ${historyHtml(history.get(p.id))}
                   ${n ? `<a class="card-link" href="#/sessions?driver=${esc(p.id)}">View drives →</a>` : ''}
                 </article>`
             })

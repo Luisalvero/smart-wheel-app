@@ -8,7 +8,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "node --test tests/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "tune": "node tools/tuning/tune.ts",
+    "tune:demo": "node tools/tuning/tune.ts --demo"
   },
   "dependencies": {
     "@noble/hashes": "^2.4.0",

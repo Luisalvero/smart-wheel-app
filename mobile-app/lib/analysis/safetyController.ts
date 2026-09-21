@@ -75,6 +75,11 @@ type Deps = {
   releaseAudio?: () => void;
   save: (row: Omit<DriveAlertRow, 'sync_status'>) => Promise<void>;
   saveAck: (profileId: string, ack: Ack) => Promise<void>;
+  /** Adaptation history: called whenever the thresholds are (re)computed. */
+  saveSnapshot?: (s: {
+    id: string; profile_id: string; at: string; reason: string; drives: number; learned: number;
+    mean: number; sd: number; high_warn: number; low_warn: number; spo2_warn: number;
+  }) => Promise<unknown>;
   haptic: (kind: 'warning' | 'error') => void;
   onChange: (s: SafetyState) => void;
   newId: () => string;
@@ -105,7 +110,7 @@ export class SafetyController {
 
   /** Recomputes the driver's thresholds from their profile, baseline and
    *  any "I'm OK" adjustments. */
-  configure(p: DriverProfile, baseline: Baseline | null, ack: Ack = this.state.ack) {
+  configure(p: DriverProfile, baseline: Baseline | null, ack: Ack = this.state.ack, reason = 'drive') {
     this.profile = p;
     this.baseline = baseline;
     const prior = profilePrior({
@@ -123,6 +128,21 @@ export class SafetyController {
     this.lang = p.language === 'es' ? 'es' : 'en';
     this.name = p.display_name.split(' ')[0] ?? '';
     this.set({ prior, band, th, ack });
+    void this.deps
+      .saveSnapshot?.({
+        id: this.deps.newId(),
+        profile_id: p.id,
+        at: new Date().toISOString(),
+        reason,
+        drives: baseline?.sessions ?? 0,
+        learned: Math.round(band.weight * 1000) / 1000,
+        mean: Math.round(band.mean * 10) / 10,
+        sd: Math.round(band.sd * 10) / 10,
+        high_warn: th.highWarn,
+        low_warn: th.lowWarn,
+        spo2_warn: th.spo2Warn,
+      })
+      .catch(() => undefined);
   }
 
   /** Settings → "Reset": back to the profile/baseline lines. */
@@ -130,7 +150,7 @@ export class SafetyController {
     if (!this.profile) return;
     const ack = { high: null, low: null };
     await this.deps.saveAck(this.profile.id, ack);
-    this.configure(this.profile, this.baseline, ack);
+    this.configure(this.profile, this.baseline, ack, 'reset');
   }
 
   /**
@@ -145,7 +165,7 @@ export class SafetyController {
     else if (ep.kind === 'bpm_low') ack.low = Math.min(ack.low ?? 999, ep.value - ACK_MARGIN_BPM);
     else return;
     await this.deps.saveAck(this.profile.id, ack);
-    this.configure(this.profile, this.baseline, ack);
+    this.configure(this.profile, this.baseline, ack, 'ok_answer');
   }
 
   /**

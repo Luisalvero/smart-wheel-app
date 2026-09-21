@@ -49,7 +49,8 @@ mobile-app/                     Expo SDK 54 app (TypeScript)
   lib/voice/                    intent.ts + intentModel.ts (local yes/no/help classifier + safety rules),
                                 voiceCheck.ts (dialogue policy), speechIO.ts (expo-speech + expo-speech-recognition)
   tools/intent/                 phrases.py (EN+ES training/test phrases), train.py, check.py
-  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql -> v5_delete.sql -> v6_quality.sql (in order;
+  tools/tuning/tune.ts          team tuning report from Supabase (npm run tune / tune:demo); recommends, never edits
+  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql -> v5_delete.sql -> v6_quality.sql -> v7_history.sql (in order;
                                 the live project has v3 and v4 applied as of 2026-09-21)
   tests/                        node --test (TypeScript stripped natively; Node >= 22)
 website/                        Vite + vanilla JS dashboard; src/lib/codec.ts is a byte-identical copy (tested)
@@ -137,6 +138,12 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
   - **Trend (trend.ts):** week median of drive medians ≥ max(4 BPM,
     0.5 SD), with the SD floored at 3, vs the prior 28 days. Needs ≥ 3 and
     ≥ 10 drives. It is an advisory `hr_trend` row, logged once per week.
+  - **Adaptation history:** SafetyController.configure(…, reason) saves a
+    `threshold_history` snapshot whenever the lines change (reasons: drive,
+    ok_answer, profile, reset). It is uploaded by liveSync.pushHistory and
+    drawn on the website Drivers page.
+  - **Tuning:** FlagEngine takes optional confirmation windows only so
+    tools/tuning can replay drives. The app always uses the defaults.
   - **Calibration (calibration.ts):** HR offset only (±10), accumulated
     across sessions (app_settings `caln:<id>`). SpO₂ is never corrected.
   - **Starting high line** = the age-group real-world 95th percentile

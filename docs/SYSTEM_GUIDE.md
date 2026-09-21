@@ -392,6 +392,9 @@ Run these in **Supabase → SQL Editor**, in this order. Each is safe to re-run.
    - alert `level`, `channel` and `answer_confidence`.
 
    The emergency contact is deliberately not stored in the cloud.
+7. `mobile-app/supabase/v7_history.sql` — adds `threshold_history`, one
+   row each time a driver's warning lines change. The website draws it on
+   the Drivers page.
 6. `mobile-app/supabase/v6_quality.sql` — adds:
    - per-second quality labels (`hr_beats`, `sqi_good`, `template_r`,
      `perfusion`, `skewness`);
@@ -908,6 +911,68 @@ the dataset carries its own labels for future algorithm work.
 - Validating against a chest-strap ECG on real drives, then tuning the
   thresholds on the team's own labelled data.
 
+### 11.8 Watching it adapt, and tuning it from the team's data
+
+**It adapts automatically, per driver, after every drive:**
+
+- the warning lines move toward the driver's own normal (28-day window,
+  full weight after 10 drives);
+- "I'm OK" answers move a warning line past a false alarm (never beyond 125
+  or below 43);
+- COPD oxygen follows the driver's own level;
+- the weekly trend compares each week with the driver's own previous four.
+
+Simulated calm driver (30-year-old man, true driving HR about 64):
+
+| Drives | Learned from own data | Warn above / below |
+|---|---|---|
+| 0 | 0 % | 107 / 41 |
+| 5 | 44 % | 106 / 41 |
+| 10 | 94 % | 91 / 45 |
+| 20 | 97 % | 91 / 46 |
+
+**What never adapts per driver, on purpose:**
+
+- the critical lines (≤ 40 / ≥ 131 BPM, oxygen ≤ 91 %), which are dangerous
+  for anyone;
+- the rules for a clean second, and the confirmation windows.
+
+Letting these drift per driver would let a noisy sensor teach the system to
+trust bad data, or let a driver train it into ignoring real events.
+
+**Adaptation history.** Every change is saved as a snapshot: when, why
+(after a drive, an "I'm OK", a profile change, a reset), how many drives it
+learned from, the expected heart rate and the lines themselves.
+
+- In the app: Settings → Safety checks → *How your thresholds changed*.
+- On the website: the Drivers page draws each driver's lines over time.
+- Table: `threshold_history` (`v7_history.sql`).
+
+**Team tuning report** (`cd mobile-app && npm run tune`;
+`npm run tune:demo` shows it on synthetic data). It reads everyone's
+labelled drives from Supabase and reports:
+
+1. How much of each driver's data is clean.
+2. Agreement between the ESP32 and the phone's beat heart rate: Bland–Altman
+   bias and 95 % limits, and MAPE against the ±10 % consumer target.
+3. The best **weak-pulse (perfusion) cut-off for our sensor** (Youden J,
+   AUC). The research said this must be learned from our own data.
+4. Alerts in practice: false-alarm share and emergencies per 10 driving
+   hours.
+5. A **replay of every drive** through the real engine with shorter or
+   longer confirmation windows and with the quality gate off, showing how
+   many "not OK" episodes each setting catches and how many alarms it
+   costs.
+
+It only *recommends*. A person reviews the report and changes the constants
+in `lib/analysis`, which is how medical algorithms are tuned: on the whole
+dataset, with review, not by each phone rewriting its own safety rules.
+The report is written to `mobile-app/tools/tuning/report.md` (gitignored;
+drivers are numbered, not named).
+
+On 2026-09-21 the live database held 2 drivers and 9 drives (0.1 h) —
+enough to prove the pipeline, not yet enough to tune.
+
 *These thresholds are prototype values built from published references. They
 are not clinically validated for this device. Validating them on real drives
 is future work.*
@@ -1004,6 +1069,7 @@ cd website && npm ci && cd ..
 | App tests + typecheck | `cd mobile-app && npm test && npm run typecheck` |
 | Build the iPhone app | push the branch to the build repo → Actions → download `SmartWheelApp-unsigned-ipa` |
 | Install on iPhone | `apploader` (opens iloader with the newest `.ipa` path on the clipboard) |
+| Team tuning report (from Supabase) | `cd mobile-app && npm run tune` (or `npm run tune:demo`) |
 | Retrain / check the voice-answer model | `cd mobile-app && python3 tools/intent/train.py` · `python3 tools/intent/check.py` |
 | Website locally | `cd website && npm run dev` → http://localhost:5173 |
 | Deploy website | `cd website && npx vercel deploy --prod` |
@@ -1022,7 +1088,9 @@ cd website && npm ci && cd ..
 | `mobile-app/tests/rhythm.test.ts` | beat detection on a synthetic PPG; sinus vs AF-like intervals; 5-of-6 advisory; bad signal never analysed |
 | `mobile-app/tests/intent.test.ts` | the phone's hashing and probabilities equal the Python trainer's; held-out phrases with zero critical errors; safety rules (urgent words, negation, "no, I'm fine", Spanish) |
 | `mobile-app/tests/voiceCheck.test.ts` | the spoken dialogue: yes, unclear then no, silence twice, urgent, Spanish, a button press mid-listen |
-| `mobile-app/tests/stats.test.ts` | percentiles match Postgres; baseline establishment |
+| `mobile-app/tests/stats.test.ts` | percentiles match Postgres; learning (28-day window, episodes excluded, unclean seconds ignored); weekly trend; calibration limits |
+| `mobile-app/tests/signal.test.ts` | clean pulse accepted; motion, noise and estimator disagreement rejected; 10-s window reset on gaps |
+| `mobile-app/tests/safetyController.test.ts` | demo: fabricated readings → warning → emergency → voice check, with nothing saved or learned |
 | `mobile-app/tests/shared-sync.test.ts` | the website's copy of the codec is byte-identical |
 | SQL | `v3_dashboard.sql` was run twice on Postgres 17 (PGlite) with the Supabase roles, bucket and publication stubbed |
 
@@ -1109,7 +1177,7 @@ Before collecting real subject data:
 | Website always available | ✅ Vercel |
 | Pi touchscreen UI | ◐ the terminal dashboard runs on the Pi's screen; a touch GUI is future work |
 | Multiple PPG sensing points | ◐ one sensor today; the protocol's per-packet sample count and flags leave room to add channels in a v4 |
-| Machine-learning assessment | ◐ not yet; the 100 Hz raw archives are the training data it will need |
+| Machine-learning assessment | ◐ per-driver learning and team-level tuning with review are in place (§11.7–11.8); a trained model awaits enough labelled drives. The 100 Hz archives and per-second quality labels are that training data |
 
 ---
 

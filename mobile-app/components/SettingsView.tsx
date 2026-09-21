@@ -12,6 +12,7 @@ import { wipeEverything } from '../lib/db/deletion';
 import { Btn, C, Card, Row, SectionTitle, fmtClock, fmtDuration } from './ui';
 import { VoicePicker } from './VoicePicker';
 import { CalibrationCard } from './CalibrationCard';
+import { ThresholdHistory } from './ThresholdHistory';
 
 type Drive = ReturnType<typeof useDriveSession>;
 
@@ -134,6 +135,12 @@ export function SettingsView(props: {
           }
           tone={d.voice && !d.voice.granted ? 'warn' : 'good'}
         />
+        {d.driver ? (
+          <>
+            <Text style={st.voiceHead}>How your thresholds changed</Text>
+            <ThresholdHistory profileId={d.driver.id} refreshKey={`${sf.th?.highWarn}:${sf.th?.lowWarn}:${d.baseline?.sessions ?? 0}`} />
+          </>
+        ) : null}
         <Text style={st.voiceHead}>Voice</Text>
         {d.driver ? (
           <VoicePicker lang={d.driver.language === 'es' ? 'es' : 'en'} driverName={d.driver.display_name.split(' ')[0] ?? ''} />

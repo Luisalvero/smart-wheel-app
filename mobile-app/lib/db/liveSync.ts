@@ -246,6 +246,7 @@ export class LiveUploader {
       }
 
       await this.pushAlerts(sessionId);
+      await this.pushHistory(session.profile_id);
       if (final && session.status !== 'active') {
         await this.pushArchive(sessionId);
         await db.runAsync("UPDATE drive_sessions SET sync_status = 'synced' WHERE id = ?", [sessionId]);
@@ -271,6 +272,24 @@ export class LiveUploader {
     await db.runAsync(
       `UPDATE drive_alerts SET sync_status = 'synced' WHERE id IN (${alerts.map(() => '?').join(',')})`,
       alerts.map((a) => a.id),
+    );
+  }
+
+  /** Adaptation history rows for this driver (v7 table; skipped if missing). */
+  private async pushHistory(profileId: string) {
+    const db = await getDatabase();
+    const rows = await db.getAllAsync<Record<string, unknown> & { id: string }>(
+      "SELECT * FROM threshold_history WHERE profile_id = ? AND sync_status = 'local' LIMIT 200",
+      [profileId],
+    );
+    if (!rows.length) return;
+    const body = rows.map(({ sync_status: _s, ...r }) => r);
+    this.status.bytesSent += JSON.stringify(body).length;
+    const { error } = await supabase.from('threshold_history').upsert(body, { onConflict: 'id' });
+    if (error) return;
+    await db.runAsync(
+      `UPDATE threshold_history SET sync_status = 'synced' WHERE id IN (${rows.map(() => '?').join(',')})`,
+      rows.map((r) => r.id),
     );
   }
 

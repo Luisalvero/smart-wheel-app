@@ -1523,3 +1523,16 @@ a.card:hover {
     text-align: right;
   }
 }
+
+/* Adaptation history (Drivers page) */
+.history { margin-top: 12px; }
+.history h3 { font-size: 0.9rem; margin: 0 0 4px; color: var(--text-2); font-weight: 600; }
+.history svg { width: 100%; height: auto; display: block; }
+.history .hist-high { stroke: var(--bpm, #e11d48); stroke-width: 2; }
+.history .hist-low { stroke: var(--spo2, #2563eb); stroke-width: 2; }
+.history .hist-mean { stroke: var(--text-2); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.history .hist-tick { fill: var(--text-2); font-size: 10px; }
+.history .key { display: inline-block; width: 10px; height: 3px; margin: 0 4px 2px 0; vertical-align: middle; }
+.history .key-high { background: var(--bpm, #e11d48); }
+.history .key-low { background: var(--spo2, #2563eb); }
+.history .key-mean { background: var(--text-2); }

@@ -180,10 +180,16 @@ export class FlagEngine {
 
   private th: Thresholds;
   private readonly newId: () => string;
+  private readonly confirmWarningS: number;
+  private readonly confirmCriticalS: number;
 
-  constructor(th: Thresholds, newId: () => string) {
+  /** `opts` lets the offline tuning tool (tools/tuning/tune.ts) replay drives
+   *  with other confirmation windows; the app always uses the defaults. */
+  constructor(th: Thresholds, newId: () => string, opts: { confirmWarningS?: number; confirmCriticalS?: number } = {}) {
     this.th = th;
     this.newId = newId;
+    this.confirmWarningS = opts.confirmWarningS ?? CONFIRM_WARNING_S;
+    this.confirmCriticalS = opts.confirmCriticalS ?? CONFIRM_CRITICAL_S;
   }
 
   setThresholds(th: Thresholds) {
@@ -342,7 +348,7 @@ export class FlagEngine {
       if (this.recovered(kind, med)) return this.close(kind, ep, 'recovered', t);
     }
     // Judge the most recent confirmation window (15 s, or 8 s once critical).
-    const w = ep.level === 'critical' ? CONFIRM_CRITICAL_S : CONFIRM_WARNING_S;
+    const w = ep.level === 'critical' ? this.confirmCriticalS : this.confirmWarningS;
     if (tr.seconds.length >= w) {
       const win = tr.seconds.slice(-w);
       const accepted = win.filter((x) => x !== null);

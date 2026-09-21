@@ -18,7 +18,7 @@ export const DB_NAME = 'smart_wheel.db';
  * version the device is on, so an existing install keeps its recorded drives
  * instead of being wiped.
  */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -220,6 +220,28 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
     await addColumn('driver_profiles', 'cal_hr REAL');
     await addColumn('driver_profiles', 'cal_spo2 REAL');
     await addColumn('driver_profiles', 'cal_at TEXT');
+  }
+
+  if (current < 6) {
+    // v6: adaptation history -- a snapshot each time a driver's thresholds change.
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS threshold_history (
+        id          TEXT PRIMARY KEY NOT NULL,
+        profile_id  TEXT NOT NULL,
+        at          TEXT NOT NULL,
+        reason      TEXT NOT NULL,
+        drives      INTEGER NOT NULL,
+        learned     REAL NOT NULL,
+        mean        REAL NOT NULL,
+        sd          REAL NOT NULL,
+        high_warn   INTEGER NOT NULL,
+        low_warn    INTEGER NOT NULL,
+        spo2_warn   INTEGER NOT NULL,
+        sync_status TEXT NOT NULL DEFAULT 'local',
+        FOREIGN KEY (profile_id) REFERENCES driver_profiles (id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_history_profile ON threshold_history (profile_id, at);
+    `);
   }
 
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);

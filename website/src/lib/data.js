@@ -192,6 +192,23 @@ export async function fetchBaseline(profileId) {
   }
 }
 
+/** Adaptation history (v7 table threshold_history), grouped by driver, oldest
+ *  first. Resolves to an empty Map if the table doesn't exist yet. */
+export async function fetchThresholdHistory() {
+  const { data, error } = await supabase
+    .from('threshold_history')
+    .select('profile_id, at, reason, drives, learned, mean, sd, high_warn, low_warn, spo2_warn')
+    .order('at', { ascending: true })
+    .limit(5000)
+  if (error) return new Map()
+  const by = new Map()
+  for (const r of data) {
+    if (!by.has(r.profile_id)) by.set(r.profile_id, [])
+    by.get(r.profile_id).push(r)
+  }
+  return by
+}
+
 export async function fetchBaselines() {
   const rows = check(await supabase.from('driver_baselines').select('*'))
   return new Map(rows.map((r) => [r.profile_id, r]))

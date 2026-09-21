@@ -172,6 +172,47 @@ export async function createProfile(
   return profile;
 }
 
+export type ThresholdSnapshot = {
+  id: string;
+  profile_id: string;
+  at: string;
+  reason: string; // 'drive' | 'ok_answer' | 'profile' | 'reset' | 'calibration'
+  drives: number;
+  learned: number; // 0..1 weight on the driver's own data
+  mean: number;
+  sd: number;
+  high_warn: number;
+  low_warn: number;
+  spo2_warn: number;
+  sync_status?: string;
+};
+
+/** Saves a snapshot unless the lines are the same as the last one. */
+export async function saveSnapshot(s: Omit<ThresholdSnapshot, 'sync_status'>): Promise<boolean> {
+  const db = await getDatabase();
+  const last = await db.getFirstAsync<ThresholdSnapshot>(
+    'SELECT * FROM threshold_history WHERE profile_id = ? ORDER BY at DESC LIMIT 1',
+    [s.profile_id],
+  );
+  if (last && last.high_warn === s.high_warn && last.low_warn === s.low_warn && last.spo2_warn === s.spo2_warn && last.drives === s.drives) {
+    return false;
+  }
+  await db.runAsync(
+    `INSERT INTO threshold_history (id, profile_id, at, reason, drives, learned, mean, sd, high_warn, low_warn, spo2_warn)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [s.id, s.profile_id, s.at, s.reason, s.drives, s.learned, s.mean, s.sd, s.high_warn, s.low_warn, s.spo2_warn],
+  );
+  return true;
+}
+
+export async function thresholdHistory(profileId: string, limit = 50): Promise<ThresholdSnapshot[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<ThresholdSnapshot>(
+    'SELECT * FROM threshold_history WHERE profile_id = ? ORDER BY at DESC LIMIT ?',
+    [profileId, limit],
+  );
+}
+
 export async function setCalibration(id: string, hr: number | null, spo2: number | null): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('UPDATE driver_profiles SET cal_hr = ?, cal_spo2 = ?, cal_at = ?, updated_at = ? WHERE id = ?', [
