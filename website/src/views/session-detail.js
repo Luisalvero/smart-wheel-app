@@ -95,11 +95,16 @@ export function mount(el, { id }) {
       return
     }
     const unit = (a) => (a.kind === 'spo2_low' ? '%' : ' bpm')
+    const NO_VALUE = new Set(['no_contact', 'irregular_rhythm'])
     const outcome = (a) => {
       const at = a.responded_at ? ` at ${esc(dateTimeSeconds(a.responded_at))}` : ''
-      if (a.response === 'ok') return `<span class="badge badge-active">Driver said OK</span><span class="muted">${at}</span>`
-      if (a.response === 'unwell') return `<span class="badge badge-danger">Reported unwell</span><span class="muted">${at}</span>`
+      const how = a.channel === 'voice' ? ' by voice' : a.channel === 'button' ? ' by button' : ''
+      if (a.response === 'ok') return `<span class="badge badge-active">Driver said OK${how}</span><span class="muted">${at}</span>`
+      if (a.response === 'not_ok' || a.response === 'unwell') return `<span class="badge badge-danger">Driver said not OK${how}</span><span class="muted">${at}</span>`
       if (a.response === 'no_response') return `<span class="badge badge-interrupted">No answer</span>`
+      if (a.response === 'recovered') return `<span class="badge badge-active">Recovered on its own</span>`
+      if (a.response === 'unconfirmed') return `<span class="badge badge-interrupted">Not confirmed (poor signal)</span>`
+      if (a.level === 'notice') return `<span class="badge">Logged</span>`
       return `<span class="badge badge-interrupted">Open — waiting for driver</span>`
     }
     box.innerHTML = `
@@ -109,8 +114,8 @@ export function mount(el, { id }) {
             (a) => `
           <li>
             <div class="alert-when">${esc(dateTimeSeconds(a.started_at))}</div>
-            <div class="alert-what"><strong>${esc(ALERT_KIND[a.kind] ?? a.kind)}</strong>
-              <span class="muted">${a.value != null ? `${Math.round(a.value)}${unit(a)} (10-s median)` : ''}${a.threshold != null ? ` · limit ${Math.round(a.threshold)}${unit(a)}` : ''}</span></div>
+            <div class="alert-what"><strong>${esc(ALERT_KIND[a.kind] ?? a.kind)}</strong>${a.level && a.level !== 'notice' ? ` <span class="badge ${a.level === 'critical' ? 'badge-danger' : 'badge-interrupted'}">${esc(a.level)}</span>` : ''}
+              <span class="muted">${a.value != null && !NO_VALUE.has(a.kind) ? `${Math.round(a.value)}${unit(a)} (5-s median)` : ''}${a.threshold != null && !NO_VALUE.has(a.kind) ? ` · limit ${Math.round(a.threshold)}${unit(a)}` : ''}</span></div>
             <div class="alert-outcome">${outcome(a)}${a.escalated ? ' <span class="badge badge-danger" title="Nobody is actually contacted in this prototype">Escalated (simulated)</span>' : ''}</div>
           </li>`
           )

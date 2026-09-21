@@ -19,7 +19,7 @@ Contents
 8. [Cloud: Supabase](#8-cloud-supabase)
 9. [Website dashboard](#9-website-dashboard)
 10. [Data policy, storage and backups](#10-data-policy-storage-and-backups)
-11. [Alerts and baselines](#11-alerts-and-baselines)
+11. [Warning and emergency system](#11-warning-and-emergency-system)
 12. [Setting up a development machine (any Linux)](#12-setting-up-a-development-machine-any-linux)
 13. [Everyday commands](#13-everyday-commands)
 14. [Tests](#14-tests)
@@ -289,9 +289,11 @@ React Native (Expo SDK 54), TypeScript, in `mobile-app/`.
 
 **Screens**
 
-- **Who's driving?** — pick or add a driver: name, subject ID, age, weight,
-  height, gender. Once in, **Switch driver** in the header goes back. If a
-  drive is recording, it is ended and saved first.
+- **Who's driving?** — pick, add or edit a driver: name, subject ID, age,
+  weight, height (the app shows **BMI** live), gender, health conditions,
+  medications, voice language and an emergency contact. To edit, long-press a
+  driver. Once in, **Switch driver** in the header goes back; if a drive is
+  recording, it is ended and saved first.
 - **Drive**
   - Phone → Pi → Wheel connection chain.
   - Big heart-rate and oxygen tiles.
@@ -304,6 +306,8 @@ React Native (Expo SDK 54), TypeScript, in `mobile-app/`.
   SHA-256, decompresses, and shows 10 s of red and IR.
 - **Settings**
   - What to save (§10).
+  - **Safety checks:** this driver's thresholds, how the profile set them,
+    the voice-check status, and **Try the voice check** (§11).
   - Upload waiting drives.
   - Auto-connect on/off.
   - Link health counters.
@@ -366,6 +370,12 @@ Run these in **Supabase → SQL Editor**, in this order. Each is safe to re-run.
    - `drive_alerts`;
    - Realtime on all live tables;
    - and it removes the bridge.
+4. `mobile-app/supabase/v4_flags.sql` — adds:
+   - profile `conditions`, `medications` and `language`;
+   - a **`bmi`** column computed by the database;
+   - alert `level`, `channel` and `answer_confidence`.
+
+   The emergency contact is deliberately not stored in the cloud.
 
 All primary keys are UUIDs made on the phone, so uploads are idempotent
 upserts.
@@ -451,37 +461,244 @@ Supabase encrypts data at rest (AES-256) and in transit (TLS).
 
 ---
 
-## 11. Alerts and baselines
+## 11. Warning and emergency system
 
-**Baseline**
+This section covers how a reading becomes a **warning flag**, how a warning
+becomes an **emergency**, and what the phone does next. All of it runs **on
+the phone**. The website only displays the results.
 
-- A driver's **usual range** is the 10th to 90th percentile of all usable
-  heart-rate readings from their finished drives.
-- It counts as established after 60 readings (one minute of good signal).
-- The same definition runs on the phone (offline, in the car) and in the
-  database view `driver_baselines`.
+```
+reading each second ─▶ quality gate ─▶ Hampel filter ─▶ 5-s median ─▶ level
+                                                                      │
+   notice  ─▶ logged only                                             │
+   warning / critical ─▶ WARNING FLAG: watch the next 15 s (8 s if critical)
+        recovered ─▶ cleared         signal too poor ─▶ unconfirmed after 60 s
+        stays out of range ─▶ EMERGENCY ─▶ voice check ─▶ OK / not OK / no answer
+```
 
-**Alert flow** (`mobile-app/lib/analysis/alerts.ts`, unit-tested):
+### 11.1 What is "normal" for this driver (the profile)
 
-1. Every second, take the **median of the last 10 s** of readings. One noisy
-   second cannot trigger an alert. A window with too few readings (poor
-   signal) is not judged at all.
-2. **Out of range** means any of:
-   - heart rate outside the usual range widened by ±15 BPM;
-   - heart rate below **40** or above **150**, with or without a baseline;
-   - SpO₂ below **90%**.
-3. After **20 s out of range**, the phone **vibrates** (non-visual first, as
-   the proposal requires) and asks "Are you feeling OK?".
-4. "I'm OK" closes the alert and starts a 5-minute quiet period. "I don't feel
-   well", or no answer within **30 s**, marks it **escalated**.
-5. In this prototype escalation is **simulated**, as the proposal specifies
-   for testing. The alert is recorded and shown on the website; nobody is
-   contacted.
-6. Every alert is saved to `drive_alerts` with its value, threshold, times and
-   outcome.
+The profile form collects:
 
-These limits are prototype values for demonstration, not clinical
-thresholds.
+- age, sex, height and weight (the app computes **BMI** from these and shows
+  it live);
+- health conditions: high blood pressure, diabetes, high cholesterol,
+  arrhythmia, sleep apnea, asthma, COPD, coronary artery disease, prior heart
+  attack, heart failure, peripheral vascular disease, prior stroke;
+- medications: beta blocker, non-DHP calcium-channel blocker, amiodarone,
+  inhaled beta-agonist;
+- the voice-check language (English or Spanish);
+- an optional emergency contact, which **stays on the phone**.
+
+Long-press a driver to edit their profile.
+
+The expected heart rate is computed in `lib/analysis/profileModel.ts`, in
+three layers.
+
+**1. Population prior.** This is your reference workbook's layer. It uses
+real-world smartphone-PPG norms from Avram et al. 2019 (66,788 people):
+
+- It starts from the age-group mean ± SD (18–20: 81.6 ± 14.0 … 61–70:
+  73.0 ± 12.7).
+- It then applies the paper's multivariable coefficients:
+
+| Factor | Adjustment |
+|---|---|
+| Sex | female +2.1 BPM, male −2.1 BPM (half of the +4.28 female–male difference) |
+| BMI | +0.21 BPM per kg/m² relative to 27.5 |
+| Conditions | diabetes +4.48, sleep apnea +3.67, COPD +2.49, hypertension +1.83, arrhythmia +1.65, asthma +1.51, high cholesterol +1.35 |
+| Medications | non-DHP calcium-channel blocker +4.11 |
+
+Effects the paper found **not significant** (beta blockers, amiodarone, CAD,
+prior MI, CHF, PVD, stroke; p ≥ 0.05) are recorded but not applied. Every
+adjustment is listed in the app under **Settings → Safety checks**, so the
+numbers can always be explained.
+
+**2. Personal baseline.** The 10th, 50th and 90th percentiles of the driver's
+own finished drives. They gradually replace the prior, with weight
+*w = n / (n + 600)*: 10 minutes of good signal counts as much as the whole
+population prior. The SD never goes below 6 BPM.
+
+**3. Clinical bands (NEWS2).** These are the same for everyone, because a
+dangerous value is dangerous whoever you are:
+
+- Pulse: ≤40 scores 3, 41–50 scores 1, 51–90 scores 0, 91–110 scores 1,
+  111–130 scores 2, ≥131 scores 3.
+- SpO₂ Scale 1: ≤91 scores 3, 92–93 scores 2, 94–95 scores 1.
+- SpO₂ Scale 2 (confirmed hypercapnic COPD only): ≤83 scores 3, 84–85
+  scores 2, 86–87 scores 1.
+
+### 11.2 Levels
+
+| Level | Heart rate | SpO₂ | What happens |
+|---|---|---|---|
+| **Notice** | NEWS2 1 **and** ≥ 2.5 SD from the driver's band | 94–95 % | logged only |
+| **Warning** | NEWS2 2 (111–130), or NEWS2 1 **and** ≥ 3 SD from the band | 92–93 % | warning flag, then confirmation |
+| **Critical** | ≤ 40 or ≥ 131 (NEWS2 3) | ≤ 91 % | warning flag, then short confirmation |
+
+For a typical 30-year-old man of normal weight with no history, the warning
+lines work out to **above 111** and **below 41 BPM**. An athlete whose
+learned baseline is around 50 BPM is not flagged at 47. Someone whose normal
+is 62 is warned at 91, because that is both clinically elevated and 3 SD
+above their normal.
+
+### 11.3 Warning → emergency ("watch the next seconds")
+
+1. **Quality gate.** A second counts only if:
+   - the finger is on the sensor;
+   - both vitals are valid;
+   - pulse periodicity is ≥ 50 %.
+
+   Bad seconds count as *missing*: never as normal, never as abnormal.
+2. **Hampel filter.** A single second that disagrees with its 7-second
+   neighbourhood by more than 3 × 1.4826 × MAD is dropped. The minimum
+   distance is 8 BPM or 3 % SpO₂.
+3. **5-second median** decides the level.
+4. **Confirmation window.** A warning-level median raises the **warning
+   flag** and starts watching:
+   - **15 s** at warning level, **8 s** at critical level;
+   - it becomes an **emergency** only if ≥ 70 % of those seconds had an
+     accepted reading **and** ≥ 80 % of them were beyond the line;
+   - if the median comes back (5 BPM / 1 % hysteresis), the flag clears as
+     *recovered*;
+   - with too little signal for 60 s, it closes as *unconfirmed*.
+
+   Why wait? Alarm research shows short delays remove most non-actionable
+   alarms. A 14-s delay removed 50 % and a 19-s delay 67 % of ignored or
+   ineffective ICU alarms (Görges et al. 2009). A 6-s delay halved SpO₂
+   alarms (Rheineck-Leyssius & Kalkman 1998).
+5. **After the check.** After "I'm OK" the same kind stays quiet for
+   5 minutes. If it gets worse (warning → critical) it re-arms immediately.
+6. **No hand on the sensor** for 15 s during a drive raises a notice. It is
+   not an emergency by itself: the sensor simply cannot see anything.
+
+### 11.4 The voice check (phone only, free, offline)
+
+When an emergency is confirmed, the phone vibrates, then:
+
+1. It **speaks**, using the phone's own text-to-speech (iOS
+   AVSpeechSynthesizer via `expo-speech`) and the best installed voice for
+   the language. "Enhanced" voices are free downloads on iPhone. For example:
+   "Luis, your heart rate has been unusually high. Are you feeling okay?
+   Please say yes, or no."
+2. It **listens for 6 s** with the phone's speech recognizer
+   (`expo-speech-recognition` → Apple SFSpeechRecognizer):
+   - **on-device when supported**, so audio never leaves the phone;
+   - the recognizer is primed with the expected answers.
+3. It **understands** the answer with a small local classifier
+   (`lib/voice/intent.ts`). This is a logistic regression over word and
+   character n-grams, about 120 KB of weights, trained by
+   `tools/intent/train.py` on about 4,700 English and Spanish phrasings.
+   Safety rules sit on top of the model:
+   - **Urgent words** ("help", "911", "ambulance", "chest", "can't breathe",
+     "ayuda", …) → *not OK + urgent*, unless negated ("I don't need help").
+   - **Explicit negation** ("not okay", "I don't feel well", "no estoy bien")
+     → *not OK*.
+   - **The model** decides "not OK" at ≥ 0.5 probability, but "OK" only at
+     ≥ 0.75. Anything in between counts as unclear. A wrong "OK" is the one
+     mistake that matters, so "OK" needs the most evidence.
+4. **Unclear or silence:** it asks once more, more simply. Still no clear
+   answer → **no response**, which is treated like "not OK" (per the
+   proposal).
+5. **Outcome:**
+   - "OK" → "I'll keep an eye on things."
+   - "Not OK" or no answer → "Please pull over as soon as it is safe. If you
+     need emergency help, call 911." It is recorded as **escalated
+     (simulated)**.
+
+   The wording never claims help is on the way, because in this prototype
+   nobody is contacted.
+6. **The on-screen buttons** ("I'm OK" / "I'm not OK") work at any moment and
+   on any tab. They also cover phones where the microphone isn't allowed.
+
+The voice check only reacts to flags. It never analyses the vitals.
+Transcripts are used in memory only and are **never stored or uploaded**.
+Only the outcome, the channel (voice or button) and the classifier's
+confidence are saved.
+
+**Classifier accuracy.**
+
+- Held-out set: 63 hand-written phrases, never used for training →
+  **63/63 correct, 0 "not OK" heard as "OK"**.
+- The phone's probabilities match the Python trainer's to 10⁻⁴ (parity
+  test).
+- Caveat: the held-out set was consulted once to add Spanish negation
+  examples, so it is no longer perfectly blind.
+- **Next step:** record real answers from team members (with road noise) and
+  add them as a new test set.
+
+**Try it:** Settings → **Try the voice check** runs the real dialogue without
+recording anything.
+
+### 11.5 Irregular-rhythm advisory
+
+Modelled on Apple's Irregular Rhythm Notification (Apple, *Using Apple Watch
+for Arrhythmia Detection*, Dec 2020). It is an **advisory shown after the
+drive, never an emergency and never a diagnosis.**
+
+1. **Beats.** The Elgendi et al. 2013 detector runs on the 100 Hz infrared
+   PPG:
+   - 0.5–8 Hz zero-phase band-pass, clip, square;
+   - moving averages over 111 ms and 667 ms, with offset β = 0.02;
+   - reported 99.84 % sensitivity.
+2. **Segments.** Each segment is 128 beat intervals from *continuous* clean
+   signal. Any bad second or lost packet restarts it, following Apple's rule
+   of analysing only when there is enough signal.
+3. **Irregular** means all three of the Dash et al. 2009 measures hold:
+   - RMSSD / mean ≥ 0.098;
+   - Shannon entropy ≥ 0.8;
+   - turning-point ratio within 0.527–0.8.
+
+   Dash reported 94.4 % sensitivity and 95.1 % specificity on MIT-BIH AF;
+   the thresholds come from the authors' patent.
+4. **Five of six** consecutive irregular segments → advisory. Two regular
+   segments reset the count (Apple). In the Apple Heart Study sub-study,
+   78.9 % of notified people had AFib confirmed by ECG patch.
+
+### 11.6 What gets recorded
+
+Every episode becomes a `drive_alerts` row, which appears on the website
+live:
+
+- `kind` — the type of episode;
+- `level` — notice, warning or critical;
+- `value` — the most extreme 5-s median;
+- `threshold` — the line it crossed;
+- `started_at`, `prompted_at` — when it started and when the driver was
+  asked;
+- `response` — `ok`, `not_ok`, `no_response`, `recovered` or
+  `unconfirmed`;
+- `channel` — voice or button;
+- `answer_confidence`, and `escalated`.
+
+The website shows a banner only for real warnings being confirmed and for
+emergencies, not for notices.
+
+**Tested scenarios** (`tests/flagEngine.test.ts`, `rhythm.test.ts`,
+`voiceCheck.test.ts`, `intent.test.ts`):
+
+- **Heart rate:**
+  - normal driving → no flags;
+  - isolated 170-BPM artifacts → rejected;
+  - sustained 142 → emergency about 8 s after the flag;
+  - sustained 118 → emergency after the 15-s window;
+  - an 8-s burst → cleared as recovered;
+  - dropouts → closed as unconfirmed.
+- **Profiles and oxygen:**
+  - an athlete at 47 → not flagged;
+  - SpO₂ 89 → emergency;
+  - a COPD Scale-2 driver at 89 → not flagged.
+- **After the check:**
+  - the 5-min quiet period holds, and critical re-arms;
+  - hands off the wheel → notice only.
+- **Rhythm:** sinus rhythm is never advised; AF-like rhythm is advised after
+  5 of 6 segments; bad signal is never analysed.
+- **Voice dialogue:** yes / unclear→no / silence×2 / urgent / Spanish /
+  button mid-listen.
+
+*These thresholds are prototype values built from published references. They
+are not clinically validated for this device. Validating them on real drives
+is future work.*
 
 ---
 
@@ -540,7 +757,18 @@ python3 -m venv ~/ppg-venv
 ~/ppg-venv/bin/pip install bleak==3.0.2 dbus-fast pyqtgraph PySide6 pyserial esptool rich numpy
 ```
 
-**6. Phone app and website dependencies**
+**6. Retraining the voice-answer model** (only needed if you change the
+phrases in `mobile-app/tools/intent/phrases.py`). It needs Python 3 with
+numpy:
+
+```
+cd mobile-app && python3 tools/intent/train.py && python3 tools/intent/check.py && npm test
+```
+
+It prints the held-out accuracy and the number of critical errors ("not OK"
+heard as "OK"). That number must stay 0.
+
+**7. Phone app and website dependencies**
 
 ```
 cd mobile-app && npm ci && npm test && cd ..
@@ -564,6 +792,7 @@ cd website && npm ci && cd ..
 | App tests + typecheck | `cd mobile-app && npm test && npm run typecheck` |
 | Build the iPhone app | push the branch to the build repo → Actions → download `SmartWheelApp-unsigned-ipa` |
 | Install on iPhone | `apploader` (opens iloader with the newest `.ipa` path on the clipboard) |
+| Retrain / check the voice-answer model | `cd mobile-app && python3 tools/intent/train.py` · `python3 tools/intent/check.py` |
 | Website locally | `cd website && npm run dev` → http://localhost:5173 |
 | Deploy website | `cd website && npx vercel deploy --prod` |
 
@@ -577,7 +806,11 @@ cd website && npm ci && cd ..
 | `system/tests/test_vitals_host.cpp` | the heart-rate/SpO₂ estimator on 45 synthetic signals with known answers |
 | `mobile-app/tests/protocol.test.ts` | the phone decodes packets from the compiled firmware encoder; bit flips; mixed v2/v3 streams at Bluetooth chunk sizes; the false-header look-ahead |
 | `mobile-app/tests/codec.test.ts` | folding is lossless, handles edge cases, rejects corruption; reports the compression ratio |
-| `mobile-app/tests/alerts.test.ts` | percentiles match Postgres; alert timing; "I'm OK" cooldown; escalation on no answer; spikes and dropouts don't trigger |
+| `mobile-app/tests/flagEngine.test.ts` | profile prior = Avram coefficients; NEWS2 bands; 11 driving scenarios: artifacts rejected, critical and warning confirmation windows, recovery, poor signal, athlete baseline, SpO₂ scales, cooldown and re-arm, no contact |
+| `mobile-app/tests/rhythm.test.ts` | beat detection on a synthetic PPG; sinus vs AF-like intervals; 5-of-6 advisory; bad signal never analysed |
+| `mobile-app/tests/intent.test.ts` | the phone's hashing and probabilities equal the Python trainer's; held-out phrases with zero critical errors; safety rules (urgent words, negation, "no, I'm fine", Spanish) |
+| `mobile-app/tests/voiceCheck.test.ts` | the spoken dialogue: yes, unclear then no, silence twice, urgent, Spanish, a button press mid-listen |
+| `mobile-app/tests/stats.test.ts` | percentiles match Postgres; baseline establishment |
 | `mobile-app/tests/shared-sync.test.ts` | the website's copy of the codec is byte-identical |
 | SQL | `v3_dashboard.sql` was run twice on Postgres 17 (PGlite) with the Supabase roles, bucket and publication stubbed |
 
@@ -614,6 +847,9 @@ CI runs the app typecheck and unit tests on every build.
 | Website shows "Database needs the v3 update" | run `v3_dashboard.sql` |
 | No finger / "Place your hand on the sensor" | the IR level is below 100 000; press a fingertip flat on the sensor |
 | Packet line shows v2 · 8 samples | the ESP32 has old firmware → reflash |
+| The voice check doesn't listen ("buttons only") | the microphone or speech permission was denied → iPhone Settings → Smart Wheel → allow Microphone and Speech Recognition |
+| The voice sounds robotic | download an "Enhanced" voice: iPhone Settings → Accessibility → Spoken Content → Voices |
+| Too many warnings for one driver | check their profile (age, conditions) in Settings → Safety checks; after about 10 minutes of their own drives the thresholds follow their personal normal |
 
 ---
 
@@ -654,8 +890,10 @@ Before collecting real subject data:
 | Real-time display | ✅ phone app, Pi dashboard, live website |
 | Store processed, time-stamped data; raw not primary | ✅ vitals-only default; raw is opt-in and folded |
 | Encryption and restricted permissions | ◐ TLS + AES-256 at rest (Supabase), owner-only files on the Pi; per-user access control is on the checklist in §17 |
-| Alert → driver response → escalation | ✅ haptic prompt, 30-s window, escalation **simulated** (as specified) |
-| Haptic / non-visual alert | ◐ phone vibration; a haptic motor in the wheel is future hardware |
+| Baseline comparison per user profile | ✅ profile prior from age, sex, BMI, conditions and medications, blended with the learned personal baseline (§11.1) |
+| Alert → driver response → escalation | ✅ warning flag → confirmation window → spoken "Are you feeling okay?" with on-device speech understanding → escalation **simulated** (as specified) |
+| Haptic / non-visual alert | ✅ vibration plus a **spoken** check (eyes stay on the road); a haptic motor in the wheel is future hardware |
+| Hands-off-wheel alert (survey request) | ✅ no-contact notice after 15 s |
 | Website always available | ✅ Vercel |
 | Pi touchscreen UI | ◐ the terminal dashboard runs on the Pi's screen; a touch GUI is future work |
 | Multiple PPG sensing points | ◐ one sensor today; the protocol's per-packet sample count and flags leave room to add channels in a v4 |
@@ -689,6 +927,44 @@ Before collecting real subject data:
   *Bioengineering* 3(4):21, 2016. https://pubmed.ncbi.nlm.nih.gov/28952584/
 - Bent B. et al., "Investigating sources of inaccuracy in wearable optical
   heart rate sensors", *npj Digit. Med.* 3:18, 2020. https://pubmed.ncbi.nlm.nih.gov/32047863/
+- Royal College of Physicians, *National Early Warning Score (NEWS) 2*, 2017
+  (pulse and SpO₂ scoring bands; Scales 1 and 2).
+  https://www.rcp.ac.uk/media/alxev00t/news2-chart-1_the-news-scoring-system_0_0.pdf
+- Avram R. et al., "Real-world heart rate norms in the Health eHeart study",
+  *npj Digital Medicine* 2:58, 2019 (age strata, the sex/BMI/condition
+  coefficients, 95th percentiles). https://doi.org/10.1038/s41746-019-0134-9
+- Team 18 reference-profiles workbook (`ppg_reference_profiles_research_backed.xlsx`,
+  derived from Avram 2019).
+- Apple Inc., *Using Apple Watch for Arrhythmia Detection*, December 2020
+  (Irregular Rhythm Notification: tachograms, 5-of-6 confirmation, Apple
+  Heart Study sub-study PPV).
+- Görges M., Markewitz B. A., Westenskow D. R., "Improving alarm performance in
+  the medical intensive care unit using delays and clinical context",
+  *Anesth Analg* 108(5):1546–52, 2009. https://pubmed.ncbi.nlm.nih.gov/19372334/
+- Rheineck-Leyssius A. T., Kalkman C. J., *J Clin Monit Comput* 14(3):151–6,
+  1998 (SpO₂ alarm delays and averaging). https://pubmed.ncbi.nlm.nih.gov/9676861/
+- Pearson R. K. et al., "Generalized Hampel Filters", *EURASIP J Adv Signal
+  Process* 2016:87. https://doi.org/10.1186/s13634-016-0383-6
+- Elgendi M. et al., "Systolic peak detection in acceleration
+  photoplethysmograms measured from emergency responders in tropical
+  conditions", *PLoS ONE* 8(10):e76585, 2013.
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC3805543/
+- Dash S., Chon K. H., Lu S., Raeder E. A., "Automatic real time detection of
+  atrial fibrillation", *Ann Biomed Eng* 37(9):1701–9, 2009; thresholds from
+  US patent 8,417,326 B2. https://patents.google.com/patent/US8417326B2/en
+- McManus D. D. et al., *Heart Rhythm* 10(3):315–9, 2013 (smartphone-PPG AF
+  detection with RMSSD/mean + ShE). https://pubmed.ncbi.nlm.nih.gov/23220686/
+- Witting M. D., Scharf S. M., "Diagnostic room-air pulse oximetry: effects of
+  smoking, race, and sex", *Am J Emerg Med* 26(2):131–6, 2008 (awake adults:
+  5.7 % below 97 %). https://doi.org/10.1016/j.ajem.2007.04.002
+- FDA, *Pulse Oximeters – Premarket Notification Submissions*, 2013
+  (reflectance accuracy Arms ≤ 3.5 %). https://www.fda.gov/media/72470/download
+- Apple, SFSpeechRecognitionRequest `requiresOnDeviceRecognition`.
+  https://developer.apple.com/documentation/speech/sfspeechrecognitionrequest/requiresondevicerecognition
+- `expo-speech-recognition` (MIT). https://github.com/jamsch/expo-speech-recognition ·
+  Expo Speech. https://docs.expo.dev/versions/latest/sdk/speech/
+- Vosk offline speech recognition (Apache-2.0), a fully open-source
+  alternative recognizer. https://alphacephei.com/vosk/models
 - Supabase:
   - Security (AES-256 at rest, TLS): https://supabase.com/security
   - Realtime Postgres Changes: https://supabase.com/docs/guides/realtime/postgres-changes
@@ -701,7 +977,12 @@ Before collecting real subject data:
 - Raspberry Pi, "Introducing Raspberry Pi 5" (the CYW43455 combo chip).
   https://www.raspberrypi.com/news/introducing-raspberry-pi-5/
 
-Two claims are engineering reasoning rather than cited findings:
+Three claims are engineering reasoning rather than cited findings:
+
+- The combination rules (for example "warning = NEWS2 1 **and** ≥ 3 SD from
+  the personal band", the 15-s / 8-s windows, the 70 % / 80 % confirmation
+  fractions) are our design built on the sources above. They have not been
+  validated on this device.
 
 - "Percentiles instead of min/max for summaries" follows from the artifact
   literature above but is not taken from a specific paper.

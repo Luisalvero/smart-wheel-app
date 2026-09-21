@@ -294,6 +294,8 @@ export const ALERT_KIND = {
   bpm_high: 'Heart rate above usual range',
   bpm_low: 'Heart rate below usual range',
   spo2_low: 'Blood oxygen low',
+  no_contact: 'No hand on the sensor',
+  irregular_rhythm: 'Irregular pulse pattern (advisory)',
 }
 
 /**
@@ -307,7 +309,9 @@ export function alertState(e, now = Date.now()) {
   for (const a of e.alerts.values()) {
     const at = Date.parse(a.responded_at ?? a.prompted_at ?? a.started_at)
     if (a.escalated && now - at < 10 * 60 * 1000 && (!escalated || at > escalated.at)) escalated = { a, at }
-    if (a.response == null && !a.escalated && (!open || at > open.at)) open = { a, at }
+    // Notices (and advisories) are only logged by the phone; the banner is for
+    // real warnings being confirmed and emergencies waiting for an answer.
+    if (a.response == null && !a.escalated && a.level !== 'notice' && (!open || at > open.at)) open = { a, at }
   }
   if (escalated) {
     const a = escalated.a
@@ -316,8 +320,8 @@ export function alertState(e, now = Date.now()) {
       title:
         a.response === 'no_response'
           ? 'No answer from driver — escalation (simulated)'
-          : a.response === 'unwell'
-            ? 'Driver reported unwell — escalation (simulated)'
+          : a.response === 'not_ok' || a.response === 'unwell'
+            ? 'Driver said they are not OK — escalation (simulated)'
             : 'Alert escalated (simulated)',
       detail: `${ALERT_KIND[a.kind] ?? a.kind}${a.value != null ? ` (${Math.round(a.value)}${a.kind === 'spo2_low' ? '%' : ' bpm'})` : ''}. Simulated: nobody is actually contacted in this prototype.`,
     }
@@ -326,7 +330,9 @@ export function alertState(e, now = Date.now()) {
     const a = open.a
     return {
       level: 'open',
-      title: a.prompted_at ? 'Outside usual range — driver asked if OK' : 'Outside usual range — checking with driver',
+      title: a.prompted_at
+        ? 'Emergency check — the phone is asking the driver if they are OK'
+        : `Unusual reading — confirming over the next ${a.level === 'critical' ? 8 : 15} s`,
       detail: `${ALERT_KIND[a.kind] ?? a.kind}${a.value != null ? ` (${Math.round(a.value)}${a.kind === 'spo2_low' ? '%' : ' bpm'})` : ''}.`,
     }
   }

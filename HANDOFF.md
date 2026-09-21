@@ -2,7 +2,7 @@
 
 You are picking up the **Biometric Steering Wheel** (FIU Senior Design, Team
 18). Read this file first, then `docs/SYSTEM_GUIDE.md` for the full human
-guide. Everything below is current as of **2026-09-20**, on branch
+guide. Everything below is current as of **2026-09-21**, on branch
 `luis/full-system`.
 
 ## 1. What the system is
@@ -39,8 +39,14 @@ mobile-app/                     Expo SDK 54 app (TypeScript)
   lib/hooks/useDriveSession.ts  THE integration point: BLE -> decode -> SQLite -> alerts -> live upload
   lib/db/                       database.ts (SQLite + migrations), repositories.ts (all SQL), liveSync.ts, sync.ts
   lib/archive/                  codec.ts (PPGA fold/unfold, pure), archiveStore.ts (fold a session, verify, store)
-  lib/analysis/                 stats.ts (percentiles), baseline.ts, alerts.ts (state machine)
-  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql (run in this order)
+  lib/analysis/                 stats.ts, baseline.ts, profileModel.ts (Avram 2019 prior + NEWS2),
+                                flagEngine.ts (notice/warning/critical, persistence → emergency),
+                                rhythm.ts (Elgendi beats + Dash irregularity + Apple 5-of-6),
+                                safetyController.ts (glue: frames → flags → voice check → drive_alerts)
+  lib/voice/                    intent.ts + intentModel.ts (local yes/no/help classifier + safety rules),
+                                voiceCheck.ts (dialogue policy), speechIO.ts (expo-speech + expo-speech-recognition)
+  tools/intent/                 phrases.py (EN+ES training/test phrases), train.py, check.py
+  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql (run in this order)
   tests/                        node --test (TypeScript stripped natively; Node >= 22)
 website/                        Vite + vanilla JS dashboard; src/lib/codec.ts is a byte-identical copy (tested)
 .github/workflows/ios-build.yml unsigned IPA build on macOS runners (typecheck + tests + prebuild + xcodebuild)
@@ -72,13 +78,16 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
   - Local SQLite is the source of truth; `sync_status` goes `local` →
     `synced`.
   - Never delete local rows during sync.
-  - SQLite migrations are additive only (`PRAGMA user_version`, now 3).
+  - SQLite migrations are additive only (`PRAGMA user_version`, now 4).
 - **Supabase schema:** `mobile-app/supabase/v3_dashboard.sql` defines:
   - views `session_summaries` (p05/median/p95), `driver_baselines`
     (p10/median/p90, established at ≥ 60 readings) and `active_sessions`
     (heartbeat within 2 min);
   - tables `session_archives` and `drive_alerts`;
   - the private bucket `session-archives`.
+
+  `v4_flags.sql` adds profile `conditions`/`medications`/`language`, a
+  generated `bmi`, and alert `level`/`channel`/`answer_confidence`.
 
   The website and `liveSync.ts` rely on these names.
 - **Percentiles:** linear interpolation, the same as Postgres
@@ -93,6 +102,19 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
     proposal).
   - `full` mode keeps `raw_payload` only until the session ends. It is then
     folded, verified by unfolding, and cleared in one transaction.
+
+- **Flag engine / voice check contract** (guide §11):
+  - Levels come from NEWS2 plus the driver's personal band.
+  - The confirmation window is 15 s (warning) or 8 s (critical). To become an
+    emergency it needs ≥ 70 % coverage and ≥ 80 % of readings beyond the
+    line.
+  - The voice check only reacts to `emergency` events. It never reads
+    vitals.
+  - Transcripts are never stored.
+  - The emergency contact never leaves the phone.
+  - Answer model: "ok" needs P ≥ 0.75, "not_ok" P ≥ 0.5, and urgent words
+    override. `tests/intent.test.ts` enforces **zero** not_ok→ok errors on
+    the held-out set. If you retrain, keep it at zero.
 
 ## 4. Commands
 
@@ -174,10 +196,16 @@ left `~/PPG_Logger/backup-*`.
 - The ESP32↔Pi link is steady with the Pi's Wi-Fi off.
 - The website is deployed at https://smart-wheel-dashboard.vercel.app.
 - `v3_dashboard.sql` was validated on Postgres 17 (PGlite).
-- All unit tests pass: Python 20, TypeScript 14, C++ vitals.
+- All unit tests pass: Python 20, TypeScript 38, C++ vitals.
 - The iOS bundle compiles with Metro and Hermes.
 
 **Not yet verified on real devices** (do these next):
+
+0. The voice check on an iPhone:
+   - permission prompts appear at drive start;
+   - Settings → "Try the voice check" speaks, hears "yes" or "no" and
+     classifies correctly;
+   - in a car with road noise and Bluetooth audio.
 
 1. The new iPhone build installed and run end to end with the Pi. Check that
    the phone receives 472-byte packets split across ~3 notifications.
