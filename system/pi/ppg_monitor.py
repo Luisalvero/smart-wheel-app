@@ -224,6 +224,14 @@ def stats(st: dict) -> Panel:
     g.add_row("forwarded to phone", f"{c['forwarded']:,}")
     g.add_row("rows logged", f"{c['logged']:,}")
     g.add_row("rate", f"{c['rx'] / uptime:.2f}/s" if uptime > 5 else "--")
+    fi = st.get("frame")
+    if fi:
+        # v3 packets carry every raw sample; v2 carried 8. Shown so a firmware
+        # mismatch (old ESP32 image) is obvious at a glance.
+        g.add_row("packet", f"v{fi['version']} · {fi['samples']} samples"
+                  + (f" @ {fi['rate_hz']} Hz" if fi.get("rate_hz") else "") + f" · {fi['bytes']} B")
+    if uptime > 5 and st.get("bytes_rx") is not None:
+        g.add_row("throughput", f"{st['bytes_rx'] / uptime:,.0f} B/s")
     g.add_row("lost frames", Text(str(c["lost"]), style=BAD if c["lost"] else OK))
     g.add_row("CRC errors", Text(str(c["crc"]), style=BAD if c["crc"] else OK))
     g.add_row("ESP32 restarts", Text(str(c["resets"]), style=WARN if c["resets"] else OK))

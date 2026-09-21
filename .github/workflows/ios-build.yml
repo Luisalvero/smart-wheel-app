@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: mobile-app/package-lock.json
 
@@ -37,6 +37,9 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Unit tests (protocol vs firmware encoder, archive codec, alerts)
+        run: npm test
 
       # EXPO_PUBLIC_* values are read at bundle time, so they must be present
       # here or the built app sees `undefined` and every Supabase call fails.

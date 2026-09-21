@@ -88,6 +88,55 @@ class TestDeframer(unittest.TestCase):
         self.assertLessEqual(len(d._buf), d.MAX_BUFFER)
 
 
+class TestProtocolV3(unittest.TestCase):
+    def frame(self, seq=1, n=100):
+        return p.encode_v3(seq, 5000, 100, 70, 98, 0x0F, 90,
+                           [150000 + (i * 37) % 900 for i in range(n)],
+                           [230000 + (i * 53) % 1300 for i in range(n)])
+
+    def test_sizes(self):
+        self.assertEqual(p.v3_frame_size(100), 472)
+        self.assertEqual(p.v3_frame_size(0), 22)
+        self.assertEqual(len(self.frame(n=255)), p.V3_MAX_FRAME_SIZE)
+
+    def test_every_single_bit_flip_is_detected(self):
+        good = self.frame()
+        for i in range(len(good)):
+            for b in range(8):
+                bad = bytearray(good)
+                bad[i] ^= 1 << b
+                with self.assertRaises(p.FrameError):
+                    p.decode(bytes(bad))
+
+    def test_mixed_v2_v3_stream_any_chunking(self):
+        stream = b"".join([good_frame(1), self.frame(2), self.frame(3, n=7), good_frame(4),
+                           self.frame(5, n=0), self.frame(6, n=255)])
+        for size in (1, 7, 20, 182, 244, 512, len(stream)):
+            d = p.Deframer()
+            got = []
+            for off in range(0, len(stream), size):
+                got += d.feed(stream[off:off + size])
+            self.assertEqual([f.seq for f in got], [1, 2, 3, 4, 5, 6], f"chunk {size}")
+            self.assertEqual([f.version for f in got], [2, 3, 3, 2, 3, 3])
+            self.assertEqual(d.crc_errors, 0)
+
+    def test_noise_and_false_magic_never_stall(self):
+        rng = random.Random(3)
+        d = p.Deframer()
+        noise = bytes(rng.randrange(256) for _ in range(20000))
+        # A false magic followed by version 3 and a huge sample count must not
+        # swallow the real frame that follows.
+        d.feed(noise + b"\x5a\xa5\x03" + bytes(11) + b"\xff")
+        got = d.feed(self.frame(9) + self.frame(10))
+        self.assertEqual([f.seq for f in got][-2:], [9, 10])
+        # Same, but the false header is fully plausible (rate 100, n 255): only
+        # the look-ahead can release the real frames without waiting ~1.2 KB.
+        d2 = p.Deframer()
+        fake = b"\x5a\xa5\x03\x00" + bytes(8) + b"\x64\x00\xff"
+        got = d2.feed(fake + self.frame(11) + self.frame(12))
+        self.assertEqual([f.seq for f in got], [11, 12])
+
+
 class TestSeqAndAverage(unittest.TestCase):
     def test_gap_detection(self):
         t = p.SeqTracker()
@@ -131,6 +180,27 @@ class TestCrossLanguage(unittest.TestCase):
         b = p.decode(bytes.fromhex(lines[3]))
         self.assertEqual((b.seq, b.heart_rate, b.spo2, len(b.samples)), (0xFFFFFFFF, -999, -999, 3))
         self.assertEqual(b.samples[0].red, 0x3FFFF)   # full 18-bit ADC value survives
+
+        # v3 frames from the firmware encoder: decoded by Python, and the
+        # Python encoder must reproduce them byte for byte.
+        v3 = [bytes.fromhex(x) for x, tag in zip(lines[1:], lines) if tag == "V3"]
+        self.assertEqual(len(v3), 2)
+        c = p.decode(v3[0])
+        self.assertEqual(len(v3[0]), 472)
+        self.assertEqual((c.version, c.seq, c.rate_hz, c.quality, c.heart_rate, c.spo2, len(c.samples)),
+                         (3, 7, 100, 87, 64, 97, 100))
+        self.assertEqual((c.start_ms, c.end_ms), (0xFFFFFF9C, 900))  # wraps like millis()
+        self.assertTrue(c.usable)
+        red = [(0x3FFFF if i == 0 else 0 if i == 1 else (0x2AAAA if i % 2 else 0x15555) ^ (i * 977))
+               for i in range(100)]
+        ir = [(200000 + i * 613) & 0x3FFFF for i in range(100)]
+        self.assertEqual([s.red for s in c.samples], red)
+        self.assertEqual([s.ir for s in c.samples], ir)
+        self.assertEqual(c.samples[99].dt_ms, 990)
+        self.assertEqual(p.encode_v3(7, 0xFFFFFF9C, 100, 64, 97, c.flags, 87, red, ir), v3[0])
+        d = p.decode(v3[1])
+        self.assertEqual([(s.red, s.ir) for s in d.samples], [(1, 0x3FFFF), (2, 5), (0x3FFFF, 6)])
+        self.assertEqual(len(v3[1]), 20 + 14 + 2)
 
 
 class TestVitalsEstimator(unittest.TestCase):

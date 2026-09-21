@@ -6,13 +6,18 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "node --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@noble/hashes": "^2.4.0",
     "@supabase/supabase-js": "^2.114.0",
     "expo": "~54.0.36",
+    "expo-haptics": "~15.0.8",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
+    "fflate": "^0.8.3",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-ble-plx": "^3.5.1",

@@ -1,8 +1,15 @@
-// Steering Wheel PPG transmitter -- ESP32 + MAX30102, protocol v2.
+// Steering Wheel PPG transmitter -- ESP32 + MAX30102, protocol v3.
 //
 // Once per second: 100 raw Red/IR samples at 100 Hz -> 25 Hz decimation for
-// the Maxim SpO2/HR algorithm, 8 evenly spaced raw samples kept for the
-// frame, CRC-16 appended, frame notified to the Raspberry Pi over BLE.
+// the vitals estimator, ALL 100 raw samples bit-packed into the frame (18 bits
+// each, the sensor's native resolution), CRC-16 appended, frame notified to
+// the Raspberry Pi over BLE.
+//
+// v3 vs v2: v2 kept 8 of the 100 samples (92% of the waveform was discarded)
+// in a fixed 104-byte frame. v3 sends every sample in 472 bytes -- 12.5x the
+// samples for 4.5x the bytes -- so later algorithms (HRV, morphology, motion
+// rejection) get the full 100 Hz signal. Nothing about acquisition changed:
+// the sensor was already sampling at 100 Hz with 0 FIFO overflows measured.
 //
 // Changes from the previous sketch (#include Wire.h.txt), and why:
 //  * The packet is actually transmitted. Before, it was built and printed but
@@ -51,8 +58,8 @@
 #define RX_UUID      "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define TX_UUID      "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
-// Requested ATT MTU. 247 fits a 104-byte frame in one notification with room
-// to spare. Chunking below keeps the link correct if the Pi negotiates less.
+// Requested ATT MTU. 247 carries a 472-byte v3 frame in two notifications;
+// chunking below keeps the link correct whatever the Pi negotiates.
 static constexpr uint16_t kRequestedMtu = 247;
 
 // ---------------------------------------------------------- acquisition ---
@@ -108,7 +115,9 @@ static void pushHistory(uint32_t red, uint32_t ir) {
 }
 
 uint32_t frameSeq = 0;
-uint8_t frameBytes[ppg::kFrameSize];
+uint8_t frameBytes[ppg::v3FrameSize(kRawPerFrame)];
+uint32_t frameRed[kRawPerFrame], frameIr[kRawPerFrame];  // every raw sample of the window
+static_assert(kRawPerFrame <= ppg::kV3MaxSamples, "a v3 frame holds at most 255 samples");
 
 // ------------------------------------------------------------ callbacks ---
 // Only flags are set here: these run in the BLE stack's task, and blocking in
@@ -119,8 +128,10 @@ uint8_t frameBytes[ppg::kFrameSize];
 // supervision timeout, and on hardware we measured repeated drops ~2-3 s into
 // a connection with BlueZ reporting org.bluez.Reason.Timeout. A 4 s timeout
 // rides out brief radio contention (e.g. a combo Wi-Fi/BT chip).
-// Values also satisfy Apple's accessory guidelines, so iOS accepts them:
-// timeout 2-6 s, min interval >= 15 ms, max >= min + 15 ms, latency 0.
+// The ESP32's only central is the Pi (BlueZ), so Apple's accessory rules do not
+// bind this link. (For reference, Apple's Accessory Design Guidelines R30
+// §58.6 want supervision timeout 6-18 s and intervals in multiples of 15 ms;
+// the phone<->Pi link is the one iOS negotiates.)
 // Units per the BLE spec: interval 1.25 ms, timeout 10 ms.
 static constexpr uint16_t kConnIntervalMin = 24;     // 30 ms
 static constexpr uint16_t kConnIntervalMax = 40;     // 50 ms
@@ -133,9 +144,16 @@ volatile bool connParamsChanged = false;
 volatile uint16_t connIntervalUnits = 0, connLatency = 0, connTimeoutUnits = 0;
 volatile int connParamsStatus = -1;
 
+// Link diagnostics, printed on every serial line: how many times a central
+// connected, and why the last link ended (esp_gatt_conn_reason_t = HCI reason:
+// 0x08 supervision timeout, 0x13 central closed it, 0x3E never established).
+volatile uint32_t connectCount = 0;
+volatile uint16_t lastDisconnectReason = 0;
+
 class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer*) override {
     clientConnected = true;
+    ++connectCount;
   }
 #if defined(CONFIG_BLUEDROID_ENABLED)
   void onConnect(BLEServer* s, esp_ble_gatts_cb_param_t* param) override {
@@ -146,6 +164,9 @@ class ServerCallbacks : public BLEServerCallbacks {
       connParamsStatus = -2;
       connParamsChanged = true;
     }
+  }
+  void onDisconnect(BLEServer*, esp_ble_gatts_cb_param_t* param) override {
+    lastDisconnectReason = static_cast<uint16_t>(param->disconnect.reason);
   }
   void onConnParamsUpdate(esp_bd_addr_t, uint16_t interval, uint16_t latency,
                           uint16_t timeout, esp_bt_status_t status) override {
@@ -356,7 +377,7 @@ void setup() {
   Serial.begin(115200);
   delay(300);
   Serial.println();
-  Serial.println("Steering Wheel PPG transmitter, protocol v2");
+  Serial.println("Steering Wheel PPG transmitter, protocol v3");
 
   for (int attempt = 1;; ++attempt) {
     int sda, scl;
@@ -410,12 +431,8 @@ void loop() {
   memmove(redBuffer, redBuffer + kAlgoNewPerSecond, (kAlgoLen - kAlgoNewPerSecond) * sizeof(uint32_t));
   memmove(irBuffer, irBuffer + kAlgoNewPerSecond, (kAlgoLen - kAlgoNewPerSecond) * sizeof(uint32_t));
 
-  ppg::Frame frame{};
-  frame.seq = frameSeq;
-  frame.startMs = millis();
-
+  const uint32_t startMs = millis();
   uint64_t irTotal = 0;
-  uint8_t kept = 0;
 
   for (int a = 0; a < kAlgoNewPerSecond; ++a) {
     uint64_t rs = 0, is = 0;
@@ -424,23 +441,15 @@ void loop() {
       readRawSample(r, i);
       rs += r;
       is += i;
-
-      // Keep 8 of the 100 raw samples, evenly spaced: raw indices
-      // 0, 13, 25, 38, 50, 63, 75, 88 (first index where idx*8/100 == n).
-      const int rawIdx = a * kDecimation + k;
-      if (kept < ppg::kSamplesPerFrame && (rawIdx * ppg::kSamplesPerFrame) / kRawPerFrame == kept) {
-        // Time from the sensor clock: sample n of the window is n*10 ms in.
-        frame.samples[kept] = {static_cast<uint16_t>(rawIdx * 1000 / kRawRateHz), r, i};
-        ++kept;
-      }
+      frameRed[a * kDecimation + k] = r;  // time = startMs + index * 10 ms (sensor clock)
+      frameIr[a * kDecimation + k] = i;
     }
     redBuffer[kAlgoLen - kAlgoNewPerSecond + a] = rs / kDecimation;
     irBuffer[kAlgoLen - kAlgoNewPerSecond + a] = is / kDecimation;
     pushHistory(rs / kDecimation, is / kDecimation);
     irTotal += is;
   }
-  frame.endMs = millis();
-  frame.sampleCount = kept;
+  const uint32_t endMs = millis();
 
   maxim_heart_rate_and_oxygen_saturation(irBuffer, kAlgoLen, redBuffer,
                                          &spo2, &validSpo2, &heartRate, &validHeartRate);
@@ -460,15 +469,24 @@ void loop() {
   const bool inRange = bpm >= kBpmMin && bpm <= kBpmMax && sat >= kSpo2Min && sat <= kSpo2Max;
 
   // -999 means "no result", matching the previous firmware; it fits in int16.
+  ppg::FrameV3 frame{};
+  frame.seq = frameSeq;
+  frame.t0Ms = startMs;
+  frame.rateHz = kRawRateHz;
+  frame.sampleCount = kRawPerFrame;
+  float q = vit.periodicity * 100.0f;
+  frame.quality = static_cast<uint8_t>(q < 0 ? 0 : (q > 100 ? 100 : lroundf(q)));
   frame.heartRate = static_cast<int16_t>(bpm);
   frame.spo2 = static_cast<int16_t>(sat);
   frame.flags = (vit.hrValid ? ppg::kHrValid : 0) |
                 (vit.spo2Valid ? ppg::kSpo2Valid : 0) |
                 (finger ? ppg::kFinger : 0) |
                 (inRange ? ppg::kInRange : 0);
+  frame.red = frameRed;
+  frame.ir = frameIr;
 
-  ppg::encode(frame, frameBytes);
-  sendFrame(frameBytes, ppg::kFrameSize);
+  const size_t frameLen = ppg::encodeV3(frame, frameBytes);
+  sendFrame(frameBytes, frameLen);
 
   // Sequence advances whether or not the Pi is listening, so gaps the Pi
   // sees after a reconnect represent real seconds of lost data.
@@ -477,17 +495,18 @@ void loop() {
   // Samples the sensor had to drop because we fell behind (0 when healthy).
   const uint8_t ovf = sensor.readRegister8(kSensorAddr, kRegFifoOvf);
   if (ovf) sensor.writeRegister8(kSensorAddr, kRegFifoOvf, 0);
-  const uint16_t crc = frameBytes[ppg::kFrameSize - 2] | (frameBytes[ppg::kFrameSize - 1] << 8);
+  const uint16_t crc = frameBytes[frameLen - 2] | (frameBytes[frameLen - 1] << 8);
   // maxim= is the old algorithm's answer, printed for comparison only.
-  Serial.printf("#%lu bpm=%ld%s spo2=%ld%s q=%.2f R=%.3f maxim=%ld/%ld ir=%lu finger=%d win=%lums ovf=%u link=%s mtu=%u crc=%04X\n",
+  Serial.printf("#%lu bpm=%ld%s spo2=%ld%s q=%.2f R=%.3f maxim=%ld/%ld ir=%lu finger=%d win=%lums ovf=%u link=%s mtu=%u len=%u conns=%lu lastdisc=0x%02X crc=%04X\n",
                 static_cast<unsigned long>(frame.seq),
                 static_cast<long>(bpm), vit.hrValid ? "" : "?",
                 static_cast<long>(sat), vit.spo2Valid ? "" : "?",
                 vit.periodicity, vit.ratio,
                 static_cast<long>(validHeartRate ? heartRate : -999), static_cast<long>(validSpo2 ? spo2 : -999),
                 static_cast<unsigned long>(irMean), finger,
-                static_cast<unsigned long>(frame.endMs - frame.startMs), ovf,
+                static_cast<unsigned long>(endMs - startMs), ovf,
                 clientConnected ? "up" : "down",
                 clientConnected ? server->getPeerMTU(server->getConnId()) : 0,
-                crc);
+                static_cast<unsigned>(frameLen),
+                static_cast<unsigned long>(connectCount), lastDisconnectReason, crc);
 }

@@ -6,6 +6,8 @@
  */
 import { getDatabase } from './database';
 import { bytesToBase64, uuidv4, type Frame } from '../ble/protocol';
+import { computeBaseline, type Baseline } from '../analysis/baseline';
+import { robustStats, type RobustStats } from '../analysis/stats';
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
 
@@ -42,7 +44,13 @@ export type DriveSession = {
   duration_seconds: number | null;
   status: SessionStatus;
   sync_status: string;
+  /** 'vitals' (default, proposal: processed values only) or 'full' (every raw
+   *  sample, folded into an archive when the session ends). */
+  storage_mode?: StorageMode;
+  sample_rate_hz?: number | null;
 };
+
+export type StorageMode = 'vitals' | 'full';
 
 export type TelemetryEvent = {
   id: string;
@@ -57,6 +65,8 @@ export type TelemetryEvent = {
   received_at: string;
   raw_payload: string | null;
   sync_status: string;
+  finger?: number | null; // SQLite boolean
+  quality?: number | null;
 };
 
 /** Aggregate physiological stats for one session. */
@@ -136,7 +146,10 @@ export async function deleteProfile(id: string): Promise<void> {
 
 // --- sessions --------------------------------------------------------------
 
-export async function startSession(profileId: string): Promise<DriveSession> {
+export async function startSession(
+  profileId: string,
+  storageMode: StorageMode = 'vitals',
+): Promise<DriveSession> {
   const db = await getDatabase();
   const session: DriveSession = {
     id: uuidv4(),
@@ -146,11 +159,13 @@ export async function startSession(profileId: string): Promise<DriveSession> {
     duration_seconds: null,
     status: 'active',
     sync_status: 'local',
+    storage_mode: storageMode,
+    sample_rate_hz: null,
   };
   await db.runAsync(
     `INSERT INTO drive_sessions
-       (id, profile_id, started_at, ended_at, status, sync_status)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+       (id, profile_id, started_at, ended_at, status, sync_status, storage_mode)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       session.id,
       session.profile_id,
@@ -158,9 +173,44 @@ export async function startSession(profileId: string): Promise<DriveSession> {
       null,
       session.status,
       session.sync_status,
+      storageMode,
     ],
   );
   return session;
+}
+
+/** Records the sensor's sample rate once the first v3 frame arrives. */
+export async function setSessionSampleRate(sessionId: string, rateHz: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE drive_sessions SET sample_rate_hz = ? WHERE id = ? AND sample_rate_hz IS NULL', [
+    rateHz,
+    sessionId,
+  ]);
+}
+
+export async function getSession(id: string): Promise<DriveSession | null> {
+  const db = await getDatabase();
+  return db.getFirstAsync<DriveSession>('SELECT * FROM drive_sessions WHERE id = ?', [id]);
+}
+
+// --- settings ----------------------------------------------------------------
+
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM app_settings WHERE key = ?', [key]);
+  return row?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    'INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    [key, value],
+  );
+}
+
+export async function getStorageMode(): Promise<StorageMode> {
+  return (await getSetting('storage_mode')) === 'full' ? 'full' : 'vitals';
 }
 
 export async function endSession(session: DriveSession): Promise<DriveSession> {
@@ -246,21 +296,28 @@ export async function storeFrame(
   sessionId: string,
   frame: Frame,
   receivedAt: Date = new Date(),
+  keepRaw = false,
 ): Promise<StoreResult> {
   const db = await getDatabase();
+  // raw_payload only in 'full' storage mode: the proposal commits to keeping
+  // processed values, not raw PPG, unless the user opts in. Even then it is
+  // temporary -- folded into the session archive when the session ends.
   const result = await db.runAsync(
     `INSERT OR IGNORE INTO telemetry_events
        (id, session_id, sequence_number, event_type, bpm, spo2,
-        signal_quality, battery, received_at, raw_payload, sync_status)
-     VALUES (?, ?, ?, 'vitals', ?, ?, NULL, NULL, ?, ?, 'local')`,
+        signal_quality, battery, received_at, raw_payload, sync_status, finger, quality)
+     VALUES (?, ?, ?, 'vitals', ?, ?, ?, NULL, ?, ?, 'local', ?, ?)`,
     [
       uuidv4(),
       sessionId,
       frame.seq,
       frame.usable ? frame.heartRate : null,
       frame.usable ? frame.spo2 : null,
+      frame.version >= 3 ? frame.quality : null,
       receivedAt.toISOString(),
-      bytesToBase64(frame.raw),
+      keepRaw ? bytesToBase64(frame.raw) : null,
+      frame.finger ? 1 : 0,
+      frame.version >= 3 ? frame.quality : null,
     ],
   );
   return result.changes > 0 ? 'stored' : 'duplicate';
@@ -324,3 +381,82 @@ export async function sessionStats(sessionId: string): Promise<SessionStats> {
     }
   );
 }
+
+// --- robust summaries & baselines ---------------------------------------------
+
+export type RobustSessionStats = {
+  frames: number;
+  usablePct: number | null;
+  bpm: RobustStats;
+  spo2: RobustStats;
+};
+
+/** Percentile-based summary of a session (see lib/analysis/stats.ts). */
+export async function robustSessionStats(sessionId: string): Promise<RobustSessionStats> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ bpm: number | null; spo2: number | null }>(
+    'SELECT bpm, spo2 FROM telemetry_events WHERE session_id = ?',
+    [sessionId],
+  );
+  const bpm = rows.map((r) => r.bpm).filter((v): v is number => v !== null);
+  const spo2 = rows.map((r) => r.spo2).filter((v): v is number => v !== null);
+  return {
+    frames: rows.length,
+    usablePct: rows.length ? (100 * bpm.length) / rows.length : null,
+    bpm: robustStats(bpm),
+    spo2: robustStats(spo2),
+  };
+}
+
+/** The driver's usual range from their completed sessions on this phone. */
+export async function driverBaseline(profileId: string): Promise<Baseline> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ bpm: number; spo2: number | null; session_id: string }>(
+    `SELECT e.bpm, e.spo2, e.session_id FROM telemetry_events e
+     JOIN drive_sessions s ON s.id = e.session_id
+     WHERE s.profile_id = ? AND s.status = 'completed' AND e.bpm IS NOT NULL`,
+    [profileId],
+  );
+  return computeBaseline(
+    rows.map((r) => r.bpm),
+    rows.map((r) => r.spo2).filter((v): v is number => v !== null),
+    new Set(rows.map((r) => r.session_id)).size,
+  );
+}
+
+// --- alerts --------------------------------------------------------------------
+
+export type DriveAlertRow = {
+  id: string;
+  session_id: string;
+  kind: string;
+  value: number | null;
+  threshold: number | null;
+  started_at: string;
+  prompted_at: string | null;
+  response: string | null;
+  responded_at: string | null;
+  escalated: number;
+  sync_status: string;
+};
+
+export async function saveAlert(a: Omit<DriveAlertRow, 'sync_status'>): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `INSERT INTO drive_alerts (id, session_id, kind, value, threshold, started_at, prompted_at,
+                               response, responded_at, escalated, sync_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local')
+     ON CONFLICT(id) DO UPDATE SET response = excluded.response, responded_at = excluded.responded_at,
+       escalated = excluded.escalated, sync_status = 'local'`,
+    [a.id, a.session_id, a.kind, a.value, a.threshold, a.started_at, a.prompted_at, a.response,
+     a.responded_at, a.escalated],
+  );
+}
+
+export async function alertsForSession(sessionId: string): Promise<DriveAlertRow[]> {
+  const db = await getDatabase();
+  return db.getAllAsync<DriveAlertRow>('SELECT * FROM drive_alerts WHERE session_id = ? ORDER BY started_at', [
+    sessionId,
+  ]);
+}
+

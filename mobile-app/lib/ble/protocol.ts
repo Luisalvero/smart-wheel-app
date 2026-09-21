@@ -1,8 +1,14 @@
 /**
- * PPG telemetry frame protocol v2 -- TypeScript twin of
- * PPG_System/common/ppg_protocol.py and the ESP32's ppg_frame.h.
+ * PPG telemetry frame protocol v2 + v3 -- TypeScript twin of
+ * system/common/ppg_protocol.py and the ESP32's ppg_frame.h.
  *
- * Frame: 104 bytes, little-endian, packed.
+ * v3 (sent by the firmware): every raw sample of the 1 s window, 18-bit packed.
+ *   0  u16 magic 0xA55A   2 u8 version 3   3 u8 flags   4 u32 seq
+ *   8  u32 t0_ms         12 u16 rate_hz   14 u8 n      15 u8 quality (0..100)
+ *  16  i16 heart_rate    18 i16 spo2      20 ceil(36n/8) bytes: n x {red:18, ir:18}
+ *  ..  u16 CRC-16/CCITT-FALSE over everything before it       (472 B at n = 100)
+ *
+ * v2 (older firmware): 104 bytes, little-endian, packed.
  *   0  u16 magic 0xA55A      2 u8 version (2)     3 u8 sample_count
  *   4  u32 seq               8 u32 start_ms      12 u32 end_ms
  *  16  i16 heart_rate       18 i16 spo2          (-999 = no result)
@@ -33,6 +39,11 @@ export const HEADER_SIZE = 22;
 export const SAMPLE_SIZE = 10;
 export const FRAME_SIZE = HEADER_SIZE + SAMPLES_PER_FRAME * SAMPLE_SIZE + 2; // 104
 
+export const VERSION_3 = 3;
+export const V3_HEADER_SIZE = 20;
+export const v3FrameSize = (n: number) => V3_HEADER_SIZE + Math.floor((n * 36 + 7) / 8) + 2;
+export const MAX_FRAME_SIZE = v3FrameSize(255); // 1170
+
 export const FLAG_HR_VALID = 0x01;
 export const FLAG_SPO2_VALID = 0x02;
 export const FLAG_FINGER = 0x04;
@@ -41,6 +52,11 @@ export const FLAG_IN_RANGE = 0x08;
 export type Sample = { dtMs: number; red: number; ir: number };
 
 export type Frame = {
+  version: number;
+  /** v3: samples per second (sample i is at startMs + i*1000/rateHz). v2: 0. */
+  rateHz: number;
+  /** v3: 0..100 pulse periodicity from the ESP32. v2: 0. */
+  quality: number;
   seq: number;
   startMs: number;
   endMs: number;
@@ -100,8 +116,72 @@ export function bytesToBase64(bytes: Uint8Array): string {
 
 export class FrameError extends Error {}
 
-/** Decodes and verifies exactly one frame. Throws FrameError on any defect. */
+/**
+ * Length of the frame starting at buf[0] (which must be the magic), or null if
+ * more bytes are needed to tell. Throws FrameError for an impossible header.
+ */
+export function frameLength(buf: Uint8Array): number | null {
+  if (buf.length < 3) return null;
+  const version = buf[2]!;
+  if (version === VERSION) return FRAME_SIZE;
+  if (version !== VERSION_3) throw new FrameError(`version ${version}`);
+  if (buf.length < 15) return null;
+  const rate = buf[12]! | (buf[13]! << 8);
+  if (rate < 1 || rate > 1000) throw new FrameError(`rate ${rate}`);
+  return v3FrameSize(buf[14]!);
+}
+
+const isUsable = (flags: number) =>
+  (flags & FLAG_FINGER) !== 0 &&
+  (flags & FLAG_HR_VALID) !== 0 &&
+  (flags & FLAG_SPO2_VALID) !== 0 &&
+  (flags & FLAG_IN_RANGE) !== 0;
+
+function decodeV3(buf: Uint8Array): Frame {
+  if (buf.length < V3_HEADER_SIZE + 2) throw new FrameError(`length ${buf.length}`);
+  const v = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (v.getUint16(0, true) !== MAGIC) throw new FrameError('bad magic');
+  const count = v.getUint8(14);
+  const size = v3FrameSize(count);
+  if (buf.length !== size) throw new FrameError(`length ${buf.length} != ${size}`);
+  if (v.getUint16(size - 2, true) !== crc16(buf, size - 2)) throw new FrameError('CRC mismatch');
+  const rateHz = v.getUint16(12, true);
+  if (rateHz === 0 && count) throw new FrameError('rate 0');
+  const t0 = v.getUint32(8, true);
+
+  // Unpack the LSB-first 18-bit stream. An 18-bit field starting at bit o
+  // spans at most bytes o>>3 .. (o>>3)+3 (7 + 18 = 25 bits), so four bytes
+  // are always enough; >>> keeps the 32-bit read unsigned.
+  const read18 = (o: number) => {
+    const i = V3_HEADER_SIZE + (o >> 3);
+    const w = buf[i]! | (buf[i + 1]! << 8) | (buf[i + 2]! << 16) | ((buf[i + 3] ?? 0) << 24);
+    return (w >>> (o & 7)) & 0x3ffff;
+  };
+  const samples: Sample[] = [];
+  for (let i = 0; i < count; i += 1) {
+    samples.push({ dtMs: Math.floor((i * 1000) / rateHz), red: read18(36 * i), ir: read18(36 * i + 18) });
+  }
+  const flags = v.getUint8(3);
+  return {
+    version: VERSION_3,
+    rateHz,
+    quality: v.getUint8(15),
+    seq: v.getUint32(4, true),
+    startMs: t0,
+    endMs: rateHz ? (t0 + Math.floor((count * 1000) / rateHz)) >>> 0 : t0,
+    heartRate: v.getInt16(16, true),
+    spo2: v.getInt16(18, true),
+    flags,
+    samples,
+    finger: (flags & FLAG_FINGER) !== 0,
+    usable: isUsable(flags),
+    raw: buf.slice(),
+  };
+}
+
+/** Decodes and verifies exactly one frame (v2 or v3). Throws FrameError on any defect. */
 export function decodeFrame(buf: Uint8Array): Frame {
+  if (buf.length >= 3 && buf[2] === VERSION_3) return decodeV3(buf);
   if (buf.length !== FRAME_SIZE) throw new FrameError(`length ${buf.length}`);
   const v = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   if (v.getUint16(0, true) !== MAGIC) throw new FrameError('bad magic');
@@ -117,10 +197,10 @@ export function decodeFrame(buf: Uint8Array): Frame {
     samples.push({ dtMs: v.getUint16(o, true), red: v.getUint32(o + 2, true), ir: v.getUint32(o + 6, true) });
   }
   const flags = v.getUint8(20);
-  const finger = (flags & FLAG_FINGER) !== 0;
-  const usable =
-    finger && (flags & FLAG_HR_VALID) !== 0 && (flags & FLAG_SPO2_VALID) !== 0 && (flags & FLAG_IN_RANGE) !== 0;
   return {
+    version: VERSION,
+    rateHz: 0,
+    quality: 0,
     seq: v.getUint32(4, true),
     startMs: v.getUint32(8, true),
     endMs: v.getUint32(12, true),
@@ -128,8 +208,8 @@ export function decodeFrame(buf: Uint8Array): Frame {
     spo2: v.getInt16(18, true),
     flags,
     samples,
-    finger,
-    usable,
+    finger: (flags & FLAG_FINGER) !== 0,
+    usable: isUsable(flags),
     raw: buf.slice(),
   };
 }
@@ -143,39 +223,70 @@ export class Deframer {
   private buf = new Uint8Array(0);
   framesOk = 0;
   crcErrors = 0;
+  /** Total bytes fed in, for the live data-rate indicator. */
+  bytesIn = 0;
 
   feed(chunk: Uint8Array): Frame[] {
+    this.bytesIn += chunk.length;
     const merged = new Uint8Array(this.buf.length + chunk.length);
     merged.set(this.buf);
     merged.set(chunk, this.buf.length);
     let data = merged;
     const out: Frame[] = [];
     for (;;) {
-      let idx = -1;
-      for (let i = 0; i + 1 < data.length; i += 1) {
-        if (data[i] === 0x5a && data[i + 1] === 0xa5) {
-          idx = i;
-          break;
-        }
-      }
+      const idx = findMagic(data, 0);
       if (idx < 0) {
         data = data.length && data[data.length - 1] === 0x5a ? data.slice(-1) : new Uint8Array(0);
         break;
       }
-      data = data.slice(idx);
-      if (data.length < FRAME_SIZE) break;
+      data = data.subarray(idx);
       try {
-        out.push(decodeFrame(data.slice(0, FRAME_SIZE)));
+        const size = frameLength(data);
+        if (size === null || data.length < size) {
+          // Incomplete. A false magic claiming a long frame would otherwise
+          // hold back real frames buffered behind it; if a complete valid
+          // frame starts later, the candidate was garbage.
+          const later = validFrameAfter(data, 1);
+          if (later < 0) break;
+          this.crcErrors += 1;
+          data = data.subarray(later);
+          continue;
+        }
+        out.push(decodeFrame(data.slice(0, size)));
         this.framesOk += 1;
-        data = data.slice(FRAME_SIZE);
+        data = data.subarray(size);
       } catch {
         this.crcErrors += 1;
-        data = data.slice(1);
+        data = data.subarray(1);
       }
     }
-    this.buf = data.length > FRAME_SIZE * 8 ? data.slice(-FRAME_SIZE) : data;
+    this.buf = data.length > MAX_FRAME_SIZE * 4 ? data.slice(-MAX_FRAME_SIZE) : data.slice();
     return out;
   }
+}
+
+function findMagic(data: Uint8Array, from: number): number {
+  for (let i = from; i + 1 < data.length; i += 1) {
+    if (data[i] === 0x5a && data[i + 1] === 0xa5) return i;
+  }
+  return -1;
+}
+
+/** Offset of the first complete, CRC-valid frame at or after `from`, or -1. */
+function validFrameAfter(data: Uint8Array, from: number): number {
+  for (let idx = findMagic(data, from); idx >= 0; idx = findMagic(data, idx + 1)) {
+    try {
+      const rest = data.subarray(idx);
+      const size = frameLength(rest);
+      if (size !== null && rest.length >= size) {
+        decodeFrame(rest.slice(0, size));
+        return idx;
+      }
+    } catch {
+      // not a frame; keep looking
+    }
+  }
+  return -1;
 }
 
 /** Counts frames lost between received sequence numbers; a drop to a lower

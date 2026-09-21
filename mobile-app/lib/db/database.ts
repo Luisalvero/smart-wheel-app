@@ -18,7 +18,7 @@ export const DB_NAME = 'smart_wheel.db';
  * version the device is on, so an existing install keeps its recorded drives
  * instead of being wiped.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -128,6 +128,60 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   }
 
+  if (current < 3) {
+    // v3: protocol v3 metadata, the storage-mode choice, the folded session
+    // archive, the alert log, and app settings.
+    const addColumn = async (table: string, ddl: string) => {
+      try {
+        await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+      } catch {
+        // already present
+      }
+    };
+    await addColumn('drive_sessions', "storage_mode TEXT NOT NULL DEFAULT 'vitals'");
+    await addColumn('drive_sessions', 'sample_rate_hz INTEGER');
+    await addColumn('telemetry_events', 'finger INTEGER');
+    await addColumn('telemetry_events', 'quality INTEGER');
+
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS session_archives (
+        session_id     TEXT PRIMARY KEY NOT NULL,
+        format_version INTEGER NOT NULL,
+        sample_rate_hz INTEGER NOT NULL,
+        sample_count   INTEGER NOT NULL,
+        frame_count    INTEGER NOT NULL,
+        raw_bytes      INTEGER NOT NULL,
+        packed_bytes   INTEGER NOT NULL,
+        sha256         TEXT NOT NULL,
+        data           BLOB NOT NULL,
+        created_at     TEXT NOT NULL,
+        sync_status    TEXT NOT NULL DEFAULT 'local',
+        FOREIGN KEY (session_id) REFERENCES drive_sessions (id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS drive_alerts (
+        id           TEXT PRIMARY KEY NOT NULL,
+        session_id   TEXT NOT NULL,
+        kind         TEXT NOT NULL,
+        value        REAL,
+        threshold    REAL,
+        started_at   TEXT NOT NULL,
+        prompted_at  TEXT,
+        response     TEXT,
+        responded_at TEXT,
+        escalated    INTEGER NOT NULL DEFAULT 0,
+        sync_status  TEXT NOT NULL DEFAULT 'local',
+        FOREIGN KEY (session_id) REFERENCES drive_sessions (id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_alerts_session ON drive_alerts (session_id);
+
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key   TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
+    `);
+  }
+
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
 }
 
@@ -135,7 +189,7 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
 export async function tableCounts(): Promise<Record<string, number>> {
   const db = await getDatabase();
   const counts: Record<string, number> = {};
-  for (const table of ['driver_profiles', 'drive_sessions', 'telemetry_events']) {
+  for (const table of ['driver_profiles', 'drive_sessions', 'telemetry_events', 'session_archives', 'drive_alerts']) {
     const row = await db.getFirstAsync<{ c: number }>(
       `SELECT COUNT(*) AS c FROM ${table}`,
     );

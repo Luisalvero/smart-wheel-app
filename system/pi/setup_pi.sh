@@ -122,6 +122,15 @@ if [[ -f /etc/bluetooth/main.conf ]]; then
   set_le_param MaxConnectionInterval 40          && changed=1  # 50 ms
   set_le_param ConnectionLatency 0               && changed=1
   set_le_param ConnectionSupervisionTimeout 400  && changed=1  # 4 s
+  # Scan duty cycle. The Pi 5's Wi-Fi and Bluetooth share one radio and
+  # antenna (Infineon CYW43455); BlueZ's default discovery scan listens 100%
+  # of the time, which on the bench made Wi-Fi drop whenever the relay was
+  # looking for the ESP32. 15 ms of every 60 ms (25%) still catches an ESP32
+  # advertising every 20-40 ms within a few hundred ms. Units: 0.625 ms.
+  set_le_param ScanIntervalDiscovery 96          && changed=1  # 60 ms
+  set_le_param ScanWindowDiscovery 24            && changed=1  # 15 ms
+  set_le_param ScanIntervalConnect 96            && changed=1  # 60 ms
+  set_le_param ScanWindowConnect 48              && changed=1  # 30 ms
   if ((changed)); then
     systemctl restart bluetooth
     sleep 2

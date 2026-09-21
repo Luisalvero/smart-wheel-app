@@ -44,6 +44,9 @@ APP_PATH = "/org/ppgrelay"
 ADV_PATH = "/org/ppgrelay/advert0"
 AGENT_PATH = "/org/ppgrelay/agent"
 SERVICE_PATH = APP_PATH + "/service0"
+RETRY_MAX_S = 15          # longest pause between ESP32 attempts
+STABLE_LINK_S = 30        # a link this long resets the backoff
+GATT_RETRY_S = 5          # retry interval for the phone-side service
 FRAME_CHAR_PATH = SERVICE_PATH + "/char0"
 STATUS_CHAR_PATH = SERVICE_PATH + "/char1"
 
@@ -222,7 +225,8 @@ class Logger:
     # and the startup instructions keep working.
     VITALS_HEADER = ["timestamp", "spo2", "avg_spo2", "bpm", "avg_bpm",
                      "seq", "esp_start_ms", "esp_end_ms",
-                     "hr_valid", "spo2_valid", "finger", "in_range"]
+                     "hr_valid", "spo2_valid", "finger", "in_range",
+                     "quality", "protocol", "samples", "rate_hz"]
     SAMPLES_HEADER = ["timestamp", "seq", "index", "esp_ms", "red", "ir"]
 
     def __init__(self, folder: Path, log_raw: bool = False):
@@ -269,6 +273,7 @@ class Logger:
             blank(frame.heart_rate), "" if avg_bpm is None else f"{avg_bpm:.1f}",
             frame.seq, frame.start_ms, frame.end_ms,
             int(frame.hr_valid), int(frame.spo2_valid), int(frame.finger), int(frame.in_range),
+            frame.quality, frame.version, len(frame.samples), frame.rate_hz,
         ])
         self._vitals_f.flush()
         if self._samples is not None:
@@ -307,6 +312,8 @@ class Relay:
         self.avg_bpm = p.MovingAverage(5)
         self.avg_spo2 = p.MovingAverage(5)
         self.frames_rx = 0
+        self.bytes_rx = 0
+        self.last_frame_info: dict | None = None
         self.crc_errors = 0
         self.started_at = time.time()
 
@@ -360,6 +367,7 @@ class Relay:
 
     # ------------------------------------------------------- ESP32 side ----
     def _on_esp_data(self, deframer: p.Deframer, _char, data: bytearray):
+        self.bytes_rx += len(data)
         before = deframer.crc_errors
         frames = deframer.feed(data)
         self.crc_errors += deframer.crc_errors - before
@@ -369,6 +377,9 @@ class Relay:
             if missing:
                 log.warning("%d frame(s) lost before seq %d", missing, f.seq)
             self.frames_rx += 1
+            self.last_frame_info = {"version": f.version, "samples": len(f.samples),
+                                    "rate_hz": f.rate_hz, "bytes": len(f.raw),
+                                    "quality": f.quality}
             if f.usable:
                 self.avg_bpm.add(f.heart_rate)
                 self.avg_spo2.add(f.spo2)
@@ -403,6 +414,22 @@ class Relay:
         def is_wheel(_dev, adv):
             return p.ESP32_SERVICE_UUID in (u.lower() for u in adv.service_uuids)
 
+        # Consecutive attempts that failed or dropped within seconds. The Pi 5
+        # shares ONE radio and antenna between Wi-Fi and Bluetooth (Infineon
+        # CYW43455), so a tight scan/connect retry loop starves Wi-Fi -- seen
+        # on the bench as Wi-Fi glitching whenever Bluetooth was on. Backing off
+        # keeps the radio mostly free while the ESP32 is absent or marginal.
+        failures = 0
+
+        async def backoff():
+            delay = min(RETRY_MAX_S, 2 ** min(failures, 4))
+            if failures > 1:
+                log.info("ESP32 retry in %d s (%d failed attempts)", delay, failures)
+            try:
+                await asyncio.wait_for(self.stopping.wait(), timeout=delay)
+            except asyncio.TimeoutError:
+                pass
+
         while not self.stopping.is_set():
             self.esp_state = "scanning"
             log.info("scanning for ESP32 (%s)", p.ESP32_SERVICE_UUID[:8])
@@ -416,7 +443,9 @@ class Relay:
                     # arrives, so _on_bus_signal doesn't mistake it for the laptop.
                     self.esp_addr = released[0]
                     continue          # released; rescan immediately
-                log.info("ESP32 not found; retrying")
+                log.info("ESP32 not found")
+                failures += 1
+                await backoff()
                 continue
 
             # Recorded before connecting: BlueZ emits Device1.Connected for this
@@ -445,12 +474,17 @@ class Relay:
             except Exception as e:  # noqa: BLE001 -- any BLE failure means reconnect
                 log.warning("ESP32 link error: %r", e)
             finally:
+                lasted = time.time() - self.esp_connected_at if self.esp_connected_at else 0.0
                 if self.esp_connected_at is not None:
-                    log.info("ESP32 disconnected after %.0f s", time.time() - self.esp_connected_at)
+                    log.info("ESP32 disconnected after %.0f s", lasted)
                 self.esp_connected_at = None
                 self.esp_state = "scanning"
+            # A link that held for a while was a success: retry fast. One that
+            # failed or dropped within seconds points at a marginal radio path,
+            # where hammering only makes Wi-Fi coexistence worse.
+            failures = 0 if lasted >= STABLE_LINK_S else failures + 1
             if not self.stopping.is_set():
-                await asyncio.sleep(1.0)
+                await backoff()
 
     # ----------------------------------------------------------- writer ----
     async def writer_loop(self):
@@ -576,6 +610,7 @@ class Relay:
                          "resets": self.seq.resets, "forwarded": self.forwarded,
                          "logged": self.rows_logged},
             "last_frame_at": self.last_frame_at,
+            "frame": self.last_frame_info, "bytes_rx": self.bytes_rx,
             "avg_bpm": self.avg_bpm.value, "avg_spo2": self.avg_spo2.value,
             "recent": list(self.recent), "bpm_trend": list(self.bpm_trend),
             "spo2_trend": list(self.spo2_trend), "events": list(self.events)[-20:],
@@ -606,6 +641,35 @@ class Relay:
                     pass
         self.logger.close()
 
+    async def gatt_loop(self):
+        """Brings up the phone-side service, retrying until it works.
+
+        Bluetooth can be off or still initialising at boot (seen on the bench:
+        the adapter was switched off and registration failed with
+        DBusError('Failed')). Previously the relay then ran as a logger only
+        until someone restarted it; now it keeps trying. Closing the D-Bus
+        connection between attempts makes BlueZ drop anything half-registered.
+        """
+        warned = False
+        while not self.stopping.is_set():
+            try:
+                await self.start_gatt()
+                if warned:
+                    log.info("phone relay is up")
+                return
+            except Exception as e:  # noqa: BLE001 -- logging must keep working meanwhile
+                if not warned:
+                    log.error("phone relay unavailable (%r); is Bluetooth on? retrying every %d s",
+                              e, GATT_RETRY_S)
+                    warned = True
+                if self.bus:
+                    self.bus.disconnect()
+                    self.bus = None
+            try:
+                await asyncio.wait_for(self.stopping.wait(), timeout=GATT_RETRY_S)
+            except asyncio.TimeoutError:
+                pass
+
     async def run(self):
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
@@ -613,13 +677,9 @@ class Relay:
 
         log.info("logging to %s (raw samples: %s)", self.logger.folder,
                  "ON - development only" if self.args.log_raw else "off")
-        if not self.args.no_relay:
-            try:
-                await self.start_gatt()
-            except Exception as e:  # noqa: BLE001 -- logging must keep working
-                log.error("laptop relay unavailable (%r); continuing as logger only", e)
-
         tasks = [asyncio.create_task(t) for t in (self.esp_loop(), self.writer_loop(), self.status_loop())]
+        if not self.args.no_relay:
+            tasks.append(asyncio.create_task(self.gatt_loop()))
         await self.stopping.wait()
         log.info("stopping")
         for t in tasks:

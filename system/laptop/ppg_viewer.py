@@ -154,17 +154,17 @@ class Worker(QObject):
             spo2 = min(100, max(92, spo2 + random.choice((-1, 0, 0, 0, 1))))
             finger = seq % 45 < 42          # periodically lift the finger
             start = int((time.monotonic() - t0) * 1000)
-            samples = []
-            for n in range(8):
-                dt = n * 125
-                phase = 2 * math.pi * (bpm / 60) * (start + dt) / 1000
+            red, ir = [], []
+            for n in range(100):                     # protocol v3: every sample at 100 Hz
+                phase = 2 * math.pi * (bpm / 60) * (start + n * 10) / 1000
                 ac = 1800 * (math.sin(phase) + 0.35 * math.sin(2 * phase + 0.9))
                 dc = 120000 if finger else 8000
-                samples.append(p.Sample(dt, int(dc * 0.8 + ac * 0.7), int(dc + ac)))
+                red.append(int(dc * 0.8 + ac * 0.7))
+                ir.append(int(dc + ac))
             flags = (p.FLAG_HR_VALID | p.FLAG_SPO2_VALID | p.FLAG_IN_RANGE | p.FLAG_FINGER) if finger else 0
-            raw = p.encode(seq, start, start + 1000,
-                           round(bpm) if finger else -999, round(spo2) if finger else -999,
-                           flags, samples)
+            raw = p.encode_v3(seq, start, 100,
+                              round(bpm) if finger else -999, round(spo2) if finger else -999,
+                              flags, 85 if finger else 0, red, ir)
             for i in range(0, len(raw), 20):         # default-MTU chunking
                 self._emit_frames(deframer, raw[i:i + 20])
             seq += 1
@@ -239,7 +239,7 @@ class Viewer(QMainWindow):
         self.resize(1280, 860)
 
         self.t, self.bpm, self.spo2 = (deque(maxlen=HISTORY_S * 2) for _ in range(3))
-        self.wave_t, self.wave_ir = deque(maxlen=WAVE_S * 8), deque(maxlen=WAVE_S * 8)
+        self.wave_t, self.wave_ir = deque(maxlen=WAVE_S * 250), deque(maxlen=WAVE_S * 250)  # up to 250 Hz
         self.avg_bpm, self.avg_spo2 = p.MovingAverage(5), p.MovingAverage(5)
         self.seq = p.SeqTracker()
         self.rx = 0
