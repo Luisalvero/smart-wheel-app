@@ -32,6 +32,8 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
   const [direct, setDirect] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [rehearsal, setRehearsal] = useState<string | null>(null);
+  const sf = d.safety;
   const now = Date.now();
 
   async function uploadBacklog() {
@@ -71,6 +73,57 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
           </Pressable>
         ))}
         {d.hasActiveSession ? <Text style={st.note}>Applies from the next drive.</Text> : null}
+      </Card>
+
+      <Card>
+        <SectionTitle>Safety checks</SectionTitle>
+        {sf.th && sf.prior ? (
+          <>
+            <Row label="Warning if heart rate above" value={`${sf.th.highWarn} BPM`} />
+            <Row label="Warning if heart rate below" value={`${sf.th.lowWarn} BPM`} />
+            <Row label="Critical" value={`≤ ${sf.th.lowCrit} or ≥ ${sf.th.highCrit} BPM`} />
+            <Row label="Warning if oxygen at or below" value={`${sf.th.spo2Warn}% (critical ≤ ${sf.th.spo2Crit}%)`} />
+            <Row
+              label="Expected heart rate for this driver"
+              value={`${sf.band ? Math.round(sf.band.mean) : Math.round(sf.prior.hrMean)} ± ${Math.round(sf.band?.sd ?? sf.prior.hrSd)} BPM`}
+            />
+            <Row label="Learned from own drives" value={`${Math.round((sf.band?.weight ?? 0) * 100)}%`} />
+            <Text style={st.note}>How the profile sets this: {sf.prior.explain.join(' · ')}.</Text>
+            <Text style={st.note}>
+              A warning is watched for 15 s (8 s if critical). Only if readings stay out of range does the phone ask "Are you
+              feeling OK?" out loud. Sources: NEWS2 (Royal College of Physicians 2017), Avram et al. 2019 real-world heart-rate
+              norms, alarm-delay studies (Görges 2009).
+            </Text>
+          </>
+        ) : (
+          <Text style={st.note}>Pick a driver to see their thresholds.</Text>
+        )}
+        <Row
+          label="Voice check"
+          value={
+            !d.voice ? 'asks permission at drive start' : !d.voice.granted ? 'off — buttons only' : d.voice.onDevice ? 'on, fully on-device' : 'on'
+          }
+          tone={d.voice && !d.voice.granted ? 'warn' : 'good'}
+        />
+        <Btn
+          title="Try the voice check"
+          kind="ghost"
+          disabled={d.hasActiveSession}
+          onPress={async () => {
+            setRehearsal('Listen and answer out loud…');
+            const r = await d.rehearseVoice();
+            setRehearsal(
+              r.outcome === 'no_response'
+                ? 'No answer heard. In a real check this counts as an emergency.'
+                : `Understood: ${r.outcome === 'ok' ? 'you are OK' : 'you are NOT OK'}${r.urgent ? ' (urgent words heard)' : ''} — via ${r.channel}.`,
+            );
+          }}
+        />
+        {rehearsal ? <Text style={st.note}>{rehearsal}</Text> : null}
+        <Text style={st.note}>
+          Speech is handled by the phone itself (no paid services). For the most natural voice on iPhone, download an "Enhanced"
+          voice in Settings → Accessibility → Spoken Content → Voices.
+        </Text>
       </Card>
 
       <Card>

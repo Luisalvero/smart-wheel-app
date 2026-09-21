@@ -18,7 +18,7 @@ export const DB_NAME = 'smart_wheel.db';
  * version the device is on, so an existing install keeps its recorded drives
  * instead of being wiped.
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -180,6 +180,26 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
         value TEXT NOT NULL
       );
     `);
+  }
+
+  if (current < 4) {
+    // v4: profile fields the flag engine uses (conditions, medications), the
+    // voice-check language, an emergency contact, and richer alert records.
+    const addColumn = async (table: string, ddl: string) => {
+      try {
+        await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+      } catch {
+        // already present
+      }
+    };
+    await addColumn('driver_profiles', "conditions TEXT NOT NULL DEFAULT '[]'");
+    await addColumn('driver_profiles', "medications TEXT NOT NULL DEFAULT '[]'");
+    await addColumn('driver_profiles', "language TEXT NOT NULL DEFAULT 'en'");
+    await addColumn('driver_profiles', 'emergency_name TEXT');
+    await addColumn('driver_profiles', 'emergency_phone TEXT');
+    await addColumn('drive_alerts', 'level TEXT');
+    await addColumn('drive_alerts', 'channel TEXT');
+    await addColumn('drive_alerts', 'answer_confidence REAL');
   }
 
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);

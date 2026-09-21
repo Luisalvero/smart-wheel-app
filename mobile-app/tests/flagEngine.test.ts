@@ -1,0 +1,127 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import { FlagEngine, thresholds, type EngineEvent, type Reading } from '../lib/analysis/flagEngine.ts';
+import { bmi, personalBand, profilePrior, news2Pulse, news2Spo2 } from '../lib/analysis/profileModel.ts';
+
+let n = 0;
+const id = () => `e${++n}`;
+const T0 = 1_800_000_000_000;
+
+const adult = profilePrior({ age: 30, sex: 'male', weight_kg: 80, height_cm: 180, conditions: [], medications: [] });
+const band0 = personalBand(adult, null);
+
+function engine(prior = adult, band = band0) {
+  return new FlagEngine(thresholds(prior, band), id);
+}
+
+/** Feed `seconds` readings from `from`, value from fn(i); returns events with their second. */
+function run(e: FlagEngine, from: number, seconds: number, fn: (i: number) => Partial<Reading>) {
+  const out: (EngineEvent & { at: number })[] = [];
+  for (let i = 0; i < seconds; i += 1) {
+    const r: Reading = { t: T0 + (from + i) * 1000, bpm: 75, spo2: 98, quality: 85, finger: true, ...fn(i) };
+    for (const ev of e.feed(r)) out.push({ ...ev, at: from + i });
+  }
+  return out;
+}
+
+test('profile prior follows Avram 2019 coefficients', () => {
+  assert.equal(bmi(80, 180), 24.7);
+  const f = profilePrior({ age: 25, sex: 'female', weight_kg: 95, height_cm: 165, conditions: ['diabetes'], medications: [] });
+  // 80.2 (21-30) + 2.14 (female) + 0.21*(34.9-27.5) + 4.48 (diabetes)
+  assert.ok(Math.abs(f.hrMean - (80.2 + 2.14 + 0.21 * (34.9 - 27.5) + 4.48)) < 0.11, String(f.hrMean));
+  assert.equal(f.hrMax, Math.round(208 - 0.7 * 25));
+  assert.deepEqual([news2Pulse(40), news2Pulse(45), news2Pulse(75), news2Pulse(100), news2Pulse(120), news2Pulse(131)], [3, 1, 0, 1, 2, 3]);
+  assert.deepEqual([news2Spo2(91, 1), news2Spo2(93, 1), news2Spo2(95, 1), news2Spo2(96, 1), news2Spo2(89, 2), news2Spo2(83, 2)], [3, 2, 1, 0, 0, 3]);
+});
+
+test('normal driving with noise: no flags', () => {
+  const e = engine();
+  const ev = run(e, 0, 600, (i) => ({ bpm: 72 + ((i * 7) % 9) - 4, spo2: 97 + (i % 3) - 1 }));
+  assert.deepEqual(ev.map((x) => x.type), []);
+});
+
+test('isolated artifact spikes are rejected, never flagged', () => {
+  const e = engine();
+  const ev = run(e, 0, 300, (i) => ({ bpm: i % 9 === 0 ? 170 : 74 }));
+  assert.deepEqual(ev.map((x) => x.type), []);
+  assert.ok(e.rejected > 20);
+});
+
+test('sustained critical heart rate: warning flag, then emergency within ~8 s of confirmation', () => {
+  const e = engine();
+  run(e, 0, 30, () => ({ bpm: 75 }));
+  const ev = run(e, 30, 40, () => ({ bpm: 142 }));
+  const w = ev.find((x) => x.type === 'warning' || x.type === 'escalated');
+  const em = ev.find((x) => x.type === 'emergency');
+  assert.ok(w && em, JSON.stringify(ev.map((x) => [x.type, x.at])));
+  assert.ok(em!.at - w!.at <= 12, `warning ${w!.at} -> emergency ${em!.at}`);
+  assert.equal(em!.episode.kind, 'bpm_high');
+  assert.equal(em!.episode.level, 'critical');
+});
+
+test('warning-level heart rate needs the longer 15 s confirmation', () => {
+  const e = engine();
+  run(e, 0, 30, () => ({ bpm: 75 }));
+  const ev = run(e, 30, 60, () => ({ bpm: 118 }));
+  const w = ev.find((x) => x.type === 'warning')!;
+  const em = ev.find((x) => x.type === 'emergency')!;
+  assert.ok(em.at - w.at >= 14 && em.at - w.at <= 17, `${w.at} -> ${em.at}`);
+  assert.equal(em.episode.level, 'warning');
+});
+
+test('a short burst that recovers is cleared, not an emergency', () => {
+  const e = engine();
+  run(e, 0, 30, () => ({ bpm: 75 }));
+  const ev = run(e, 30, 40, (i) => ({ bpm: i < 8 ? 125 : 78 }));
+  assert.ok(ev.some((x) => x.type === 'warning'));
+  assert.ok(!ev.some((x) => x.type === 'emergency'));
+  const c = ev.find((x) => x.type === 'cleared')!;
+  assert.equal(c.episode.outcome, 'recovered');
+});
+
+test('poor signal cannot confirm: closed as unconfirmed after 60 s', () => {
+  const e = engine();
+  run(e, 0, 30, () => ({ bpm: 75 }));
+  const ev = run(e, 30, 90, (i) => (i < 6 ? { bpm: 125 } : i % 2 ? { bpm: 125 } : { finger: false, bpm: null }));
+  assert.ok(!ev.some((x) => x.type === 'emergency'), JSON.stringify(ev.map((x) => [x.type, x.at])));
+  assert.equal(ev.find((x) => x.type === 'cleared')?.episode.outcome, 'unconfirmed');
+});
+
+test('personal baseline: an athlete at 47 bpm is fine, the general profile only notices', () => {
+  const athleteBand = personalBand(adult, { readings: 6000, bpmMedian: 50, bpmP10: 45, bpmP90: 56 });
+  const a = engine(adult, athleteBand);
+  assert.deepEqual(run(a, 0, 300, () => ({ bpm: 47 })).map((x) => x.type), []);
+  const g = engine();
+  const ev = run(g, 0, 300, () => ({ bpm: 42 }));
+  assert.ok(!ev.some((x) => x.type === 'emergency'));
+});
+
+test('low SpO2: critical at ≤91 (Scale 1); a COPD Scale-2 driver at 89 is not flagged', () => {
+  const e = engine();
+  run(e, 0, 20, () => ({}));
+  const ev = run(e, 20, 30, () => ({ spo2: 89 }));
+  assert.equal(ev.find((x) => x.type === 'emergency')?.episode.kind, 'spo2_low');
+  const copd = profilePrior({ age: 68, sex: 'male', weight_kg: 80, height_cm: 175, conditions: ['copd'], medications: [] }, { copdScale2: true });
+  const c = engine(copd, personalBand(copd, null));
+  assert.deepEqual(run(c, 0, 120, () => ({ spo2: 89 })).map((x) => x.type), []);
+});
+
+test('after "I\'m OK" the same warning stays quiet for 5 min, but a worse level re-arms', () => {
+  const e = engine();
+  run(e, 0, 20, () => ({}));
+  const first = run(e, 20, 40, () => ({ bpm: 118 }));
+  assert.ok(first.some((x) => x.type === 'emergency'));
+  e.resolve('ok', T0 + 60_000);
+  const quiet = run(e, 60, 120, () => ({ bpm: 118 }));
+  assert.ok(!quiet.some((x) => x.type === 'emergency' || x.type === 'warning'));
+  const worse = run(e, 180, 30, () => ({ bpm: 145 }));
+  assert.ok(worse.some((x) => x.type === 'emergency'));
+});
+
+test('hands off the wheel for 15 s: no-contact notice, never an emergency', () => {
+  const e = engine();
+  run(e, 0, 10, () => ({}));
+  const ev = run(e, 10, 40, () => ({ finger: false, bpm: null, spo2: null }));
+  assert.deepEqual(ev.map((x) => [x.type, x.episode.kind]), [['notice', 'no_contact']]);
+});

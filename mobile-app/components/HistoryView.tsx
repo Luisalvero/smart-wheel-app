@@ -13,6 +13,21 @@ import type { Archive } from '../lib/archive/codec';
 import { Btn, C, Card, Pill, Row, SectionTitle, fmtBytes, fmtDuration, fmtNum } from './ui';
 import { Waveform } from './charts';
 
+const KIND: Record<string, string> = {
+  bpm_high: 'high heart rate',
+  bpm_low: 'low heart rate',
+  spo2_low: 'low oxygen',
+  no_contact: 'no hand on sensor',
+  irregular_rhythm: 'irregular pulse pattern',
+};
+const OUTCOME: Record<string, string> = {
+  ok: 'said OK',
+  not_ok: 'not OK · escalated (sim.)',
+  no_response: 'no answer · escalated (sim.)',
+  recovered: 'recovered on its own',
+  unconfirmed: 'not confirmed (signal)',
+};
+
 const when = (iso: string) =>
   new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -100,11 +115,16 @@ function Detail(props: { session: SessionSummary; onBack: () => void }) {
           {alerts.map((a) => (
             <Row
               key={a.id}
-              label={`${new Date(a.started_at).toLocaleTimeString()} · ${a.kind.replace('_', ' ')} (${fmtNum(a.value)})`}
-              value={a.response === 'ok' ? 'said OK' : a.escalated ? 'escalated (sim.)' : a.response ?? 'open'}
-              tone={a.escalated ? 'bad' : 'neutral'}
+              label={`${new Date(a.started_at).toLocaleTimeString()} · ${KIND[a.kind] ?? a.kind}${
+                a.kind === 'no_contact' || a.kind === 'irregular_rhythm' ? '' : ` ${fmtNum(a.value)}`
+              }${a.level && a.level !== 'notice' ? ` (${a.level})` : ''}`}
+              value={OUTCOME[a.response ?? ''] ?? (a.level === 'notice' ? 'noted' : 'open')}
+              tone={a.escalated ? 'bad' : a.response === 'ok' || a.response === 'recovered' ? 'good' : 'neutral'}
             />
           ))}
+          <Text style={st.note}>
+            Notices are only logged. A warning is watched for 15 s (8 s if critical); only if it holds does the phone ask out loud.
+          </Text>
         </Card>
       ) : null}
 

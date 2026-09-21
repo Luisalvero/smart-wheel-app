@@ -12,7 +12,7 @@ import * as repo from '../lib/db/repositories';
 import type { DriverProfile } from '../lib/db/repositories';
 import { C } from './ui';
 import { DriverPicker } from './DriverPicker';
-import { DriveView } from './DriveView';
+import { DriveView, VoiceCheckModal } from './DriveView';
 import { HistoryView } from './HistoryView';
 import { SettingsView } from './SettingsView';
 
@@ -90,6 +90,8 @@ export default function SmartWheelScreen() {
         {tab === 'history' ? <HistoryView refreshKey={`${drive.session?.id ?? ''}:${drive.session?.status ?? ''}:${drive.fold.state}`} /> : null}
         {tab === 'settings' ? <SettingsView drive={drive} autoOn={autoOn} setAutoOn={setAutoOn} /> : null}
       </View>
+
+      <VoiceCheckModal drive={drive} />
 
       <View style={st.tabs}>
         {(

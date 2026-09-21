@@ -13,14 +13,14 @@
  * plus link_state ('streaming' | 'sensor_lost' | 'pi_lost'), so the dashboard
  * can tell "phone online but the wheel sensor dropped" from "phone went quiet".
  *
- * Schema tolerance: if the database hasn't had supabase/v3_dashboard.sql yet,
- * the v3 columns don't exist and PostgREST rejects the whole upsert. The first
- * such error switches this uploader to the v2 column set, so live upload keeps
- * working on an older database instead of silently stopping.
+ * Schema tolerance: if the database hasn't had the latest SQL (v3_dashboard,
+ * v4_flags), newer columns don't exist and PostgREST rejects the whole upsert.
+ * The first such error makes that table fall back to its older column set, so
+ * live upload keeps working on an older database instead of silently stopping.
  */
 import { supabase } from '../supabase';
 import { getDatabase } from './database';
-import type { DriveAlertRow, DriveSession, DriverProfile, TelemetryEvent } from './repositories';
+import { parseList, type DriveAlertRow, type DriveSession, type DriverProfile, type TelemetryEvent } from './repositories';
 import { archiveBytes, archiveInfo } from '../archive/archiveStore';
 
 const INTERVAL_MS = 1000;
@@ -49,7 +49,8 @@ export class LiveUploader {
   private running: Promise<void> = Promise.resolve();
   private sessionId: string | null = null;
   private profilePushed: string | null = null;
-  private v3 = true;
+  /** Tables whose newer columns the database lacks (older SQL applied). */
+  private legacy = new Set<string>();
   readonly status: LiveStatus = {
     ok: true,
     pushed: 0,
@@ -115,23 +116,25 @@ export class LiveUploader {
     this.status.ok = error === null;
     this.status.lastError = error;
     this.status.pushed += pushed;
-    this.status.legacySchema = !this.v3;
+    this.status.legacySchema = this.legacy.size > 0;
     if (error === null) this.status.lastPushAt = new Date();
     this.onStatus?.({ ...this.status });
   }
 
-  /** Upsert with automatic fallback to the pre-v3 column set. */
-  private async upsert(table: string, rows: Record<string, unknown>[], v3Keys: string[]) {
+  /** Upsert that drops `newerKeys` for a table whose database lacks them
+   *  (older SQL applied), per table, so one missing column never costs the
+   *  others -- e.g. the v3 heartbeat keeps working without the v4 profile fields. */
+  private async upsert(table: string, rows: Record<string, unknown>[], newerKeys: string[]) {
     const strip = (r: Record<string, unknown>) => {
       const c = { ...r };
-      for (const k of v3Keys) delete c[k];
+      for (const k of newerKeys) delete c[k];
       return c;
     };
-    const body = this.v3 ? rows : rows.map(strip);
+    const body = this.legacy.has(table) ? rows.map(strip) : rows;
     this.status.bytesSent += JSON.stringify(body).length;
     let r = await supabase.from(table).upsert(body, { onConflict: 'id' });
-    if (r.error && this.v3 && v3Keys.length && isMissingColumn(r.error.message)) {
-      this.v3 = false;
+    if (r.error && !this.legacy.has(table) && newerKeys.length && isMissingColumn(r.error.message)) {
+      this.legacy.add(table);
       r = await supabase.from(table).upsert(rows.map(strip), { onConflict: 'id' });
     }
     return r.error;
@@ -161,9 +164,14 @@ export class LiveUploader {
               gender: profile.gender,
               created_at: profile.created_at,
               updated_at: profile.updated_at,
+              // v4. The emergency contact is deliberately NOT uploaded: the
+              // phone is what escalates, so the number never needs to leave it.
+              conditions: parseList(profile.conditions),
+              medications: parseList(profile.medications),
+              language: profile.language ?? 'en',
             },
           ],
-          [],
+          ['conditions', 'medications', 'language'],
         );
         if (err) return this.report(`profile: ${err.message}`);
         this.profilePushed = profile.id;
@@ -228,9 +236,9 @@ export class LiveUploader {
         if (events.length < BATCH_SIZE) break;
       }
 
-      if (this.v3) await this.pushAlerts(sessionId);
+      await this.pushAlerts(sessionId);
       if (final && session.status !== 'active') {
-        if (this.v3) await this.pushArchive(sessionId);
+        await this.pushArchive(sessionId);
         await db.runAsync("UPDATE drive_sessions SET sync_status = 'synced' WHERE id = ?", [sessionId]);
       }
       this.report(null, pushed);
@@ -248,8 +256,8 @@ export class LiveUploader {
     );
     if (!alerts.length) return;
     const body = alerts.map(({ sync_status: _s, escalated, ...a }) => ({ ...a, escalated: escalated === 1 }));
-    this.status.bytesSent += JSON.stringify(body).length;
-    const { error } = await supabase.from('drive_alerts').upsert(body, { onConflict: 'id' });
+    // level/channel/answer_confidence are v4 columns: dropped automatically on an older database.
+    const error = await this.upsert('drive_alerts', body, ['level', 'channel', 'answer_confidence']);
     if (error) return; // table missing on an old database: alerts stay local, retried later
     await db.runAsync(
       `UPDATE drive_alerts SET sync_status = 'synced' WHERE id IN (${alerts.map(() => '?').join(',')})`,

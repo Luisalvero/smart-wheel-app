@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 
 import * as repo from '../lib/db/repositories';
 import type { DriverProfile, Gender } from '../lib/db/repositories';
+import { CONDITIONS, MEDICATIONS, bmi, bmiCategory } from '../lib/analysis/profileModel';
 import { Btn, C, Card, SectionTitle } from './ui';
 
 const GENDERS: { key: Gender; label: string }[] = [
@@ -30,8 +31,16 @@ export function DriverPicker(props: {
   onCreated: () => Promise<void>;
 }) {
   const [adding, setAdding] = useState(props.profiles.length === 0);
-  const [form, setForm] = useState({ custom_id: '', display_name: '', weight_kg: '', age: '', height_cm: '' });
+  const [editing, setEditing] = useState<DriverProfile | null>(null);
+  const blank = { custom_id: '', display_name: '', weight_kg: '', age: '', height_cm: '', emergency_name: '', emergency_phone: '' };
+  const [form, setForm] = useState(blank);
   const [gender, setGender] = useState<Gender | null>(null);
+  const [conditions, setConditions] = useState<string[]>([]);
+  const [medications, setMedications] = useState<string[]>([]);
+  const [language, setLanguage] = useState<'en' | 'es'>('en');
+  const toggle = (list: string[], set: (v: string[]) => void, key: string) =>
+    set(list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
+  const liveBmi = bmi(Number(form.weight_kg) || null, Number(form.height_cm) || null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -45,6 +54,25 @@ export function DriverPicker(props: {
     return n;
   }
 
+  /** Long-press a driver: reopen the form with their details. */
+  function edit(p: DriverProfile) {
+    setEditing(p);
+    setForm({
+      custom_id: p.custom_id ?? '',
+      display_name: p.display_name,
+      weight_kg: p.weight_kg ? String(p.weight_kg) : '',
+      age: p.age ? String(p.age) : '',
+      height_cm: p.height_cm ? String(p.height_cm) : '',
+      emergency_name: p.emergency_name ?? '',
+      emergency_phone: p.emergency_phone ?? '',
+    });
+    setGender(p.gender);
+    setConditions(repo.parseList(p.conditions));
+    setMedications(repo.parseList(p.medications));
+    setLanguage(p.language === 'es' ? 'es' : 'en');
+    setAdding(true);
+  }
+
   async function create() {
     try {
       setError(null);
@@ -53,16 +81,26 @@ export function DriverPicker(props: {
         return;
       }
       setBusy(true);
-      await repo.createProfile({
+      const save = editing ? (input: repo.NewProfileInput) => repo.updateProfile(editing.id, input) : repo.createProfile;
+      await save({
         custom_id: form.custom_id,
         display_name: form.display_name,
         weight_kg: optionalNumber(form.weight_kg, 'Weight'),
         age: optionalNumber(form.age, 'Age'),
         height_cm: optionalNumber(form.height_cm, 'Height'),
         gender,
+        conditions,
+        medications,
+        language,
+        emergency_name: form.emergency_name,
+        emergency_phone: form.emergency_phone,
       });
-      setForm({ custom_id: '', display_name: '', weight_kg: '', age: '', height_cm: '' });
+      setForm(blank);
       setGender(null);
+      setConditions([]);
+      setMedications([]);
+      setLanguage('en');
+      setEditing(null);
       setAdding(false);
       await props.onCreated();
     } catch (e) {
@@ -86,13 +124,18 @@ export function DriverPicker(props: {
   return (
     <ScrollView contentContainerStyle={st.container} keyboardShouldPersistTaps="handled">
       <Text style={st.hello}>Who's driving?</Text>
-      <Text style={st.lead}>Pick a driver so readings are saved to the right profile and compared with their usual range.</Text>
+      <Text style={st.lead}>
+        Pick a driver so readings are saved to the right profile and compared with their usual range. Long-press a driver to
+        edit their profile.
+      </Text>
 
       {props.profiles.map((p) => (
         <Pressable
           key={p.id}
           accessibilityRole="button"
           onPress={() => props.onPick(p)}
+          onLongPress={() => edit(p)}
+          accessibilityHint="Long-press to edit this driver's profile"
           style={({ pressed }) => [st.driver, pressed && { opacity: 0.7 }]}
         >
           <View style={st.avatar}>
@@ -104,8 +147,9 @@ export function DriverPicker(props: {
               {[
                 p.custom_id,
                 p.age ? `${p.age} y` : null,
-                p.weight_kg ? `${p.weight_kg} kg` : null,
-                p.height_cm ? `${p.height_cm} cm` : null,
+                bmi(p.weight_kg, p.height_cm) ? `BMI ${bmi(p.weight_kg, p.height_cm)}` : null,
+                repo.parseList(p.conditions).length ? `${repo.parseList(p.conditions).length} condition(s)` : null,
+                p.language === 'es' ? 'Español' : null,
               ]
                 .filter(Boolean)
                 .join(' · ') || 'No details'}
@@ -119,7 +163,7 @@ export function DriverPicker(props: {
         <Btn title="+ Add a driver" kind="ghost" onPress={() => setAdding(true)} />
       ) : (
         <Card>
-          <SectionTitle>New driver</SectionTitle>
+          <SectionTitle>{editing ? `Edit ${editing.display_name}` : 'New driver'}</SectionTitle>
           {input('display_name', 'Name *')}
           {input('custom_id', 'Subject ID (e.g. SUBJ-001)')}
           <View style={st.row3}>
@@ -127,6 +171,11 @@ export function DriverPicker(props: {
             <View style={{ flex: 1 }}>{input('weight_kg', 'Weight kg', true)}</View>
             <View style={{ flex: 1 }}>{input('height_cm', 'Height cm', true)}</View>
           </View>
+          {liveBmi ? (
+            <Text style={st.hint}>
+              BMI {liveBmi} · {bmiCategory(liveBmi)} (calculated from height and weight)
+            </Text>
+          ) : null}
           <View style={st.genders}>
             {GENDERS.map((g) => (
               <Pressable
@@ -138,9 +187,62 @@ export function DriverPicker(props: {
               </Pressable>
             ))}
           </View>
+          <Text style={st.label}>Health conditions (optional)</Text>
+          <Text style={st.hint}>Used to set what heart rate is normal for this driver. Stays with the profile.</Text>
+          <View style={st.genders}>
+            {CONDITIONS.map((c) => (
+              <Pressable
+                key={c.key}
+                onPress={() => toggle(conditions, setConditions, c.key)}
+                style={[st.chip, conditions.includes(c.key) && st.chipOn]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: conditions.includes(c.key) }}
+              >
+                <Text style={[st.chipText, conditions.includes(c.key) && st.chipTextOn]}>{c.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={st.label}>Medications (optional)</Text>
+          <View style={st.genders}>
+            {MEDICATIONS.map((m) => (
+              <Pressable
+                key={m.key}
+                onPress={() => toggle(medications, setMedications, m.key)}
+                style={[st.chip, medications.includes(m.key) && st.chipOn]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: medications.includes(m.key) }}
+              >
+                <Text style={[st.chipText, medications.includes(m.key) && st.chipTextOn]}>{m.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={st.label}>Voice check language</Text>
+          <View style={st.genders}>
+            {(
+              [
+                ['en', 'English'],
+                ['es', 'Español'],
+              ] as ['en' | 'es', string][]
+            ).map(([k, label]) => (
+              <Pressable key={k} onPress={() => setLanguage(k)} style={[st.chip, language === k && st.chipOn]}>
+                <Text style={[st.chipText, language === k && st.chipTextOn]}>{label}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={st.label}>Emergency contact (optional, stays on this phone)</Text>
+          {input('emergency_name', 'Name')}
+          {input('emergency_phone', 'Phone', false)}
           {error ? <Text style={st.error}>{error}</Text> : null}
           <Btn title="Save driver" onPress={create} busy={busy} />
-          {props.profiles.length ? <Btn title="Cancel" kind="ghost" onPress={() => setAdding(false)} /> : null}
+          {props.profiles.length ? <Btn
+              title="Cancel"
+              kind="ghost"
+              onPress={() => {
+                setAdding(false);
+                setEditing(null);
+                setForm(blank);
+              }}
+            /> : null}
         </Card>
       )}
     </ScrollView>
@@ -177,4 +279,6 @@ const st = StyleSheet.create({
   chipText: { color: C.sub, fontWeight: '600' },
   chipTextOn: { color: '#fff' },
   error: { color: C.bad },
+  label: { fontSize: 14, fontWeight: '700', color: C.ink, marginTop: 6 },
+  hint: { fontSize: 12, color: C.sub },
 });

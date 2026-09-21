@@ -22,6 +22,22 @@ export type DriverProfile = {
   gender: Gender | null;
   created_at: string;
   updated_at: string;
+  /** JSON arrays of keys from lib/analysis/profileModel.ts (CONDITIONS, MEDICATIONS). */
+  conditions?: string;
+  medications?: string;
+  /** Voice-check language: 'en' | 'es'. */
+  language?: string;
+  emergency_name?: string | null;
+  emergency_phone?: string | null;
+};
+
+export const parseList = (json: string | undefined | null): string[] => {
+  try {
+    const v = JSON.parse(json ?? '[]');
+    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
 };
 
 export type NewProfileInput = {
@@ -31,6 +47,11 @@ export type NewProfileInput = {
   age?: number | null;
   height_cm?: number | null;
   gender?: Gender | null;
+  conditions?: string[];
+  medications?: string[];
+  language?: 'en' | 'es';
+  emergency_name?: string | null;
+  emergency_phone?: string | null;
 };
 
 export type SessionStatus = 'active' | 'completed' | 'interrupted';
@@ -117,12 +138,17 @@ export async function createProfile(
     gender: input.gender ?? null,
     created_at: nowIso(),
     updated_at: nowIso(),
+    conditions: JSON.stringify(input.conditions ?? []),
+    medications: JSON.stringify(input.medications ?? []),
+    language: input.language ?? 'en',
+    emergency_name: input.emergency_name?.trim() || null,
+    emergency_phone: input.emergency_phone?.trim() || null,
   };
   await db.runAsync(
     `INSERT INTO driver_profiles
        (id, custom_id, display_name, weight_kg, age, height_cm, gender,
-        created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        created_at, updated_at, conditions, medications, language, emergency_name, emergency_phone)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       profile.id,
       profile.custom_id,
@@ -133,9 +159,41 @@ export async function createProfile(
       profile.gender,
       profile.created_at,
       profile.updated_at,
+      profile.conditions!,
+      profile.medications!,
+      profile.language!,
+      profile.emergency_name ?? null,
+      profile.emergency_phone ?? null,
     ],
   );
   return profile;
+}
+
+/** Updates an existing profile (the form's edit mode). */
+export async function updateProfile(id: string, input: NewProfileInput): Promise<void> {
+  const name = input.display_name.trim();
+  if (!name) throw new Error('Driver name cannot be empty');
+  const db = await getDatabase();
+  await db.runAsync(
+    `UPDATE driver_profiles SET custom_id = ?, display_name = ?, weight_kg = ?, age = ?, height_cm = ?, gender = ?,
+       conditions = ?, medications = ?, language = ?, emergency_name = ?, emergency_phone = ?, updated_at = ?
+     WHERE id = ?`,
+    [
+      input.custom_id?.trim() || null,
+      name,
+      input.weight_kg ?? null,
+      input.age ?? null,
+      input.height_cm ?? null,
+      input.gender ?? null,
+      JSON.stringify(input.conditions ?? []),
+      JSON.stringify(input.medications ?? []),
+      input.language ?? 'en',
+      input.emergency_name?.trim() || null,
+      input.emergency_phone?.trim() || null,
+      nowIso(),
+      id,
+    ],
+  );
 }
 
 export async function deleteProfile(id: string): Promise<void> {
@@ -438,18 +496,25 @@ export type DriveAlertRow = {
   responded_at: string | null;
   escalated: number;
   sync_status: string;
+  /** 'notice' | 'warning' | 'critical' (highest level the episode reached). */
+  level?: string | null;
+  /** How the driver answered: 'voice' | 'button' | 'none'. */
+  channel?: string | null;
+  answer_confidence?: number | null;
 };
 
 export async function saveAlert(a: Omit<DriveAlertRow, 'sync_status'>): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
     `INSERT INTO drive_alerts (id, session_id, kind, value, threshold, started_at, prompted_at,
-                               response, responded_at, escalated, sync_status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local')
-     ON CONFLICT(id) DO UPDATE SET response = excluded.response, responded_at = excluded.responded_at,
-       escalated = excluded.escalated, sync_status = 'local'`,
+                               response, responded_at, escalated, sync_status, level, channel, answer_confidence)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'local', ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET value = excluded.value, prompted_at = excluded.prompted_at,
+       response = excluded.response, responded_at = excluded.responded_at, escalated = excluded.escalated,
+       level = excluded.level, channel = excluded.channel, answer_confidence = excluded.answer_confidence,
+       sync_status = 'local'`,
     [a.id, a.session_id, a.kind, a.value, a.threshold, a.started_at, a.prompted_at, a.response,
-     a.responded_at, a.escalated],
+     a.responded_at, a.escalated, a.level ?? null, a.channel ?? null, a.answer_confidence ?? null],
   );
 }
 

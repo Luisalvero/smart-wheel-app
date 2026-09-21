@@ -15,8 +15,9 @@ import * as repo from '../db/repositories';
 import { syncToSupabase } from '../db/sync';
 import type { DriveSession, DriverProfile, StorageMode } from '../db/repositories';
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
-import { AlertMonitor, type AlertEvent, type OpenAlert } from '../analysis/alerts';
 import type { Baseline } from '../analysis/baseline';
+import { SafetyController, initialSafety, type SafetyState } from '../analysis/safetyController';
+import { phoneVoiceIO, prepareVoice } from '../voice/speechIO';
 
 /** Seconds of vitals kept for the on-screen charts. */
 export const CHART_SECONDS = 120;
@@ -66,9 +67,9 @@ type State = {
   live: LiveStatus | null;
   storageMode: StorageMode;
   baseline: Baseline | null;
-  band: { low: number; high: number; personal: boolean } | null;
-  alert: OpenAlert | null;
-  lastAlert: { kind: string; response: string; escalated: boolean; at: Date } | null;
+  /** Flags, the voice check and the rhythm advisory (lib/analysis/safetyController.ts). */
+  safety: SafetyState;
+  voice: { granted: boolean; onDevice: boolean } | null;
   fold: FoldState;
 };
 
@@ -88,8 +89,9 @@ type Action =
   | { type: 'live'; live: LiveStatus }
   | { type: 'rate'; point: RatePoint }
   | { type: 'storageMode'; mode: StorageMode }
-  | { type: 'baseline'; baseline: Baseline | null; band: State['band'] }
-  | { type: 'alert'; alert: OpenAlert | null; last?: State['lastAlert'] }
+  | { type: 'baseline'; baseline: Baseline | null }
+  | { type: 'safety'; safety: SafetyState }
+  | { type: 'voice'; voice: State['voice'] }
   | { type: 'fold'; fold: FoldState };
 
 const initial: State = {
@@ -123,9 +125,8 @@ const initial: State = {
   live: null,
   storageMode: 'vitals',
   baseline: null,
-  band: null,
-  alert: null,
-  lastAlert: null,
+  safety: initialSafety,
+  voice: null,
   fold: { state: 'idle' },
 };
 
@@ -154,6 +155,7 @@ function reducer(s: State, a: Action): State {
         relay: s.relay,
         storageMode: s.storageMode,
         rateSeries: s.rateSeries,
+        voice: s.voice,
         driver: a.driver,
       };
     case 'session':
@@ -198,7 +200,7 @@ function reducer(s: State, a: Action): State {
         notice: `Sensor restarted at ${new Date().toLocaleTimeString()} — continued in a new session.`,
       };
     case 'resetSession':
-      return { ...s, stored: 0, duplicates: 0, ignoredNoSession: 0, fold: { state: 'idle' }, lastAlert: null };
+      return { ...s, stored: 0, duplicates: 0, ignoredNoSession: 0, fold: { state: 'idle' } };
     case 'live':
       return { ...s, live: a.live };
     case 'rate':
@@ -206,9 +208,11 @@ function reducer(s: State, a: Action): State {
     case 'storageMode':
       return { ...s, storageMode: a.mode };
     case 'baseline':
-      return { ...s, baseline: a.baseline, band: a.band };
-    case 'alert':
-      return { ...s, alert: a.alert, lastAlert: a.last === undefined ? s.lastAlert : a.last };
+      return { ...s, baseline: a.baseline };
+    case 'safety':
+      return { ...s, safety: a.safety };
+    case 'voice':
+      return { ...s, voice: a.voice };
     case 'fold':
       return { ...s, fold: a.fold };
     default:
@@ -232,7 +236,21 @@ export function useDriveSession() {
   const rxBytes = useRef(0);
   // Serialises database writes so back-to-back frames cannot interleave.
   const queue = useRef<Promise<void>>(Promise.resolve());
-  const monitor = useRef(new AlertMonitor(null, uuidv4));
+  // Flags → voice check. Created once; reports its state into the reducer.
+  const safety = useMemo(
+    () =>
+      new SafetyController({
+        voiceIO: phoneVoiceIO,
+        save: repo.saveAlert,
+        haptic: (k) =>
+          void Haptics.notificationAsync(
+            k === 'error' ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Warning,
+          ),
+        onChange: (st) => dispatch({ type: 'safety', safety: st }),
+        newId: uuidv4,
+      }),
+    [],
+  );
 
   // What the dashboard's "link" pill shows, reported with every heartbeat.
   const linkState = useCallback((): LinkState => {
@@ -257,49 +275,6 @@ export function useDriveSession() {
     return () => clearInterval(t);
   }, [live]);
 
-  const persistAlert = useCallback(
-    async (e: AlertEvent) => {
-      const session = sessionRef.current;
-      if (!session) return;
-      const a = e.alert;
-      await repo.saveAlert({
-        id: a.id,
-        session_id: session.id,
-        kind: a.kind,
-        value: Math.round(a.value * 10) / 10,
-        threshold: Math.round(a.threshold * 10) / 10,
-        started_at: new Date(a.startedAt).toISOString(),
-        prompted_at: new Date(a.promptedAt).toISOString(),
-        response: e.type === 'resolved' ? e.response : null,
-        responded_at: e.type === 'resolved' ? new Date(e.at).toISOString() : null,
-        escalated: e.type === 'resolved' && e.escalated ? 1 : 0,
-      });
-      live.nudge();
-    },
-    [live],
-  );
-
-  const handleAlertEvent = useCallback(
-    (e: AlertEvent | null) => {
-      if (!e) return;
-      if (e.type === 'prompt') {
-        // Proposal: non-visual first. The phone buzzes; the prompt is there
-        // for a passenger or a stop, never something to read while driving.
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        dispatch({ type: 'alert', alert: e.alert });
-      } else {
-        if (e.escalated) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        dispatch({
-          type: 'alert',
-          alert: null,
-          last: { kind: e.alert.kind, response: e.response, escalated: e.escalated, at: new Date(e.at) },
-        });
-      }
-      void persistAlert(e);
-    },
-    [persistAlert],
-  );
-
   const onBytes = useCallback(
     (bytes: Uint8Array) => {
       const rx = new Date(); // stamped on arrival, before any queueing
@@ -307,7 +282,8 @@ export function useDriveSession() {
       for (const f of deframer.current.feed(bytes)) {
         lastRx.current = rx.getTime();
         const resetsBefore = seq.current.resets;
-        const lost = (seq.current.update(f.seq), seq.current.lost);
+        const missingNow = seq.current.update(f.seq); // frames lost just before this one
+        const lost = seq.current.lost;
         // The ESP32's sequence restarts at 0 whenever it reboots -- every
         // ignition cycle in the car. Without handling this, the new numbers
         // collide with ones already stored in this session: the duplicate guard
@@ -329,7 +305,8 @@ export function useDriveSession() {
           crc: deframer.current.crcErrors,
         });
         if (sessionRef.current?.status === 'active') {
-          handleAlertEvent(monitor.current.feed(rx.getTime(), f.usable ? f.heartRate : null, f.usable ? f.spo2 : null));
+          safety.onFrame(f, rx, missingNow);
+          live.nudge(); // flags and answers reach the dashboard without waiting for the tick
         }
 
         queue.current = queue.current
@@ -375,7 +352,7 @@ export function useDriveSession() {
           .catch(() => undefined);
       }
     },
-    [live, handleAlertEvent],
+    [live, safety],
   );
 
   const connection = useMemo(
@@ -419,11 +396,14 @@ export function useDriveSession() {
     if (driverId) connection.start();
   }, [driverId, connection]);
 
-  const loadBaseline = useCallback(async (profileId: string) => {
-    const b = await repo.driverBaseline(profileId);
-    monitor.current = new AlertMonitor(b, uuidv4);
-    dispatch({ type: 'baseline', baseline: b, band: monitor.current.band() });
-  }, []);
+  const loadBaseline = useCallback(
+    async (driver: DriverProfile) => {
+      const b = await repo.driverBaseline(driver.id);
+      safety.configure(driver, b);
+      dispatch({ type: 'baseline', baseline: b });
+    },
+    [safety],
+  );
 
   const selectDriver = useCallback(
     (driver: DriverProfile) => {
@@ -432,7 +412,7 @@ export function useDriveSession() {
       avgBpm.current = [];
       avgSpo2.current = [];
       dispatch({ type: 'driver', driver });
-      void loadBaseline(driver.id);
+      void loadBaseline(driver);
     },
     [loadBaseline],
   );
@@ -443,16 +423,17 @@ export function useDriveSession() {
     dispatch({ type: 'resetSession' });
     const session = await repo.startSession(state.driver.id, state.storageMode);
     sessionRef.current = session;
-    monitor.current = new AlertMonitor(state.baseline, uuidv4);
+    safety.startSession(session.id);
     dispatch({ type: 'session', session });
     live.follow(session.id);
-  }, [state.driver, state.storageMode, state.baseline, live]);
+    // Microphone + speech permission now, so an emergency is never blocked by a dialog.
+    if (!state.voice?.granted) dispatch({ type: 'voice', voice: await prepareVoice() });
+  }, [state.driver, state.storageMode, state.voice, live, safety]);
 
   const endSession = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
-    const open = monitor.current.open;
-    if (open) handleAlertEvent(monitor.current.respond(Date.now(), 'ok')); // ending the drive closes the prompt
+    safety.endSession();
     const ended = await repo.endSession(session);
     sessionRef.current = null;
     dispatch({ type: 'session', session: ended });
@@ -467,8 +448,8 @@ export function useDriveSession() {
       }
     }
     await live.finish(ended.id);
-    if (state.driver) void loadBaseline(state.driver.id); // this drive now counts toward the baseline
-  }, [live, handleAlertEvent, loadBaseline, state.driver]);
+    if (state.driver) void loadBaseline(state.driver); // this drive now counts toward the baseline
+  }, [live, safety, loadBaseline, state.driver]);
 
   /** Back to the driver list. An active session is ended first, never dropped. */
   const leaveDriver = useCallback(async () => {
@@ -481,10 +462,14 @@ export function useDriveSession() {
     dispatch({ type: 'storageMode', mode });
   }, []);
 
-  const respondAlert = useCallback(
-    (response: 'ok' | 'unwell') => handleAlertEvent(monitor.current.respond(Date.now(), response)),
-    [handleAlertEvent],
-  );
+  /** Settings: hear and answer the real voice check once (nothing recorded). */
+  const rehearseVoice = useCallback(async () => {
+    if (!state.voice?.granted) dispatch({ type: 'voice', voice: await prepareVoice() });
+    return safety.rehearse();
+  }, [safety, state.voice]);
+
+  /** On-screen answer to the voice check (always available). */
+  const respondAlert = useCallback((response: 'ok' | 'not_ok') => safety.answer(response), [safety]);
 
   return {
     ...state,
@@ -499,5 +484,6 @@ export function useDriveSession() {
     endSession,
     setStorageMode,
     respondAlert,
+    rehearseVoice,
   };
 }

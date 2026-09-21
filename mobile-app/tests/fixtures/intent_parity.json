@@ -1,0 +1,569 @@
+[
+{
+"text": "yeah i'm doing alright",
+"label": "ok",
+"probs": [
+0.958523,
+0.03821,
+0.003266
+]
+},
+{
+"text": "yep all good",
+"label": "ok",
+"probs": [
+0.984212,
+0.011914,
+0.003873
+]
+},
+{
+"text": "i'm totally okay thank you",
+"label": "ok",
+"probs": [
+0.917508,
+0.03672,
+0.045772
+]
+},
+{
+"text": "no no i'm good man",
+"label": "ok",
+"probs": [
+0.784629,
+0.21125,
+0.004122
+]
+},
+{
+"text": "nah i'm fine",
+"label": "ok",
+"probs": [
+0.922817,
+0.071355,
+0.005828
+]
+},
+{
+"text": "i'm fine why",
+"label": "ok",
+"probs": [
+0.953984,
+0.019346,
+0.02667
+]
+},
+{
+"text": "sure i'm fine",
+"label": "ok",
+"probs": [
+0.99428,
+0.004002,
+0.001718
+]
+},
+{
+"text": "i'm ok just a bit tired",
+"label": "ok",
+"probs": [
+0.815351,
+0.147391,
+0.037258
+]
+},
+{
+"text": "yes i feel okay",
+"label": "ok",
+"probs": [
+0.894939,
+0.096314,
+0.008747
+]
+},
+{
+"text": "mm hmm i'm good",
+"label": "ok",
+"probs": [
+0.963145,
+0.024571,
+0.012284
+]
+},
+{
+"text": "everything's all right",
+"label": "ok",
+"probs": [
+0.912039,
+0.083361,
+0.0046
+]
+},
+{
+"text": "i'm good bro",
+"label": "ok",
+"probs": [
+0.946527,
+0.043914,
+0.009559
+]
+},
+{
+"text": "not bad at all",
+"label": "ok",
+"probs": [
+0.463375,
+0.444053,
+0.092572
+]
+},
+{
+"text": "fine fine",
+"label": "ok",
+"probs": [
+0.940214,
+0.008946,
+0.05084
+]
+},
+{
+"text": "yes everything is okay",
+"label": "ok",
+"probs": [
+0.977318,
+0.012996,
+0.009687
+]
+},
+{
+"text": "absolutely fine",
+"label": "ok",
+"probs": [
+0.9904,
+0.004453,
+0.005147
+]
+},
+{
+"text": "i'm fine it was nothing",
+"label": "ok",
+"probs": [
+0.959607,
+0.025801,
+0.014592
+]
+},
+{
+"text": "s\u00ed estoy bien",
+"label": "ok",
+"probs": [
+0.975107,
+0.017656,
+0.007237
+]
+},
+{
+"text": "todo bien gracias",
+"label": "ok",
+"probs": [
+0.90095,
+0.064509,
+0.034541
+]
+},
+{
+"text": "claro estoy bien",
+"label": "ok",
+"probs": [
+0.982429,
+0.013044,
+0.004527
+]
+},
+{
+"text": "no, todo bien",
+"label": "ok",
+"probs": [
+0.88685,
+0.090481,
+0.022669
+]
+},
+{
+"text": "yeah yeah i'm okay",
+"label": "ok",
+"probs": [
+0.987635,
+0.008057,
+0.004308
+]
+},
+{
+"text": "of course i'm okay",
+"label": "ok",
+"probs": [
+0.993443,
+0.0027,
+0.003856
+]
+},
+{
+"text": "i feel alright",
+"label": "ok",
+"probs": [
+0.555183,
+0.435177,
+0.00964
+]
+},
+{
+"text": "no i don't need anything",
+"label": "ok",
+"probs": [
+0.774199,
+0.19068,
+0.035121
+]
+},
+{
+"text": "i'm good just hit a bump",
+"label": "ok",
+"probs": [
+0.882234,
+0.092437,
+0.025329
+]
+},
+{
+"text": "no i don't feel so good",
+"label": "not_ok",
+"probs": [
+0.028895,
+0.966278,
+0.004827
+]
+},
+{
+"text": "not really my chest is tight",
+"label": "not_ok",
+"probs": [
+0.045202,
+0.913358,
+0.04144
+]
+},
+{
+"text": "i feel really dizzy",
+"label": "not_ok",
+"probs": [
+0.056359,
+0.926197,
+0.017444
+]
+},
+{
+"text": "i think i need help",
+"label": "not_ok",
+"probs": [
+0.120462,
+0.835832,
+0.043706
+]
+},
+{
+"text": "please call 911",
+"label": "not_ok",
+"probs": [
+0.025682,
+0.922021,
+0.052298
+]
+},
+{
+"text": "i can't breathe well",
+"label": "not_ok",
+"probs": [
+0.085022,
+0.800559,
+0.114419
+]
+},
+{
+"text": "my heart is racing really fast",
+"label": "not_ok",
+"probs": [
+0.024951,
+0.937514,
+0.037535
+]
+},
+{
+"text": "nope not okay",
+"label": "not_ok",
+"probs": [
+0.042903,
+0.904515,
+0.052582
+]
+},
+{
+"text": "i'm not feeling so hot",
+"label": "not_ok",
+"probs": [
+0.030105,
+0.961583,
+0.008312
+]
+},
+{
+"text": "i feel like i'm going to pass out",
+"label": "not_ok",
+"probs": [
+0.038017,
+0.95551,
+0.006472
+]
+},
+{
+"text": "no i'm dizzy",
+"label": "not_ok",
+"probs": [
+0.044831,
+0.949683,
+0.005485
+]
+},
+{
+"text": "i'm not okay at all",
+"label": "not_ok",
+"probs": [
+0.047817,
+0.94519,
+0.006993
+]
+},
+{
+"text": "call an ambulance please",
+"label": "not_ok",
+"probs": [
+0.007977,
+0.97895,
+0.013074
+]
+},
+{
+"text": "i feel sick to my stomach",
+"label": "not_ok",
+"probs": [
+0.022045,
+0.966914,
+0.011041
+]
+},
+{
+"text": "no estoy nada bien",
+"label": "not_ok",
+"probs": [
+0.449686,
+0.53216,
+0.018154
+]
+},
+{
+"text": "me siento muy mareado",
+"label": "not_ok",
+"probs": [
+0.017273,
+0.965858,
+0.016869
+]
+},
+{
+"text": "ay\u00fadame por favor",
+"label": "not_ok",
+"probs": [
+0.173499,
+0.612583,
+0.213918
+]
+},
+{
+"text": "llama al 911 ya",
+"label": "not_ok",
+"probs": [
+0.2014,
+0.686384,
+0.112216
+]
+},
+{
+"text": "my arm feels numb",
+"label": "not_ok",
+"probs": [
+0.072258,
+0.88976,
+0.037982
+]
+},
+{
+"text": "i need to stop right now",
+"label": "not_ok",
+"probs": [
+0.130522,
+0.822604,
+0.046874
+]
+},
+{
+"text": "not good at all",
+"label": "not_ok",
+"probs": [
+0.051781,
+0.926621,
+0.021598
+]
+},
+{
+"text": "yes i need an ambulance",
+"label": "not_ok",
+"probs": [
+0.040291,
+0.948525,
+0.011184
+]
+},
+{
+"text": "nah i feel weird",
+"label": "not_ok",
+"probs": [
+0.016664,
+0.977103,
+0.006233
+]
+},
+{
+"text": "i don't feel right at all",
+"label": "not_ok",
+"probs": [
+0.04005,
+0.952034,
+0.007916
+]
+},
+{
+"text": "something feels wrong",
+"label": "not_ok",
+"probs": [
+0.15405,
+0.805015,
+0.040934
+]
+},
+{
+"text": "what was that",
+"label": "unclear",
+"probs": [
+0.062849,
+0.030328,
+0.906823
+]
+},
+{
+"text": "say it again please",
+"label": "unclear",
+"probs": [
+0.017588,
+0.038201,
+0.94421
+]
+},
+{
+"text": "hold on a sec",
+"label": "unclear",
+"probs": [
+0.021621,
+0.08607,
+0.892309
+]
+},
+{
+"text": "who said that",
+"label": "unclear",
+"probs": [
+0.08934,
+0.02239,
+0.88827
+]
+},
+{
+"text": "turn right at the light",
+"label": "unclear",
+"probs": [
+0.026763,
+0.065767,
+0.90747
+]
+},
+{
+"text": "hmm let me see",
+"label": "unclear",
+"probs": [
+0.03847,
+0.132546,
+0.828984
+]
+},
+{
+"text": "sorry i didn't catch that",
+"label": "unclear",
+"probs": [
+0.050392,
+0.043124,
+0.906484
+]
+},
+{
+"text": "qu\u00e9 dijiste",
+"label": "unclear",
+"probs": [
+0.008459,
+0.022638,
+0.968903
+]
+},
+{
+"text": "espera un momento",
+"label": "unclear",
+"probs": [
+0.009351,
+0.015501,
+0.975148
+]
+},
+{
+"text": "put on the radio",
+"label": "unclear",
+"probs": [
+0.00376,
+0.010387,
+0.985852
+]
+},
+{
+"text": "i'm not sure what you mean",
+"label": "unclear",
+"probs": [
+0.213597,
+0.345294,
+0.441109
+]
+},
+{
+"text": "hello who is this",
+"label": "unclear",
+"probs": [
+0.010129,
+0.013536,
+0.976335
+]
+}
+]

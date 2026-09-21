@@ -2,20 +2,29 @@
  * The in-car screen: is everything connected, what are the vitals, is data
  * flowing, and one big start/stop button. Technical detail lives in Settings.
  */
-import { Modal, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { useDriveSession } from '../lib/hooks/useDriveSession';
 import { CHART_SECONDS } from '../lib/hooks/useDriveSession';
-import { RESPONSE_S } from '../lib/analysis/alerts';
 import { Btn, C, Card, Pill, Row, SectionTitle, fmtBytes, fmtClock, fmtDuration, fmtNum, type Tone } from './ui';
 import { RateDot, VitalChart } from './charts';
 
 type Drive = ReturnType<typeof useDriveSession>;
 
 const ALERT_TEXT: Record<string, string> = {
-  bpm_high: 'Your heart rate has been higher than usual',
-  bpm_low: 'Your heart rate has been lower than usual',
-  spo2_low: 'Your oxygen level has been lower than usual',
+  bpm_high: 'Your heart rate has been unusually high',
+  bpm_low: 'Your heart rate has been unusually low',
+  spo2_low: 'Your oxygen level has been low',
+};
+const WATCH_TEXT: Record<string, string> = {
+  bpm_high: 'Heart rate is high — checking the next few seconds',
+  bpm_low: 'Heart rate is low — checking the next few seconds',
+  spo2_low: 'Oxygen is low — checking the next few seconds',
+};
+const OUTCOME_TEXT: Record<string, string> = {
+  ok: 'you said you were OK',
+  not_ok: 'you said you were not OK — escalation (simulated)',
+  no_response: 'no answer — escalation (simulated)',
 };
 
 /** Phone → Pi → wheel sensor, each hop with its own state. */
@@ -79,8 +88,13 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
           ? { tone: 'brand', text: 'Reading your pulse…' }
           : { tone: 'good', text: 'Good signal' };
 
-  const inBand =
-    d.band && d.bpm !== null ? (d.bpm < d.band.low ? 'below' : d.bpm > d.band.high ? 'above' : 'in') : null;
+  const sf = d.safety;
+  const th = sf.th;
+  // The shaded "usual" zone on the chart: personal band ± 2 SD, inside the warning lines.
+  const usual =
+    sf.band && th
+      ? { low: Math.max(th.lowWarn, sf.band.mean - 2 * sf.band.sd), high: Math.min(th.highWarn, sf.band.mean + 2 * sf.band.sd) }
+      : null;
 
   return (
     <ScrollView contentContainerStyle={st.container}>
@@ -95,15 +109,23 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
           <VitalTile label="Heart rate" value={d.bpm} unit="BPM" avg={d.avgBpm} color={C.heart} soft={C.heartSoft} />
           <VitalTile label="Oxygen" value={d.spo2} unit="% SpO₂" avg={d.avgSpo2} color={C.oxygen} soft={C.oxygenSoft} />
         </View>
-        {d.band ? (
+        {sf.tracking ? (
+          <View style={st.watch} accessibilityLiveRegion="polite">
+            <Text style={st.watchText}>{WATCH_TEXT[sf.tracking.kind] ?? 'Checking…'}</Text>
+          </View>
+        ) : null}
+        {th && sf.band ? (
           <Text style={st.subtle}>
-            {d.band.personal ? 'Your usual range' : 'Safe range (learning your baseline)'}: {Math.round(d.band.low)}–
-            {Math.round(d.band.high)} BPM
-            {inBand === 'in' ? ' · within range' : inBand ? ` · ${inBand} range` : ''}
+            Watching for heart rate below {th.lowWarn} or above {th.highWarn} BPM, oxygen below {th.spo2Warn + 1}%.{' '}
+            {sf.band.weight >= 0.5
+              ? 'Tuned to your own drives.'
+              : sf.band.weight > 0
+                ? 'Learning your normal from your drives.'
+                : 'Based on your profile (age, sex, BMI, conditions).'}
           </Text>
         ) : null}
         <SectionTitle>Heart rate · last {CHART_SECONDS / 60} min</SectionTitle>
-        <VitalChart points={d.bpmSeries} seconds={CHART_SECONDS} color={C.heart} min={40} max={160} band={d.band} />
+        <VitalChart points={d.bpmSeries} seconds={CHART_SECONDS} color={C.heart} min={40} max={160} band={usual} />
         <SectionTitle>Oxygen · last {CHART_SECONDS / 60} min</SectionTitle>
         <VitalChart points={d.spo2Series} seconds={CHART_SECONDS} color={C.oxygen} min={85} max={100} height={52} />
       </Card>
@@ -153,15 +175,20 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
           </Text>
         ) : null}
         {d.fold.state === 'failed' ? <Text style={[st.body, { color: C.bad }]}>Archive not created: {d.fold.error}. Raw data kept.</Text> : null}
-        {d.lastAlert ? (
-          <Text style={[st.body, { color: d.lastAlert.escalated ? C.bad : C.sub }]}>
-            Last alert at {fmtClock(d.lastAlert.at)}:{' '}
-            {d.lastAlert.response === 'ok'
-              ? 'you said you were OK.'
-              : d.lastAlert.response === 'unwell'
-                ? 'you reported feeling unwell — escalation (simulated).'
-                : 'no answer — escalation (simulated).'}
+        {sf.last ? (
+          <Text style={[st.body, { color: sf.last.result.outcome === 'ok' ? C.sub : C.bad }]}>
+            Last check at {fmtClock(sf.last.at)}: {OUTCOME_TEXT[sf.last.result.outcome]}
+            {sf.last.result.channel === 'voice' ? ' (by voice)' : sf.last.result.channel === 'button' ? ' (button)' : ''}.
           </Text>
+        ) : null}
+        {sf.advisory ? (
+          <Text style={[st.body, { color: C.warn }]}>
+            An irregular pulse pattern was noticed during this drive. This is not a diagnosis — if you see it again, consider
+            mentioning it to a doctor.
+          </Text>
+        ) : null}
+        {d.voice && !d.voice.granted ? (
+          <Text style={st.body}>Voice check is off (microphone or speech not allowed). Checks will use the on-screen buttons.</Text>
         ) : null}
       </Card>
 
@@ -172,25 +199,40 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
         <RateDot series={d.rateSeries} />
       </Card>
 
-      <Modal visible={d.alert !== null} transparent animationType="fade">
+    </ScrollView>
+  );
+}
+
+/** The voice-check prompt. Rendered by the app shell so it appears on every tab. */
+export function VoiceCheckModal(props: { drive: Drive }) {
+  const d = props.drive;
+  const sf = d.safety;
+  return (
+    <Modal visible={sf.check !== null} transparent animationType="fade">
         <View style={st.scrim}>
           <View style={st.alertBox}>
             <Text style={st.alertTitle}>Are you feeling OK?</Text>
             <Text style={st.alertBody}>
-              {d.alert ? ALERT_TEXT[d.alert.kind] : ''} ({d.alert ? Math.round(d.alert.value) : ''}
-              {d.alert?.kind === 'spo2_low' ? '%' : ' BPM'}). If you're driving, pull over safely first.
+              {sf.check ? ALERT_TEXT[sf.check.episode.kind] : ''} ({sf.check ? Math.round(sf.check.episode.value) : ''}
+              {sf.check?.episode.kind === 'spo2_low' ? '%' : ' BPM'}).
             </Text>
+            <View style={st.phase}>
+              <View style={[st.phaseDot, { backgroundColor: sf.check?.phase === 'listening' ? C.heart : C.brand }]} />
+              <Text style={st.phaseText}>
+                {sf.check?.phase === 'listening' ? 'Listening — just say "yes" or "no"' : 'Speaking…'}
+              </Text>
+            </View>
             <Text style={st.alertHint}>
-              No answer in {RESPONSE_S} s counts as "not well" (prototype: escalation is simulated, nobody is contacted).
+              You can answer out loud or tap below. No answer counts as "not OK". Prototype: escalation is simulated — nobody is
+              contacted. If you need help, pull over and call 911.
             </Text>
             <Btn title="I'm OK" onPress={() => d.respondAlert('ok')} />
-            <Pressable onPress={() => d.respondAlert('unwell')} style={st.unwell} accessibilityRole="button">
-              <Text style={st.unwellText}>I don't feel well</Text>
+            <Pressable onPress={() => d.respondAlert('not_ok')} style={st.unwell} accessibilityRole="button">
+              <Text style={st.unwellText}>I'm not OK</Text>
             </Pressable>
           </View>
         </View>
-      </Modal>
-    </ScrollView>
+    </Modal>
   );
 }
 
@@ -215,6 +257,11 @@ const st = StyleSheet.create({
   alertTitle: { fontSize: 24, fontWeight: '800', color: C.ink },
   alertBody: { fontSize: 16, color: C.ink, lineHeight: 22 },
   alertHint: { fontSize: 12, color: C.sub },
+  watch: { backgroundColor: C.warnSoft, borderRadius: 12, padding: 10 },
+  watchText: { color: C.warn, fontWeight: '700', fontSize: 14 },
+  phase: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  phaseDot: { width: 12, height: 12, borderRadius: 6 },
+  phaseText: { fontSize: 15, fontWeight: '600', color: C.ink },
   unwell: { paddingVertical: 14, alignItems: 'center', borderRadius: 14, backgroundColor: C.badSoft },
   unwellText: { color: C.bad, fontWeight: '700', fontSize: 16 },
 });

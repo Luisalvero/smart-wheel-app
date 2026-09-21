@@ -44,6 +44,17 @@
           "modes": [],
           "bluetoothAlwaysPermission": "Smart Wheel uses Bluetooth to receive live telemetry from the steering wheel."
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Smart Wheel listens for your spoken answer (yes / no) only when it asks if you are okay after an unusual heart-rate or oxygen reading.",
+          "speechRecognitionPermission": "Your spoken answer is understood on the phone so Smart Wheel can tell whether you are okay. Nothing is recorded or stored.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.as"
+          ]
+        }
       ]
     ]
   }
