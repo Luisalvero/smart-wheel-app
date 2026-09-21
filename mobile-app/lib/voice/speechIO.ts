@@ -38,26 +38,60 @@ import type { Lang, VoiceIO } from './voiceCheck';
 const LOCALE: Record<Lang, string> = { en: 'en-US', es: 'es-US' };
 
 let voiceCache: Partial<Record<Lang, string | null>> = {};
+/** Voices the driver picked in Settings (loaded from app_settings at start). */
+let preferred: Partial<Record<Lang, string | null>> = {};
+
+export type VoiceChoice = { id: string; name: string; language: string; tier: 'Premium' | 'Enhanced' | 'Standard' };
+
+const rank = (v: Speech.Voice) => {
+  const id = v.identifier.toLowerCase();
+  if (id.includes('speech.synthesis') || id.includes('eloquence')) return 0; // novelty / robotic voices
+  if (id.includes('.premium.')) return 3;
+  if (id.includes('.enhanced.') || String(v.quality) === 'Enhanced') return 2;
+  return 1;
+};
+
+/** Installed voices for a language, best first (for the Settings picker). */
+export async function listVoices(lang: Lang): Promise<VoiceChoice[]> {
+  try {
+    const prefix = LOCALE[lang].slice(0, 2);
+    const voices = (await Speech.getAvailableVoicesAsync()).filter(
+      (v) => v.language?.toLowerCase().startsWith(prefix) && rank(v) > 0,
+    );
+    return voices
+      .sort((a, b) => rank(b) - rank(a) || Number(b.language === LOCALE[lang]) - Number(a.language === LOCALE[lang]) || a.name.localeCompare(b.name))
+      .map((v) => ({
+        id: v.identifier,
+        name: v.name,
+        language: v.language,
+        tier: rank(v) === 3 ? 'Premium' : rank(v) === 2 ? 'Enhanced' : 'Standard',
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export function setPreferredVoice(lang: Lang, id: string | null) {
+  preferred[lang] = id;
+  delete voiceCache[lang];
+}
+
+/** Speaks a short sample with a specific voice, at prompt volume. */
+export async function previewVoice(lang: Lang, id: string, text: string) {
+  Speech.stop();
+  promptAudio();
+  await new Promise<void>((resolve) =>
+    Speech.speak(text, { language: LOCALE[lang], voice: id, rate: 0.95, volume: 1.0, onDone: () => resolve(), onStopped: () => resolve(), onError: () => resolve() }),
+  );
+  releaseAudio();
+}
 
 async function bestVoice(lang: Lang): Promise<string | undefined> {
   if (lang in voiceCache) return voiceCache[lang] ?? undefined;
-  try {
-    const voices = await Speech.getAvailableVoicesAsync();
-    const prefix = LOCALE[lang].slice(0, 2);
-    const rank = (v: Speech.Voice) => {
-      const id = v.identifier.toLowerCase();
-      if (id.includes('speech.synthesis') || id.includes('eloquence')) return 0; // novelty / robotic voices
-      if (id.includes('.premium.')) return 3;
-      if (id.includes('.enhanced.') || String(v.quality) === 'Enhanced') return 2;
-      return 1;
-    };
-    const mine = voices.filter((v) => v.language?.toLowerCase().startsWith(prefix) && rank(v) > 0);
-    const exact = mine.filter((v) => v.language === LOCALE[lang]);
-    const pool = (exact.length ? exact : mine).sort((a, b) => rank(b) - rank(a));
-    voiceCache[lang] = pool[0]?.identifier ?? null;
-  } catch {
-    voiceCache[lang] = null;
-  }
+  const all = await listVoices(lang);
+  const chosen = preferred[lang];
+  // The driver's pick wins if it is still installed; otherwise the best one.
+  voiceCache[lang] = (chosen && all.some((v) => v.id === chosen) ? chosen : all[0]?.id) ?? null;
   return voiceCache[lang] ?? undefined;
 }
 

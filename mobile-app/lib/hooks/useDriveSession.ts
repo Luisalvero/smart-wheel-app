@@ -17,7 +17,7 @@ import type { DriveSession, DriverProfile, StorageMode } from '../db/repositorie
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
 import type { Baseline } from '../analysis/baseline';
 import { SafetyController, initialSafety, type DemoScenario, type SafetyState } from '../analysis/safetyController';
-import { phoneVoiceIO, prepareVoice, releaseAudio, resetVoiceCache } from '../voice/speechIO';
+import { phoneVoiceIO, prepareVoice, releaseAudio, resetVoiceCache, setPreferredVoice } from '../voice/speechIO';
 
 /** Seconds of vitals kept for the on-screen charts. */
 export const CHART_SECONDS = 120;
@@ -384,6 +384,8 @@ export function useDriveSession() {
       const closed = await repo.recoverInterruptedSessions();
       if (closed) void syncToSupabase().catch(() => undefined);
       dispatch({ type: 'storageMode', mode: await repo.getStorageMode() });
+      // Voices picked in Settings.
+      for (const lang of ['en', 'es'] as const) setPreferredVoice(lang, await repo.getSetting(`voice:${lang}`));
     })();
     return () => {
       void connection.stop();

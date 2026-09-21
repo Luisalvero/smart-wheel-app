@@ -613,6 +613,10 @@ When an emergency is confirmed, the phone vibrates, then:
    **Settings → Accessibility → Read & Speak → Voices** (iOS 26; called
    Spoken Content on iOS 17–18). They are about 100–400 MB each, on Wi-Fi.
 
+   To choose a voice yourself: **Settings → Safety checks → Voice** lists
+   every installed voice (Premium, Enhanced, Standard). Tap one to hear it;
+   it is used from then on. "Automatic" picks the best one.
+
    Prompts play in iOS "voice prompt" mode, the one navigation apps use: full
    volume through the speaker or the car's Bluetooth, music ducked, even with
    the silent switch on. For example:

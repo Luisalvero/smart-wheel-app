@@ -9,6 +9,7 @@ import type { useDriveSession } from '../lib/hooks/useDriveSession';
 import type { StorageMode } from '../lib/db/repositories';
 import { pendingCount, syncToSupabase } from '../lib/db/sync';
 import { Btn, C, Card, Row, SectionTitle, fmtClock, fmtDuration } from './ui';
+import { VoicePicker } from './VoicePicker';
 
 type Drive = ReturnType<typeof useDriveSession>;
 
@@ -124,6 +125,10 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
           }
           tone={d.voice && !d.voice.granted ? 'warn' : 'good'}
         />
+        <Text style={st.voiceHead}>Voice</Text>
+        {d.driver ? (
+          <VoicePicker lang={d.driver.language === 'es' ? 'es' : 'en'} driverName={d.driver.display_name.split(' ')[0] ?? ''} />
+        ) : null}
         <Btn
           title="Try the voice check"
           kind="ghost"
@@ -266,5 +271,6 @@ const st = StyleSheet.create({
   note: { fontSize: 13, color: C.sub, lineHeight: 18 },
   bench: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   id: { fontSize: 10, color: C.faint },
+  voiceHead: { fontSize: 14, fontWeight: '700', color: C.ink, marginTop: 6 },
   disclaimer: { fontSize: 12, color: C.faint, textAlign: 'center' },
 });
