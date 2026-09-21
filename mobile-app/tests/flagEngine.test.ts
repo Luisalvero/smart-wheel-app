@@ -97,14 +97,27 @@ test('personal baseline: an athlete at 47 bpm is fine, the general profile only 
   assert.ok(!ev.some((x) => x.type === 'emergency'));
 });
 
-test('low SpO2: critical at ≤91 (Scale 1); a COPD Scale-2 driver at 89 is not flagged', () => {
+test('low SpO2: a typical driver is critical at ≤91 and warned at 93', () => {
   const e = engine();
   run(e, 0, 20, () => ({}));
   const ev = run(e, 20, 30, () => ({ spo2: 89 }));
   assert.equal(ev.find((x) => x.type === 'emergency')?.episode.kind, 'spo2_low');
-  const copd = profilePrior({ age: 68, sex: 'male', weight_kg: 80, height_cm: 175, conditions: ['copd'], medications: [] }, { copdScale2: true });
-  const c = engine(copd, personalBand(copd, null));
-  assert.deepEqual(run(c, 0, 120, () => ({ spo2: 89 })).map((x) => x.type), []);
+  const w = engine();
+  assert.ok(run(w, 0, 60, () => ({ spo2: 93 })).some((x) => x.type === 'emergency'));
+});
+
+test('COPD (Little 1999): normal 93 % is not flagged; a fall of more than 4 points is', () => {
+  const copd = profilePrior({ age: 68, sex: 'male', weight_kg: 80, height_cm: 175, conditions: ['copd'], medications: [] });
+  assert.equal(copd.spo2Baseline, 93.9);
+  const th = thresholds(copd, personalBand(copd, null));
+  assert.deepEqual([th.spo2Notice, th.spo2Warn, th.spo2Crit], [90, 89, 85]);
+  const c = new FlagEngine(th, id);
+  assert.deepEqual(run(c, 0, 300, (i) => ({ spo2: 92 + (i % 3) })).map((x) => x.type), []); // 92-94: their normal
+  const ev = run(c, 300, 40, () => ({ spo2: 88 }));
+  assert.equal(ev.find((x) => x.type === 'emergency')?.episode.level, 'warning');
+  // Once their own baseline is known (say 96 %), the line follows it: > 4 below = ≤ 91.
+  const own = thresholds(copd, personalBand(copd, null), 96);
+  assert.equal(own.spo2Warn, 91);
 });
 
 test('after "I\'m OK" the same warning stays quiet for 5 min, but a worse level re-arms', () => {

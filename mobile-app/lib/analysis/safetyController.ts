@@ -90,7 +90,7 @@ export class SafetyController {
       medications: parseList(p.medications),
     });
     const band = personalBand(prior, baseline);
-    const th = thresholds(prior, band);
+    const th = thresholds(prior, band, baseline?.established ? baseline.spo2Median : null);
     if (this.engine) this.engine.setThresholds(th);
     else this.engine = new FlagEngine(th, this.deps.newId);
     this.lang = p.language === 'es' ? 'es' : 'en';

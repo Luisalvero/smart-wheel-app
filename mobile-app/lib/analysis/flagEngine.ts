@@ -12,9 +12,11 @@
  *     single implausible second that disagrees with its neighbours is dropped.
  *  3. LEVEL of the 5-reading median:
  *       critical  NEWS2 single-parameter score 3 (pulse ≤ 40 or ≥ 131;
- *                 SpO2 ≤ 91, or ≤ 83 on Scale 2)
- *       warning   NEWS2 2 (pulse 111–130; SpO2 92–93 / 84–85), or NEWS2 1 AND
- *                 ≥ 3 SD from this driver's personal band (profileModel.ts)
+ *                 SpO2 ≤ 91 -- COPD drivers ≤ 85)
+ *       warning   NEWS2 2 (pulse 111–130; SpO2 92–93), or NEWS2 1 AND
+ *                 ≥ 3 SD from this driver's personal band (profileModel.ts);
+ *                 COPD drivers: SpO2 more than 4 points below their own
+ *                 awake baseline (Little et al. 1999)
  *       notice    NEWS2 1 AND ≥ 2.5 SD from the personal band -- logged only
  *                 (both, so an athlete whose normal is 48 bpm isn't noticed
  *                 every two minutes)
@@ -84,9 +86,16 @@ const HYSTERESIS_SPO2 = 1;
 
 export type Band = { mean: number; sd: number };
 
-/** The numbers a reading is compared with, for this driver. */
-export function thresholds(prior: ProfilePrior, band: Band) {
-  const s2 = prior.spo2Scale === 2;
+/**
+ * The numbers a reading is compared with, for this driver. `spo2Median` is the
+ * driver's learned oxygen median (null until established); it only matters
+ * for COPD drivers, whose oxygen is judged relative to their baseline.
+ */
+export function thresholds(prior: ProfilePrior, band: Band, spo2Median: number | null = null) {
+  const copdBase = prior.spo2Baseline === null ? null : (spo2Median ?? prior.spo2Baseline);
+  // COPD: fall of MORE than 4 points from baseline = warning (Little 1999);
+  // readings are whole percent, so "< base − 4" is "≤ ceil(base − 4) − 1".
+  const copdWarn = copdBase === null ? 0 : Math.max(86, Math.ceil(copdBase - 4) - 1);
   return {
     highWarn: Math.min(111, Math.max(91, Math.round(band.mean + 3 * band.sd))),
     highCrit: 131,
@@ -94,9 +103,9 @@ export function thresholds(prior: ProfilePrior, band: Band) {
     lowWarn: Math.max(41, Math.min(50, Math.round(band.mean - 3 * band.sd))),
     lowCrit: 40,
     lowNotice: Math.min(50, Math.round(band.mean - 2.5 * band.sd)),
-    spo2Warn: s2 ? 85 : 93,
-    spo2Crit: s2 ? 83 : 91,
-    spo2Notice: s2 ? 87 : 95,
+    spo2Warn: copdBase === null ? 93 : copdWarn,
+    spo2Crit: copdBase === null ? 91 : 85,
+    spo2Notice: copdBase === null ? 95 : Math.max(copdWarn + 1, Math.floor(copdBase - 3)),
   };
 }
 export type Thresholds = ReturnType<typeof thresholds>;

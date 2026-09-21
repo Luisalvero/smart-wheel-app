@@ -528,13 +528,33 @@ dangerous value is dangerous whoever you are:
 - SpO₂ Scale 2 (confirmed hypercapnic COPD only): ≤83 scores 3, 84–85
   scores 2, 86–87 scores 1.
 
+**COPD drivers are the exception for oxygen.** People with stable COPD live
+at a lower normal saturation:
+
+- In Little et al. 1999 (33 stable, normoxic or mildly hypoxic patients),
+  awake SaO₂ was **93.9 ± 1.6 %**. That sits inside Scale 1's warning band,
+  so Scale 1 would flag them all day long.
+- The same paper defines a clinically significant desaturation as a **fall
+  of more than 4 points from the person's own awake baseline**.
+
+So for a driver whose profile includes COPD, oxygen is judged against
+**their baseline**: 93.9 % to start, then their own learned median once it is
+established.
+
+- Notice: a 3-point fall.
+- Warning: a fall of more than 4 points.
+- Critical: ≤ 85 %, the NEWS2 Scale 2 score-2 band.
+
+Scale 2 is not applied wholesale because it requires blood-gas-confirmed
+hypercapnia, which a profile cannot know.
+
 ### 11.2 Levels
 
 | Level | Heart rate | SpO₂ | What happens |
 |---|---|---|---|
-| **Notice** | NEWS2 1 **and** ≥ 2.5 SD from the driver's band | 94–95 % | logged only |
-| **Warning** | NEWS2 2 (111–130), or NEWS2 1 **and** ≥ 3 SD from the band | 92–93 % | warning flag, then confirmation |
-| **Critical** | ≤ 40 or ≥ 131 (NEWS2 3) | ≤ 91 % | warning flag, then short confirmation |
+| **Notice** | NEWS2 1 **and** ≥ 2.5 SD from the driver's band | 94–95 % (COPD: 3-point fall) | logged only |
+| **Warning** | NEWS2 2 (111–130), or NEWS2 1 **and** ≥ 3 SD from the band | 92–93 % (COPD: fall of more than 4 points) | warning flag, then confirmation |
+| **Critical** | ≤ 40 or ≥ 131 (NEWS2 3) | ≤ 91 % (COPD: ≤ 85 %) | warning flag, then short confirmation |
 
 For a typical 30-year-old man of normal weight with no history, the warning
 lines work out to **above 111** and **below 41 BPM**. An athlete whose
@@ -686,8 +706,10 @@ emergencies, not for notices.
   - dropouts → closed as unconfirmed.
 - **Profiles and oxygen:**
   - an athlete at 47 → not flagged;
-  - SpO₂ 89 → emergency;
-  - a COPD Scale-2 driver at 89 → not flagged.
+  - SpO₂ 89 → emergency, SpO₂ 93 → emergency for a typical driver;
+  - a COPD driver at their normal 92–94 % → not flagged, but a drop to 88 % →
+    emergency; with a learned baseline of 96 %, the warning line moves
+    to 91 %.
 - **After the check:**
   - the 5-min quiet period holds, and critical re-arms;
   - hands off the wheel → notice only.
@@ -943,6 +965,11 @@ Before collecting real subject data:
   *Anesth Analg* 108(5):1546–52, 2009. https://pubmed.ncbi.nlm.nih.gov/19372334/
 - Rheineck-Leyssius A. T., Kalkman C. J., *J Clin Monit Comput* 14(3):151–6,
   1998 (SpO₂ alarm delays and averaging). https://pubmed.ncbi.nlm.nih.gov/9676861/
+- Little S. A., Elkholy M. M., Chalmers G. W., Farouk A., Patel K. R.,
+  Thomson N. C., "Predictors of nocturnal oxygen desaturation in patients with
+  COPD", *Respiratory Medicine* 93:202–207, 1999 (awake SaO₂ 93.9 ± 1.6 % in
+  stable COPD; significant desaturation = a fall of more than 4 % from the
+  awake baseline). https://doi.org/10.1016/S0954-6111(99)90009-4
 - Pearson R. K. et al., "Generalized Hampel Filters", *EURASIP J Adv Signal
   Process* 2016:87. https://doi.org/10.1186/s13634-016-0383-6
 - Elgendi M. et al., "Systolic peak detection in acceleration

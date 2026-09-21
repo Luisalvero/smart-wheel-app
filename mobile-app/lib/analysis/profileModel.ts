@@ -12,7 +12,19 @@
  *    ≤83 → 3, 84–85 → 2, 86–87 → 1, 88–92 → 0 (on air).
  *    These are what make a reading a WARNING or CRITICAL; they do not move
  *    with the profile, because a clinically dangerous value is dangerous
- *    whoever you are.
+ *    whoever you are -- with one exception, COPD oxygen (below).
+ *
+ *    COPD: people with stable COPD live at a lower normal saturation. In
+ *    Little et al. 1999 (Respir Med 93:202-207; 33 stable, normoxic or mildly
+ *    hypoxic patients) awake SaO2 was 93.9 ± 1.6 %, i.e. inside NEWS2
+ *    Scale 1's warning band, so Scale 1 would flag them all day. The paper
+ *    defines a clinically significant desaturation as a fall of MORE THAN 4
+ *    points from the person's own awake baseline. For COPD drivers oxygen is
+ *    therefore judged relative to their baseline (their learned median once
+ *    established, else 93.9 %): notice at a 3-point fall, warning at a fall
+ *    of more than 4, critical at ≤ 85 % (NEWS2 Scale 2 score 2). Scale 2
+ *    itself needs blood-gas-confirmed hypercapnia, which a profile cannot
+ *    know, so it is not applied wholesale.
  *
  * 2. Real-world population norms for this profile (Avram et al. 2019, npj
  *    Digital Medicine 2:58, 66,788 participants, smartphone PPG -- the
@@ -105,14 +117,18 @@ export type ProfilePrior = {
   hrSd: number;
   /** Tanaka 2001: 208 − 0.7 × age (bpm); null without an age. */
   hrMax: number | null;
-  /** NEWS2 SpO2 scale: 2 only for COPD with known hypercapnia (set per profile). */
-  spo2Scale: 1 | 2;
+  /** COPD drivers: oxygen is judged relative to this awake baseline (Little
+   *  et al. 1999 population mean until the driver's own median is known). */
+  spo2Baseline: number | null;
   bmi: number | null;
   /** Human-readable account of every adjustment, for the UI and the docs. */
   explain: string[];
 };
 
-export function profilePrior(p: DriverProfileInput, opts: { copdScale2?: boolean } = {}): ProfilePrior {
+/** Little et al. 1999, Table 1: awake SaO2 in stable COPD, 93.9 ± 1.6 %. */
+export const COPD_AWAKE_SPO2 = 93.9;
+
+export function profilePrior(p: DriverProfileInput): ProfilePrior {
   const explain: string[] = [];
   const stratum = p.age ? AGE_STRATA.find((s) => p.age! <= s.maxAge)! : null;
   let hrMean = stratum ? stratum.mean : ALL_AGES.mean;
@@ -147,12 +163,13 @@ export function profilePrior(p: DriverProfileInput, opts: { copdScale2?: boolean
       explain.push(`${m.label}: +${m.hr} bpm`);
     }
   }
-  const spo2Scale = opts.copdScale2 && p.conditions.includes('copd') ? 2 : 1;
+  const copd = p.conditions.includes('copd');
+  if (copd) explain.push(`COPD: oxygen judged against your own baseline (start ${COPD_AWAKE_SPO2}%, Little 1999)`);
   return {
     hrMean: Math.round(hrMean * 10) / 10,
     hrSd,
     hrMax: p.age ? Math.round(208 - 0.7 * p.age) : null,
-    spo2Scale,
+    spo2Baseline: copd ? COPD_AWAKE_SPO2 : null,
     bmi: b,
     explain,
   };

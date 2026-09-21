@@ -40,7 +40,7 @@ mobile-app/                     Expo SDK 54 app (TypeScript)
   lib/db/                       database.ts (SQLite + migrations), repositories.ts (all SQL), liveSync.ts, sync.ts
   lib/archive/                  codec.ts (PPGA fold/unfold, pure), archiveStore.ts (fold a session, verify, store)
   lib/analysis/                 stats.ts, baseline.ts, profileModel.ts (Avram 2019 prior + NEWS2),
-                                flagEngine.ts (notice/warning/critical, persistence → emergency),
+                                flagEngine.ts (notice/warning/critical, persistence → emergency; COPD oxygen vs own baseline, Little 1999),
                                 rhythm.ts (Elgendi beats + Dash irregularity + Apple 5-of-6),
                                 safetyController.ts (glue: frames → flags → voice check → drive_alerts)
   lib/voice/                    intent.ts + intentModel.ts (local yes/no/help classifier + safety rules),
