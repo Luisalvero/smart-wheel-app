@@ -589,8 +589,14 @@ class Relay:
         else:
             self.clients.pop(addr, None)
             log.info("phone/laptop disconnected: %s", addr)
-            self.frame_char.notifying = False
-            self.link_mtu = 23
+            # Only when nobody is left. Resetting on ANY client's disconnect
+            # silenced a phone that was still connected and subscribed (it
+            # never re-subscribes, so the app showed "Wheel quiet" while the
+            # Pi showed both links up). BlueZ calls StopNotify itself when the
+            # last subscriber goes.
+            if not self.clients:
+                self.frame_char.notifying = False
+                self.link_mtu = 23
             asyncio.get_running_loop().create_task(self._readvertise())
         return False
 

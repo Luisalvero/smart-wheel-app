@@ -214,6 +214,9 @@ left `~/PPG_Logger/backup-*`.
   now re-checks `client.is_connected` before treating the link as lost. Don't
   remove that check. ESP32 `lastdisc`: `0x13` = the relay hung up, `0x08` = the
   Pi went silent, `0x3E` = never established.
+- **The relay's frame `notifying` flag is shared by all clients.** It is reset
+  only when the last client disconnects. Resetting it on any disconnect
+  silenced a still-subscribed phone ("Wheel quiet" with both links up).
 - **BlueZ can keep a dead "Connected: yes" to the ESP32 after a relay restart,**
   and every connect then times out. The relay calls `release_orphaned` after a
   failed connect to clear it.
