@@ -200,12 +200,23 @@ left `~/PPG_Logger/backup-*`.
 - **Pi 5 Wi-Fi and Bluetooth share one radio/antenna (CYW43455).**
   - With Wi-Fi on 2.4 GHz, ESP32 connections failed repeatedly with HCI 0x3E.
   - With Wi-Fi off, the link is steady. The car has no Wi-Fi.
+  - Rebooted with Wi-Fi on at 40 % signal, the Pi could not establish a single
+    connection to the ESP32 for minutes. Wi-Fi off fixed it immediately.
   - On the bench, use Ethernet or accept flakiness.
   - A past attempt to force the Pi onto 5 GHz dropped it off the network. The
     5 GHz signal there was weak.
 - **Distance and shielding.** The Pi heard the ESP32 at −93 dBm with a laptop
   between them. Keep them within 1–2 m with clear line of sight. The ESP32
   now transmits at +9 dBm.
+- **bleak 3 can fire `disconnected_callback` for a stale BlueZ event while the
+  link is up.** The relay used to believe it and hang up ~3 s after every
+  connect (ESP32 `lastdisc=0x13`): the long-running reconnect loop. `esp_loop`
+  now re-checks `client.is_connected` before treating the link as lost. Don't
+  remove that check. ESP32 `lastdisc`: `0x13` = the relay hung up, `0x08` = the
+  Pi went silent, `0x3E` = never established.
+- **BlueZ can keep a dead "Connected: yes" to the ESP32 after a relay restart,**
+  and every connect then times out. The relay calls `release_orphaned` after a
+  failed connect to clear it.
 - **Opening the ESP32 serial port resets the board** (DTR/RTS). Every serial
   read restarts `seq`.
 - **The ESP32 must be flashed at 40 MHz DIO.** At 80 MHz QIO it boot-loops
@@ -244,7 +255,8 @@ left `~/PPG_Logger/backup-*`.
 - Firmware v3 is flashed: 472-byte packets, 100 samples each.
 - The relay decodes v3 and runs on the Pi. It retries the phone-side service
   and backs off failed ESP32 connections. Scan duty cycle is 25%.
-- The ESP32↔Pi link is steady with the Pi's Wi-Fi off.
+- The ESP32↔Pi link is steady with the Pi's Wi-Fi off, with the relay fixes
+  (`af24644`, `b7da963`) deployed to the Pi and confirmed on the bench.
 - The website is deployed at https://smart-wheel-dashboard.vercel.app.
 - `v3_dashboard.sql` was validated on Postgres 17 (PGlite).
 - All unit tests pass: Python 20, TypeScript 53, C++ vitals.

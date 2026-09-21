@@ -243,7 +243,15 @@ Files (in `system/pi/`, installed to `~/PPG_Logger` on the Pi):
   - writes live state to `/run/ppg-relay/state.json` for the dashboard;
   - retries the phone-side service every 5 s if Bluetooth is off at boot;
   - backs off between failed ESP32 attempts, from 1 s up to 15 s;
-  - releases BlueZ links orphaned by a crash.
+  - releases BlueZ links orphaned by a crash, and closes a dead BlueZ link to
+    the ESP32 after any failed connect (seen after a service restart: BlueZ
+    said "Connected: yes" while the ESP32 was advertising, so every connect
+    timed out);
+  - ignores a stale disconnect event that BlueZ can emit during the connect
+    handshake. bleak 3 passes it to `disconnected_callback` although the link
+    is up; acting on it made the relay hang up (HCI `0x13`) about 3 s after
+    every connect. The link now counts as lost only when
+    `client.is_connected` agrees.
 - `ppg_monitor.py` — the terminal dashboard. It opens automatically at boot
   and shows the links, vitals with sparklines, latest packets, counters
   (including the packet format and bytes/s) and events. `ppg-monitor --once`
@@ -268,7 +276,18 @@ Measured on the bench:
 - While the Pi's Wi-Fi was on 2.4 GHz, the ESP32 link failed to establish
   (HCI reason `0x3E`) again and again.
 - Switching Bluetooth on made Wi-Fi glitch.
-- **With Wi-Fi off, the link held steadily.**
+- **With Wi-Fi off, the link held steadily** (after the relay fix below).
+- Rebooted with Wi-Fi on (2.4 GHz, 40 % signal): not one connection request
+  reached the ESP32 in several minutes, although the Pi's scans found it and a
+  laptop connected fine.
+
+The "connected → scanning → connected" loop seen on the bench had a separate
+cause: the relay acted on a stale BlueZ disconnect event and closed every link
+itself after ~3 s (ESP32 logged `lastdisc=0x13`, central terminated). Fixed in
+`ppg_relay.py`; the laptop and the Pi then held the link for minutes. How to
+read the ESP32's `lastdisc`: `0x13` = the Pi hung up (look at the relay),
+`0x08` = the Pi went silent (radio/coexistence/range), `0x3E` = the connection
+never got established (radio/coexistence/range).
 
 What to do about it:
 
@@ -1109,6 +1128,7 @@ CI runs the app typecheck and unit tests on every build.
 | Finger threshold evidence | finger ≈ 242 000 · object ≈ 50 400 · air ≈ 1 100 (IR counts) |
 | Pi ↔ ESP32 with Pi Wi-Fi on (2.4 GHz) | repeated `0x3E` failures; the Pi heard the ESP32 at −80 to −93 dBm with a laptop in between |
 | Pi ↔ ESP32 with Pi Wi-Fi off | connected and steady |
+| Relay before/after stale-disconnect fix (laptop, same ESP32) | dropped after 3–4 s every time (`0x13`) → held 145 s, until the test ended |
 | Archive fold (synthetic, 2 min @ 100 Hz) | 96 KB → 22 KB (4.4×), lossless |
 
 ---
@@ -1118,6 +1138,8 @@ CI runs the app typecheck and unit tests on every build.
 | Symptom | Likely cause → fix |
 |---|---|
 | Pi dashboard stuck on SCANNING / connecting then dropping | Wi-Fi/Bluetooth sharing on the Pi 5 or distance → turn Pi Wi-Fi off, keep the ESP32 within 1–2 m with nothing metal between |
+| ESP32 link drops every ~3 s, ESP32 shows `lastdisc=0x13` | old relay acting on a stale disconnect event → deploy the current `system/pi/ppg_relay.py` and `sudo systemctl restart ppg-relay` |
+| Relay logs `ESP32 link error: TimeoutError()` on every attempt | Pi Wi-Fi on (shared radio) → Wi-Fi off; or a dead BlueZ link (`bluetoothctl info 70:4B:CA:6F:36:86` says Connected: yes while the ESP32 says link=down) → the current relay clears it itself; by hand: `bluetoothctl disconnect 70:4B:CA:6F:36:86` |
 | Pi Wi-Fi glitches when Bluetooth is on | same shared radio → use Ethernet for development, or Wi-Fi off |
 | "phone relay unavailable … is Bluetooth on?" in the Pi log | Bluetooth was off → switch it on; the relay retries every 5 s by itself |
 | ESP32 serial shows "MAX30102 not found" | wiring. Read the diagnostic line: no pull-ups = power/GND; pull-ups but no ACK = SDA/SCL swapped or wrong pins |
