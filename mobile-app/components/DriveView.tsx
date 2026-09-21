@@ -109,6 +109,14 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
           <VitalTile label="Heart rate" value={d.bpm} unit="BPM" avg={d.avgBpm} color={C.heart} soft={C.heartSoft} />
           <VitalTile label="Oxygen" value={d.spo2} unit="% SpO₂" avg={d.avgSpo2} color={C.oxygen} soft={C.oxygenSoft} />
         </View>
+        {sf.demo ? (
+          <View style={[st.watch, { backgroundColor: C.brandSoft }]}>
+            <Text style={[st.watchText, { color: C.brand }]}>
+              DEMO · fabricated {sf.demo.value}
+              {sf.demo.scenario === 'spo2' ? '%' : ' BPM'} · {sf.demo.step}
+            </Text>
+          </View>
+        ) : null}
         {sf.tracking ? (
           <View style={st.watch} accessibilityLiveRegion="polite">
             <Text style={st.watchText}>{WATCH_TEXT[sf.tracking.kind] ?? 'Checking…'}</Text>

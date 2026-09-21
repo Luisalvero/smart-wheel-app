@@ -16,7 +16,7 @@ import { syncToSupabase } from '../db/sync';
 import type { DriveSession, DriverProfile, StorageMode } from '../db/repositories';
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
 import type { Baseline } from '../analysis/baseline';
-import { SafetyController, initialSafety, type SafetyState } from '../analysis/safetyController';
+import { SafetyController, initialSafety, type DemoScenario, type SafetyState } from '../analysis/safetyController';
 import { phoneVoiceIO, prepareVoice } from '../voice/speechIO';
 
 /** Seconds of vitals kept for the on-screen charts. */
@@ -242,6 +242,7 @@ export function useDriveSession() {
       new SafetyController({
         voiceIO: phoneVoiceIO,
         save: repo.saveAlert,
+        saveAck: repo.setAck,
         haptic: (k) =>
           void Haptics.notificationAsync(
             k === 'error' ? Haptics.NotificationFeedbackType.Error : Haptics.NotificationFeedbackType.Warning,
@@ -399,7 +400,7 @@ export function useDriveSession() {
   const loadBaseline = useCallback(
     async (driver: DriverProfile) => {
       const b = await repo.driverBaseline(driver.id);
-      safety.configure(driver, b);
+      safety.configure(driver, b, await repo.getAck(driver.id));
       dispatch({ type: 'baseline', baseline: b });
     },
     [safety],
@@ -485,5 +486,14 @@ export function useDriveSession() {
     setStorageMode,
     respondAlert,
     rehearseVoice,
+    /** Demo: fabricated readings through the real engine + voice check. Nothing saved. */
+    simulate: useCallback(
+      async (scenario: DemoScenario) => {
+        if (!state.voice?.granted) dispatch({ type: 'voice', voice: await prepareVoice() });
+        return safety.simulate(scenario);
+      },
+      [safety, state.voice],
+    ),
+    resetAck: useCallback(() => safety.resetAck(), [safety]),
   };
 }

@@ -87,20 +87,35 @@ const HYSTERESIS_SPO2 = 1;
 export type Band = { mean: number; sd: number };
 
 /**
+ * "I'm OK" feedback. When the driver answers OK to a WARNING-level heart-rate
+ * check, that value was evidently normal for them, so their warning line in
+ * that direction moves to the episode's peak + 5 bpm (− 5 for low). Limits
+ * keep this safe: the high line never passes 125 and the low line never goes
+ * under 43, so the critical lines (≥ 131, ≤ 40 -- NEWS2 red) always still
+ * ask; critical episodes and oxygen never adapt; Settings can reset it.
+ */
+export type Ack = { high: number | null; low: number | null };
+export const ACK_MARGIN_BPM = 5;
+export const ACK_HIGH_CAP = 125;
+export const ACK_LOW_FLOOR = 43;
+
+/**
  * The numbers a reading is compared with, for this driver. `spo2Median` is the
  * driver's learned oxygen median (null until established); it only matters
  * for COPD drivers, whose oxygen is judged relative to their baseline.
  */
-export function thresholds(prior: ProfilePrior, band: Band, spo2Median: number | null = null) {
+export function thresholds(prior: ProfilePrior, band: Band, spo2Median: number | null = null, ack: Ack = { high: null, low: null }) {
   const copdBase = prior.spo2Baseline === null ? null : (spo2Median ?? prior.spo2Baseline);
   // COPD: fall of MORE than 4 points from baseline = warning (Little 1999);
   // readings are whole percent, so "< base − 4" is "≤ ceil(base − 4) − 1".
   const copdWarn = copdBase === null ? 0 : Math.max(86, Math.ceil(copdBase - 4) - 1);
+  const highWarn = Math.min(111, Math.max(91, Math.round(band.mean + 3 * band.sd)));
+  const lowWarn = Math.max(41, Math.min(50, Math.round(band.mean - 3 * band.sd)));
   return {
-    highWarn: Math.min(111, Math.max(91, Math.round(band.mean + 3 * band.sd))),
+    highWarn: ack.high === null ? highWarn : Math.min(ACK_HIGH_CAP, Math.max(highWarn, Math.round(ack.high))),
     highCrit: 131,
     highNotice: Math.max(91, Math.round(band.mean + 2.5 * band.sd)),
-    lowWarn: Math.max(41, Math.min(50, Math.round(band.mean - 3 * band.sd))),
+    lowWarn: ack.low === null ? lowWarn : Math.max(ACK_LOW_FLOOR, Math.min(lowWarn, Math.round(ack.low))),
     lowCrit: 40,
     lowNotice: Math.min(50, Math.round(band.mean - 2.5 * band.sd)),
     spo2Warn: copdBase === null ? 93 : copdWarn,

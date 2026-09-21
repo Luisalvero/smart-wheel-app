@@ -33,6 +33,13 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
   const [syncMsg, setSyncMsg] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [rehearsal, setRehearsal] = useState<string | null>(null);
+  const [demoResult, setDemoResult] = useState<string | null>(null);
+  const describe = (r: { outcome: string; urgent: boolean; channel: string } | null) =>
+    !r
+      ? 'The readings never confirmed an emergency.'
+      : r.outcome === 'no_response'
+        ? 'No answer heard — in a real drive this counts as an emergency (simulated escalation).'
+        : `Understood: ${r.outcome === 'ok' ? 'you are OK' : 'you are NOT OK'}${r.urgent ? ' (urgent words heard)' : ''} — via ${r.channel}.`;
   const sf = d.safety;
   const now = Date.now();
 
@@ -88,6 +95,18 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
               value={`${sf.band ? Math.round(sf.band.mean) : Math.round(sf.prior.hrMean)} ± ${Math.round(sf.band?.sd ?? sf.prior.hrSd)} BPM`}
             />
             <Row label="Learned from own drives" value={`${Math.round((sf.band?.weight ?? 0) * 100)}%`} />
+            {sf.ack.high !== null || sf.ack.low !== null ? (
+              <>
+                <Row
+                  label={`Adjusted by your "I'm OK" answers`}
+                  value={[sf.ack.high !== null ? `high line ${sf.th.highWarn}` : null, sf.ack.low !== null ? `low line ${sf.th.lowWarn}` : null]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  tone="brand"
+                />
+                <Btn title="Reset these adjustments" kind="ghost" onPress={() => void d.resetAck()} />
+              </>
+            ) : null}
             <Text style={st.note}>How the profile sets this: {sf.prior.explain.join(' · ')}.</Text>
             <Text style={st.note}>
               A warning is watched for 15 s (8 s if critical). Only if readings stay out of range does the phone ask "Are you
@@ -124,6 +143,41 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
           Speech is handled by the phone itself (no paid services). For the most natural voice on iPhone, download an "Enhanced"
           voice in Settings → Accessibility → Spoken Content → Voices.
         </Text>
+      </Card>
+
+      <Card>
+        <SectionTitle>Demo — trigger a warning</SectionTitle>
+        <Text style={st.note}>
+          Plays fabricated readings through the real warning engine with this driver's thresholds, 4× faster than real time: a
+          few normal seconds, then abnormal ones until the warning flag is raised, confirmed, and the voice check asks if you're
+          OK. Nothing is saved, uploaded, or learned from.
+        </Text>
+        {(
+          [
+            ['high_critical', 'Very high heart rate (critical)'],
+            ['high_warning', 'High heart rate (warning, 15-s check)'],
+            ['low', 'Very low heart rate'],
+            ['spo2', 'Low oxygen'],
+          ] as const
+        ).map(([key, label]) => (
+          <Btn
+            key={key}
+            title={label}
+            kind="ghost"
+            disabled={!sf.th || sf.demo !== null || sf.check !== null}
+            onPress={async () => {
+              setDemoResult(null);
+              setDemoResult(describe(await d.simulate(key)));
+            }}
+          />
+        ))}
+        {sf.demo ? (
+          <Text style={[st.note, { color: C.warn }]}>
+            Second {sf.demo.second}: {sf.demo.value}
+            {sf.demo.scenario === 'spo2' ? '%' : ' BPM'} · {sf.demo.step}
+          </Text>
+        ) : null}
+        {demoResult ? <Text style={st.note}>{demoResult}</Text> : null}
       </Card>
 
       <Card>

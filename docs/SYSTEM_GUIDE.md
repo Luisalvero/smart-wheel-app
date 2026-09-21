@@ -589,7 +589,17 @@ above their normal.
    alarms (Rheineck-Leyssius & Kalkman 1998).
 5. **After the check.** After "I'm OK" the same kind stays quiet for
    5 minutes. If it gets worse (warning → critical) it re-arms immediately.
-6. **No hand on the sensor** for 15 s during a drive raises a notice. It is
+6. **Learning from "I'm OK".** If the driver answers OK to a
+   **warning-level** heart-rate check, that value was evidently normal for
+   them:
+   - their warning line in that direction moves to the episode's peak + 5 BPM
+     (− 5 for low), and is saved per driver;
+   - limits keep this safe: the high line never passes **125**, the low line
+     never goes below **43**, so the critical lines (≥ 131, ≤ 40) always still
+     ask;
+   - critical episodes and oxygen never adapt;
+   - Settings → Safety checks shows any adjustment, with **Reset**.
+7. **No hand on the sensor** for 15 s during a drive raises a notice. It is
    not an emergency by itself: the sensor simply cannot see anything.
 
 ### 11.4 The voice check (phone only, free, offline)
@@ -649,6 +659,19 @@ confidence are saved.
 
 **Try it:** Settings → **Try the voice check** runs the real dialogue without
 recording anything.
+
+**Demo — trigger a warning** (Settings) plays **fabricated readings**
+through a fresh copy of the real engine, using this driver's thresholds, at
+4× real time:
+
+- **Scenarios:** very high heart rate (critical), high heart rate (warning,
+  15-s check), very low heart rate, low oxygen.
+- **What you see:** about 10 normal seconds, then abnormal ones. The Drive
+  tab shows the warning flag and the confirmation, then the real voice check
+  asks if you're OK.
+- **Nothing is kept:** nothing is saved, uploaded, or learned from.
+- **Timing:** a demo takes about 5–10 real seconds to reach the voice
+  check.
 
 ### 11.5 Irregular-rhythm advisory
 

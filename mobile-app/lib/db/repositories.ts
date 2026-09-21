@@ -31,14 +31,7 @@ export type DriverProfile = {
   emergency_phone?: string | null;
 };
 
-export const parseList = (json: string | undefined | null): string[] => {
-  try {
-    const v = JSON.parse(json ?? '[]');
-    return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
-};
+export { parseList } from '../util/json';
 
 export type NewProfileInput = {
   custom_id?: string | null;
@@ -265,6 +258,20 @@ export async function setSetting(key: string, value: string): Promise<void> {
     'INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
     [key, value],
   );
+}
+
+/** The driver's "I'm OK" warning-line adjustments (see Ack in flagEngine.ts). */
+export async function getAck(profileId: string): Promise<{ high: number | null; low: number | null }> {
+  try {
+    const v = JSON.parse((await getSetting(`ack:${profileId}`)) ?? 'null');
+    return { high: typeof v?.high === 'number' ? v.high : null, low: typeof v?.low === 'number' ? v.low : null };
+  } catch {
+    return { high: null, low: null };
+  }
+}
+
+export async function setAck(profileId: string, ack: { high: number | null; low: number | null }): Promise<void> {
+  await setSetting(`ack:${profileId}`, JSON.stringify(ack));
 }
 
 export async function getStorageMode(): Promise<StorageMode> {

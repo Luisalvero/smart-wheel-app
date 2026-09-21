@@ -15,12 +15,22 @@
  */
 import type { Frame } from '../ble/protocol';
 import type { DriveAlertRow, DriverProfile } from '../db/repositories';
-import { parseList } from '../db/repositories';
+import { parseList } from '../util/json.ts';
 import type { Baseline } from './baseline';
-import { FlagEngine, thresholds, type Band, type EngineEvent, type Episode, type Thresholds } from './flagEngine';
-import { personalBand, profilePrior, type ProfilePrior, type Sex } from './profileModel';
-import { RhythmMonitor } from './rhythm';
-import { VoiceCheck, type CheckResult, type Lang, type VoiceIO } from '../voice/voiceCheck';
+import {
+  ACK_MARGIN_BPM,
+  FlagEngine,
+  thresholds,
+  type Ack,
+  type Band,
+  type EngineEvent,
+  type Episode,
+  type Reading,
+  type Thresholds,
+} from './flagEngine.ts';
+import { personalBand, profilePrior, type ProfilePrior, type Sex } from './profileModel.ts';
+import { RhythmMonitor } from './rhythm.ts';
+import { VoiceCheck, type CheckResult, type Lang, type VoiceIO } from '../voice/voiceCheck.ts';
 
 export type CheckPhase = 'speaking' | 'listening';
 
@@ -36,7 +46,13 @@ export type SafetyState = {
   notices: number;
   advisory: boolean;
   rejected: number;
+  /** Warning lines moved by the driver's own "I'm OK" answers. */
+  ack: Ack;
+  /** Demo mode: fabricated readings are being played through the engine. */
+  demo: { scenario: DemoScenario; second: number; value: number; step: string } | null;
 };
+
+export type DemoScenario = 'high_critical' | 'high_warning' | 'low' | 'spo2';
 
 export const initialSafety: SafetyState = {
   prior: null,
@@ -48,11 +64,14 @@ export const initialSafety: SafetyState = {
   notices: 0,
   advisory: false,
   rejected: 0,
+  ack: { high: null, low: null },
+  demo: null,
 };
 
 type Deps = {
   voiceIO: () => VoiceIO;
   save: (row: Omit<DriveAlertRow, 'sync_status'>) => Promise<void>;
+  saveAck: (profileId: string, ack: Ack) => Promise<void>;
   haptic: (kind: 'warning' | 'error') => void;
   onChange: (s: SafetyState) => void;
   newId: () => string;
@@ -68,6 +87,8 @@ export class SafetyController {
   private voice: VoiceCheck | null = null;
   private lang: Lang = 'en';
   private name = '';
+  private profile: DriverProfile | null = null;
+  private baseline: Baseline | null = null;
   private readonly deps: Deps;
 
   constructor(deps: Deps) {
@@ -79,8 +100,11 @@ export class SafetyController {
     this.deps.onChange(this.state);
   }
 
-  /** Recomputes the driver's thresholds from their profile and baseline. */
-  configure(p: DriverProfile, baseline: Baseline | null) {
+  /** Recomputes the driver's thresholds from their profile, baseline and
+   *  any "I'm OK" adjustments. */
+  configure(p: DriverProfile, baseline: Baseline | null, ack: Ack = this.state.ack) {
+    this.profile = p;
+    this.baseline = baseline;
     const prior = profilePrior({
       age: p.age,
       sex: p.gender as Sex,
@@ -90,12 +114,88 @@ export class SafetyController {
       medications: parseList(p.medications),
     });
     const band = personalBand(prior, baseline);
-    const th = thresholds(prior, band, baseline?.established ? baseline.spo2Median : null);
+    const th = thresholds(prior, band, baseline?.established ? baseline.spo2Median : null, ack);
     if (this.engine) this.engine.setThresholds(th);
     else this.engine = new FlagEngine(th, this.deps.newId);
     this.lang = p.language === 'es' ? 'es' : 'en';
     this.name = p.display_name.split(' ')[0] ?? '';
-    this.set({ prior, band, th });
+    this.set({ prior, band, th, ack });
+  }
+
+  /** Settings → "Reset": back to the profile/baseline lines. */
+  async resetAck() {
+    if (!this.profile) return;
+    const ack = { high: null, low: null };
+    await this.deps.saveAck(this.profile.id, ack);
+    this.configure(this.profile, this.baseline, ack);
+  }
+
+  /**
+   * The driver said "I'm OK" to a warning-level heart-rate check: that value is
+   * evidently normal for them. Move the warning line past it (see Ack in
+   * flagEngine.ts for the safety limits). Never for critical or oxygen.
+   */
+  private async learnFromOk(ep: Episode) {
+    if (!this.profile || ep.level !== 'warning') return;
+    const ack = { ...this.state.ack };
+    if (ep.kind === 'bpm_high') ack.high = Math.max(ack.high ?? 0, ep.value + ACK_MARGIN_BPM);
+    else if (ep.kind === 'bpm_low') ack.low = Math.min(ack.low ?? 999, ep.value - ACK_MARGIN_BPM);
+    else return;
+    await this.deps.saveAck(this.profile.id, ack);
+    this.configure(this.profile, this.baseline, ack);
+  }
+
+  /**
+   * Demo: plays fabricated readings through a fresh copy of the real engine
+   * (this driver's thresholds), 4 simulated seconds per real second, until it
+   * raises the warning flag and confirms the emergency -- then runs the real
+   * voice check. Nothing is saved, uploaded, or learned from.
+   */
+  async simulate(scenario: DemoScenario): Promise<CheckResult | null> {
+    const th = this.state.th;
+    if (!th || this.state.check || this.state.demo) return null;
+    const value =
+      scenario === 'high_critical' ? th.highCrit + 9
+      : scenario === 'high_warning' ? Math.min(th.highCrit - 1, th.highWarn + 6)
+      : scenario === 'low' ? th.lowCrit - 3
+      : th.spo2Crit - 2;
+    const oxygen = scenario === 'spo2';
+    const engine = new FlagEngine(th, () => `demo-${Date.now()}`);
+    const t0 = Date.now();
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    let emergency: Episode | null = null;
+    for (let s = 0; s < 90 && !emergency; s += 1) {
+      const abnormal = s >= 10; // 10 normal seconds first, like a real drive
+      const jitter = ((s * 7) % 5) - 2;
+      const r: Reading = {
+        t: t0 + s * 1000,
+        bpm: !abnormal || oxygen ? 74 + jitter : value + jitter,
+        spo2: abnormal && oxygen ? value + (s % 2) : 98,
+        quality: 85,
+        finger: true,
+      };
+      let step = abnormal ? 'fabricated abnormal readings' : 'normal readings';
+      for (const e of engine.feed(r)) {
+        if (e.type === 'warning' || e.type === 'escalated') {
+          step = `warning flag (${e.episode.level}) — confirming`;
+          this.set({ tracking: { ...e.episode } });
+        } else if (e.type === 'emergency') {
+          emergency = e.episode;
+          step = 'emergency confirmed — voice check';
+        }
+      }
+      const shown = oxygen ? (r.spo2 ?? 0) : (r.bpm ?? 0);
+      this.set({ demo: { scenario, second: s, value: shown, step } });
+      await sleep(250);
+    }
+    this.set({ tracking: null });
+    if (!emergency) {
+      this.set({ demo: null });
+      return null;
+    }
+    const result = await this.runCheck(emergency, true);
+    this.set({ demo: null });
+    return result;
   }
 
   startSession(sessionId: string) {
@@ -212,6 +312,7 @@ export class SafetyController {
       return result;
     }
     const done = this.engine?.resolve(result.outcome, Date.now()) ?? { ...ep, outcome: result.outcome, resolvedAt: Date.now() };
+    if (result.outcome === 'ok') await this.learnFromOk(done);
     if (result.outcome !== 'ok') this.deps.haptic('error');
     await this.persist(done, undefined, result);
     this.set({ check: null, last: { episode: done, result, at: new Date() } });

@@ -138,3 +138,18 @@ test('hands off the wheel for 15 s: no-contact notice, never an emergency', () =
   const ev = run(e, 10, 40, () => ({ finger: false, bpm: null, spo2: null }));
   assert.deepEqual(ev.map((x) => [x.type, x.episode.kind]), [['notice', 'no_contact']]);
 });
+
+test('"I\'m OK" feedback moves a warning line, within safe limits', () => {
+  const base = thresholds(adult, band0);
+  const moved = thresholds(adult, band0, null, { high: 118 + 5, low: null });
+  assert.equal(moved.highWarn, 123);
+  assert.equal(moved.highCrit, 131); // critical never moves
+  assert.equal(thresholds(adult, band0, null, { high: 160, low: null }).highWarn, 125); // capped
+  assert.equal(thresholds(adult, band0, null, { high: null, low: 30 }).lowWarn, 43); // floored
+  assert.equal(thresholds(adult, band0, null, { high: 80, low: null }).highWarn, base.highWarn); // never lowers
+  // After adapting, a sustained 118 is no longer an emergency, but 140 still is.
+  const e = new FlagEngine(moved, id);
+  run(e, 0, 20, () => ({}));
+  assert.ok(!run(e, 20, 60, () => ({ bpm: 118 })).some((x) => x.type === 'emergency'));
+  assert.ok(run(e, 80, 30, () => ({ bpm: 140 })).some((x) => x.type === 'emergency'));
+});
