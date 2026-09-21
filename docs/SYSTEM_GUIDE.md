@@ -1139,7 +1139,8 @@ CI runs the app typecheck and unit tests on every build.
 |---|---|
 | Pi dashboard stuck on SCANNING / connecting then dropping | Wi-Fi/Bluetooth sharing on the Pi 5 or distance → turn Pi Wi-Fi off, keep the ESP32 within 1–2 m with nothing metal between |
 | ESP32 link drops every ~3 s, ESP32 shows `lastdisc=0x13` | old relay acting on a stale disconnect event → deploy the current `system/pi/ppg_relay.py` and `sudo systemctl restart ppg-relay` |
-| App says "Wheel quiet" while the Pi shows ESP32 and phone connected | old relay: another client (e.g. a laptop) disconnecting switched frame forwarding off for everyone → deploy the current relay; meanwhile force-quit and reopen the app so it subscribes again |
+| App says "Wheel quiet" while the Pi shows ESP32 and phone connected | old relay: its own "subscribed" flag fell out of step with BlueZ (relay restarted with the phone connected, or another client left) and it stopped sending → deploy the current relay, which always hands frames to BlueZ; meanwhile force-quit and reopen the app |
+| Pi dashboard says no phone while the app streams | relay restarted while the phone stayed connected (BlueZ keeps the link) → current relay picks up already-connected clients at start |
 | Relay logs `ESP32 link error: TimeoutError()` on every attempt | Pi Wi-Fi on (shared radio) → Wi-Fi off; or a dead BlueZ link (`bluetoothctl info 70:4B:CA:6F:36:86` says Connected: yes while the ESP32 says link=down) → the current relay clears it itself; by hand: `bluetoothctl disconnect 70:4B:CA:6F:36:86` |
 | Pi Wi-Fi glitches when Bluetooth is on | same shared radio → use Ethernet for development, or Wi-Fi off |
 | "phone relay unavailable … is Bluetooth on?" in the Pi log | Bluetooth was off → switch it on; the relay retries every 5 s by itself |

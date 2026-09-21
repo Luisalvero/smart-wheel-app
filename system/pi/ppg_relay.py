@@ -400,15 +400,24 @@ class Relay:
                 log.error("log queue full; dropping row for seq %d", f.seq)
 
     def _forward(self, raw: bytes) -> bool:
-        """Returns True if a subscribed client was sent the frame."""
-        if not self.frame_char.notifying:
-            self.frame_char.set_value(raw, notify=False)
-            return False
+        """Returns True if a client is known to be subscribed.
+
+        Always emits: BlueZ sends a Value change only to clients that enabled
+        notifications, so emitting with nobody listening is harmless. Gating on
+        our own `notifying` flag was not: BlueZ calls StartNotify only for the
+        FIRST subscriber, so once the flag fell out of step (a relay restart
+        with the phone still connected, or another client leaving) a
+        subscribed phone got nothing -- "Wheel quiet" in the app while the Pi
+        showed both links up and frames arriving.
+        """
         chunk = max(20, min(len(raw), self.link_mtu - 3))
         for off in range(0, len(raw), chunk):
-            self.frame_char.set_value(raw[off:off + chunk])
-        self.forwarded += 1
-        return True
+            self.frame_char.set_value(raw[off:off + chunk], notify=False)
+            self.frame_char.emit_properties_changed({"Value": self.frame_char._value})
+        subscribed = self.frame_char.notifying or bool(self.clients)
+        if subscribed:
+            self.forwarded += 1
+        return subscribed
 
     async def esp_loop(self):
         def is_wheel(_dev, adv):
@@ -573,6 +582,22 @@ class Relay:
                   "member='PropertiesChanged',arg0='org.bluez.Device1'"]))
         self.bus.add_message_handler(self._on_bus_signal)
 
+        # A relay restart does not drop a connected phone (BlueZ owns the
+        # link), so no Connected signal will come for it: pick up clients that
+        # are already connected, or the dashboard shows "no phone" while the
+        # app is streaming.
+        for path, ifaces in objects.items():
+            dev = ifaces.get("org.bluez.Device1")
+            if not dev or not path.startswith(want + "/") or not dev.get("Connected") or not dev["Connected"].value:
+                continue
+            uuids = [u.lower() for u in dev["UUIDs"].value] if "UUIDs" in dev else []
+            addr = dev["Address"].value
+            if p.ESP32_SERVICE_UUID in uuids or addr == (self.esp_addr or "").upper():
+                continue
+            name = dev["Alias"].value if "Alias" in dev else addr
+            self.clients[addr] = {"since": time.time(), "name": name}
+            log.info("phone/laptop already connected: %s (%s)", addr, name)
+
     def _on_bus_signal(self, msg: Message):
         if msg.message_type != MessageType.SIGNAL or msg.member != "PropertiesChanged":
             return False
@@ -589,13 +614,10 @@ class Relay:
         else:
             self.clients.pop(addr, None)
             log.info("phone/laptop disconnected: %s", addr)
-            # Only when nobody is left. Resetting on ANY client's disconnect
-            # silenced a phone that was still connected and subscribed (it
-            # never re-subscribes, so the app showed "Wheel quiet" while the
-            # Pi showed both links up). BlueZ calls StopNotify itself when the
-            # last subscriber goes.
+            # `notifying` is left alone: BlueZ calls StopNotify itself when the
+            # last subscriber goes (see _forward for why our copy must never
+            # override BlueZ's).
             if not self.clients:
-                self.frame_char.notifying = False
                 self.link_mtu = 23
             asyncio.get_running_loop().create_task(self._readvertise())
         return False
