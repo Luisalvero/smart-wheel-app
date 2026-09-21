@@ -487,6 +487,13 @@ class Relay:
                         gone.clear()
             except Exception as e:  # noqa: BLE001 -- any BLE failure means reconnect
                 log.warning("ESP32 link error: %r", e)
+                # Seen on the Pi after a service restart: the ESP32 advertised
+                # (so the scan found it) while BlueZ still held a dead link to
+                # it as "Connected: yes", and every connect timed out. This
+                # process holds no client here, so any BlueZ link to the ESP32
+                # is dead and safe to close.
+                if await release_orphaned(p.ESP32_SERVICE_UUID):
+                    failures = 0
             finally:
                 lasted = time.time() - self.esp_connected_at if self.esp_connected_at else 0.0
                 if self.esp_connected_at is not None:

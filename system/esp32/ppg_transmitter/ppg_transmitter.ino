@@ -148,6 +148,14 @@ volatile int connParamsStatus = -1;
 // connected, and why the last link ended (esp_gatt_conn_reason_t = HCI reason:
 // 0x08 supervision timeout, 0x13 central closed it, 0x3E never established).
 volatile uint32_t connectCount = 0;
+// Deferred connection-parameter request (see onConnect).
+static constexpr uint32_t kParamsRequestDelayMs = 5000;
+static constexpr uint16_t kMinUsableTimeout = 200;  // 2 s, in 10 ms units
+esp_bd_addr_t pendingBda = {0};
+volatile uint32_t connectedAtMs = 0;
+volatile bool paramsRequestPending = false;
+volatile bool connectLogPending = false;
+volatile uint16_t initInterval = 0, initTimeout = 0;
 volatile uint16_t lastDisconnectReason = 0;
 
 class ServerCallbacks : public BLEServerCallbacks {
@@ -156,14 +164,22 @@ class ServerCallbacks : public BLEServerCallbacks {
     ++connectCount;
   }
 #if defined(CONFIG_BLUEDROID_ENABLED)
-  void onConnect(BLEServer* s, esp_ble_gatts_cb_param_t* param) override {
-    // Queues a connection-parameter request; does not block. A false return
-    // means the request was not queued, reported as status=-2 on serial.
-    if (!s->requestConnParams(param->connect.remote_bda, kConnIntervalMin, kConnIntervalMax,
-                              kConnLatency, kSupervisionTimeout)) {
-      connParamsStatus = -2;
-      connParamsChanged = true;
-    }
+  void onConnect(BLEServer*, esp_ble_gatts_cb_param_t* param) override {
+    // Do NOT ask for new connection parameters right away. Doing that while
+    // the central is still discovering services and enabling notifications
+    // collided with connection setup: centrals (the Pi, and a Linux laptop
+    // in a bench repro) hung up ~3 s after connecting, ESP32 disconnect
+    // reason 0x13. Nordic's SDK waits 5 s (FIRST_CONN_PARAMS_UPDATE_DELAY)
+    // for the same reason. If the central already picked usable values --
+    // the Pi does, via setup_pi.sh's BlueZ [LE] settings -- skip the request.
+    memcpy(pendingBda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
+    initInterval = param->connect.conn_params.interval;
+    initTimeout = param->connect.conn_params.timeout;
+    const bool usable = initInterval >= kConnIntervalMin && initInterval <= kConnIntervalMax &&
+                        initTimeout >= kMinUsableTimeout;
+    connectedAtMs = millis();
+    paramsRequestPending = !usable;
+    connectLogPending = true;
   }
   void onDisconnect(BLEServer*, esp_ble_gatts_cb_param_t* param) override {
     lastDisconnectReason = static_cast<uint16_t>(param->disconnect.reason);
@@ -179,6 +195,7 @@ class ServerCallbacks : public BLEServerCallbacks {
 #endif
   void onDisconnect(BLEServer*) override {
     clientConnected = false;
+    paramsRequestPending = false;
     restartAdvertising = true;
   }
 };
@@ -420,6 +437,18 @@ void loop() {
     restartAdvertising = false;
     BLEDevice::startAdvertising();
     Serial.println("Pi disconnected - advertising again");
+  }
+  if (connectLogPending) {
+    connectLogPending = false;
+    Serial.printf("BLE connected: interval=%.2fms supervision=%ums -> %s\n", initInterval * 1.25f,
+                  initTimeout * 10u, paramsRequestPending ? "will request better params in 5 s" : "params OK, no request");
+  }
+  if (paramsRequestPending && clientConnected && millis() - connectedAtMs >= kParamsRequestDelayMs) {
+    paramsRequestPending = false;
+    if (!server->requestConnParams(pendingBda, kConnIntervalMin, kConnIntervalMax, kConnLatency, kSupervisionTimeout)) {
+      connParamsStatus = -2;
+      connParamsChanged = true;
+    }
   }
   if (connParamsChanged) {
     connParamsChanged = false;
