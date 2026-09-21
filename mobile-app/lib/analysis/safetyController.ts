@@ -230,7 +230,8 @@ export class SafetyController {
     for (const e of events) this.handle(e);
     if (this.engine.rejected !== this.state.rejected) this.set({ rejected: this.engine.rejected });
 
-    if (f.version >= 3 && f.rateHz) {
+    // A driver with known AFib/arrhythmia would get the advisory on every drive.
+    if (f.version >= 3 && f.rateHz && !this.state.prior?.knownArrhythmia) {
       const ok = f.finger && (quality ?? 0) >= 50 && missingBefore === 0;
       for (const ev of this.rhythm.feed(f.samples.map((s) => s.ir), f.rateHz, ok)) {
         if (ev.type !== 'advisory') continue;

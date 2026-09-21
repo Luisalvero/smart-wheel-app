@@ -34,12 +34,14 @@ system/                         hardware side (Python + Arduino C++)
   laptop/ppg_viewer.py          PySide6 bench viewer (--demo, --direct)
   tests/                        python unittest + host-compiled C++ tests
 mobile-app/                     Expo SDK 54 app (TypeScript)
-  components/                   SmartWheelScreen (shell + global VoiceCheckModal), DriverPicker (create/edit, long-press),
+  components/                   SmartWheelScreen (shell + global VoiceCheckModal, first-run Onboarding),
+                                DriverPicker (create/edit/delete via long-press),
                                 DriveView, HistoryView, SettingsView (safety card, demo, voice), VoicePicker, ui, charts
   lib/ble/                      bleService.ts (auto-reconnect to Pi), protocol.ts (TS twin of the protocol)
   lib/hooks/useDriveSession.ts  THE integration point: BLE -> decode -> SQLite -> alerts -> live upload
   lib/db/                       database.ts (SQLite + migrations), repositories.ts (all SQL), liveSync.ts, sync.ts
   lib/archive/                  codec.ts (PPGA fold/unfold, pure), archiveStore.ts (fold a session, verify, store)
+  lib/db/deletion.ts            delete driver / drive / wipe: local + Supabase (+ Storage files), offline queue
   lib/analysis/                 stats.ts, baseline.ts, profileModel.ts (Avram 2019 prior + NEWS2),
                                 flagEngine.ts (notice/warning/critical, persistence → emergency; COPD oxygen vs own baseline, Little 1999),
                                 rhythm.ts (Elgendi beats + Dash irregularity + Apple 5-of-6),
@@ -47,7 +49,8 @@ mobile-app/                     Expo SDK 54 app (TypeScript)
   lib/voice/                    intent.ts + intentModel.ts (local yes/no/help classifier + safety rules),
                                 voiceCheck.ts (dialogue policy), speechIO.ts (expo-speech + expo-speech-recognition)
   tools/intent/                 phrases.py (EN+ES training/test phrases), train.py, check.py
-  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql (run in this order)
+  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql -> v5_delete.sql (in order;
+                                the live project has v3 and v4 applied as of 2026-09-21)
   tests/                        node --test (TypeScript stripped natively; Node >= 22)
 website/                        Vite + vanilla JS dashboard; src/lib/codec.ts is a byte-identical copy (tested)
 .github/workflows/ios-build.yml unsigned IPA build on macOS runners (typecheck + tests + prebuild + xcodebuild)
@@ -121,6 +124,12 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
     It is capped at 125 and floored at 43, never applies to critical or
     oxygen, and is stored per driver as app_settings `ack:<profileId>`.
     Settings has a reset.
+  - **Starting high line** = the age-group real-world 95th percentile
+    (Avram 2019: 110 / 100 / 95) plus the profile shifts, blended toward the
+    personal mean + 3 SD as own data accumulates, clamped to 91–111.
+    `tests/flagEngine.test.ts` checks that the profile really moves it.
+  - **Deletion** only touches rows this phone knows. The cloud part is
+    queued in app_settings `pending_deletes` when offline.
   - **COPD oxygen** is relative to the driver's awake baseline: warning at a
     fall of more than 4 points, critical at ≤ 85 % (Little 1999). Everyone
     else uses NEWS2 Scale 1.
@@ -216,7 +225,7 @@ left `~/PPG_Logger/backup-*`.
 - The ESP32↔Pi link is steady with the Pi's Wi-Fi off.
 - The website is deployed at https://smart-wheel-dashboard.vercel.app.
 - `v3_dashboard.sql` was validated on Postgres 17 (PGlite).
-- All unit tests pass: Python 20, TypeScript 42, C++ vitals.
+- All unit tests pass: Python 20, TypeScript 43, C++ vitals.
 - The iOS bundle compiles with Metro and Hermes.
 
 **Not yet verified on real devices** (do these next):

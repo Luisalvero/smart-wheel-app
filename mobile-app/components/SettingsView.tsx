@@ -3,11 +3,12 @@
  * crowd the drive screen.
  */
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import type { useDriveSession } from '../lib/hooks/useDriveSession';
 import type { StorageMode } from '../lib/db/repositories';
 import { pendingCount, syncToSupabase } from '../lib/db/sync';
+import { wipeEverything } from '../lib/db/deletion';
 import { Btn, C, Card, Row, SectionTitle, fmtClock, fmtDuration } from './ui';
 import { VoicePicker } from './VoicePicker';
 
@@ -28,7 +29,13 @@ const MODES: { key: StorageMode; title: string; body: string }[] = [
   },
 ];
 
-export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: (v: boolean) => void }) {
+export function SettingsView(props: {
+  drive: Drive;
+  autoOn: boolean;
+  setAutoOn: (v: boolean) => void;
+  onWiped: () => Promise<void>;
+  onShowIntro: () => void;
+}) {
   const d = props.drive;
   const [direct, setDirect] = useState(false);
   const [syncMsg, setSyncMsg] = useState('');
@@ -254,6 +261,41 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
         </View>
         {d.driver ? <Text style={st.id}>driver {d.driver.id}</Text> : null}
         {d.session ? <Text style={st.id}>session {d.session.id}</Text> : null}
+      </Card>
+      <Card>
+        <SectionTitle>Your data</SectionTitle>
+        <Btn title="Show the introduction again" kind="ghost" onPress={props.onShowIntro} />
+        <Text style={st.note}>
+          To delete one driver: go back to "Who's driving?", long-press them, and choose Delete. To delete one drive: open it
+          in History. Deleting removes it here and on the dashboard.
+        </Text>
+        <Btn
+          title="Wipe all data on this phone"
+          kind="danger"
+          disabled={d.hasActiveSession}
+          onPress={() =>
+            Alert.alert(
+              'Wipe everything?',
+              'Deletes every driver, drive, reading, alert and waveform this phone has recorded — here and on the dashboard. Other phones\' data is not touched. This cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Wipe everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    const r = await wipeEverything();
+                    await props.onWiped();
+                    Alert.alert(
+                      'Wiped',
+                      `${r.drivers} driver(s) deleted.` +
+                        (r.queued ? ` ${r.queued} will be removed from the dashboard when the phone is next online.` : ''),
+                    );
+                  },
+                },
+              ],
+            )
+          }
+        />
       </Card>
       <Text style={st.disclaimer}>Prototype — not a medical device. Alerts use prototype thresholds and escalation is simulated.</Text>
     </ScrollView>

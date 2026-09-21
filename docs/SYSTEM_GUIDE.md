@@ -289,6 +289,9 @@ React Native (Expo SDK 54), TypeScript, in `mobile-app/`.
 
 **Screens**
 
+- **Introduction** (first launch only; reopen from Settings → Your data):
+  five short pages covering what it does, how the check works, the profile,
+  your data, and voice setup (microphone permission and voice choice).
 - **Who's driving?** — pick, add or edit a driver: name, subject ID, age,
   weight, height (the app shows **BMI** live), gender, health conditions,
   medications, voice language and an emergency contact. To edit, long-press a
@@ -312,6 +315,19 @@ React Native (Expo SDK 54), TypeScript, in `mobile-app/`.
   - Auto-connect on/off.
   - Link health counters.
   - Bench-only "connect straight to ESP32".
+  - **Your data:** show the introduction again, and **wipe all data on this
+    phone**.
+- **Deleting.**
+  - A driver: long-press them, then Delete.
+  - One drive: History → open it → Delete.
+  - Everything: Settings → Wipe.
+
+  Each deletes on the phone **and** in Supabase: the driver row cascades to
+  their drives, readings, alerts and archive records, and the waveform files
+  are removed from Storage. Offline deletions are queued and retried at start
+  and on every sync. Only data this phone recorded is touched, never other
+  phones' data. Verified against the live database: the test driver, drive
+  and reading were all gone after one delete.
 
 **How it connects**: it scans for the Pi relay only and reconnects by itself,
 backing off 1, 2, 4, then 8 s. It retries immediately when the app returns to
@@ -376,6 +392,9 @@ Run these in **Supabase → SQL Editor**, in this order. Each is safe to re-run.
    - alert `level`, `channel` and `answer_confidence`.
 
    The emergency contact is deliberately not stored in the cloud.
+5. `mobile-app/supabase/v5_delete.sql` — lets the app remove waveform files
+   from Storage when a driver or drive is deleted. The table rows already
+   delete and cascade without it.
 
 All primary keys are UUIDs made on the phone, so uploads are idempotent
 upserts.
@@ -514,6 +533,47 @@ prior MI, CHF, PVD, stroke; p ≥ 0.05) are recorded but not applied. Every
 adjustment is listed in the app under **Settings → Safety checks**, so the
 numbers can always be explained.
 
+**The starting warning line.** Avram 2019 also reports the real-world
+**95th-percentile** heart rate by age:
+
+- ≤ 110 BPM at 18–45;
+- ≤ 100 at 45–60;
+- ≤ 95 over 60.
+
+Until the driver's own drives are known, that number, shifted by the same
+sex, BMI and condition adjustments, is where the **high warning** line
+starts. It always stays inside NEWS2's 91–111 band.
+
+(Using the population SD instead, as an earlier version did, put every
+profile at the same 111 line, because people differ by ± 14 BPM. The
+profile then changed nothing.)
+
+**What each profile field changes**
+
+| Field | Effect |
+|---|---|
+| Age | expected heart rate and the starting high line (110 / 100 / 95 by age group) |
+| Sex | ± 2.1 BPM on both |
+| Height + weight → BMI | + 0.21 BPM per kg/m² above 27.5, − below |
+| Diabetes, sleep apnea, COPD, high blood pressure, arrhythmia, asthma, high cholesterol | + 1.4 to + 4.5 BPM (the paper's significant effects) |
+| Heart disease, prior MI, heart failure, PVD, prior stroke | recorded; no significant effect in the data, so no change |
+| COPD | oxygen judged against the driver's own baseline (§11.1 below) |
+| Arrhythmia / AFib | irregular-pulse advisory turned off (it would only repeat what they know) |
+| Medications | non-DHP calcium-channel blocker + 4.1 BPM; the others had no significant effect |
+| Language | voice-check language (English / Spanish) |
+| Name | spoken in the voice check |
+| Emergency contact | a **Call** button after a "not OK" or no answer (stays on the phone) |
+| Subject ID | labels only |
+
+Examples before any drives:
+
+| Driver | High warning line |
+|---|---|
+| 20-year-old man | 107 |
+| 55-year-old man with hypertension | 100 |
+| 68-year-old woman | 97 |
+| 75-year-old man | 93 |
+
 **2. Personal baseline.** The 10th, 50th and 90th percentiles of the driver's
 own finished drives. They gradually replace the prior, with weight
 *w = n / (n + 600)*: 10 minutes of good signal counts as much as the whole
@@ -645,7 +705,9 @@ When an emergency is confirmed, the phone vibrates, then:
    - "OK" → "I'll keep an eye on things."
    - "Not OK" or no answer → "Please pull over as soon as it is safe. If you
      need emergency help, call 911." It is recorded as **escalated
-     (simulated)**.
+     (simulated)**, and the Drive screen shows **Call {emergency contact}**
+     and **Call 911** buttons. The driver taps them; nothing is dialled
+     automatically.
 
    The wording never claims help is on the way, because in this prototype
    nobody is contacted.

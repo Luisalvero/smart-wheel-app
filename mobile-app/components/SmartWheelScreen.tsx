@@ -15,6 +15,7 @@ import { DriverPicker } from './DriverPicker';
 import { DriveView, VoiceCheckModal } from './DriveView';
 import { HistoryView } from './HistoryView';
 import { SettingsView } from './SettingsView';
+import { Onboarding } from './Onboarding';
 
 type Tab = 'drive' | 'history' | 'settings';
 
@@ -24,6 +25,15 @@ export default function SmartWheelScreen() {
   const [tab, setTab] = useState<Tab>('drive');
   const [busy, setBusy] = useState(false);
   const [autoOn, setAutoOn] = useState(true);
+  // First run: the introduction (null = still loading the flag).
+  const [showIntro, setShowIntro] = useState<boolean | null>(null);
+  useEffect(() => {
+    void repo.getSetting('onboarded').then((v) => setShowIntro(v !== '1'));
+  }, []);
+  const finishIntro = useCallback(() => {
+    setShowIntro(false);
+    void repo.setSetting('onboarded', '1');
+  }, []);
   // Re-render once a second so timers and "x s ago" stay current.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -52,7 +62,16 @@ export default function SmartWheelScreen() {
     ]);
   }
 
-  if (!profiles) {
+  if (showIntro) {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <Onboarding onDone={finishIntro} />
+      </>
+    );
+  }
+
+  if (!profiles || showIntro === null) {
     return (
       <View style={st.center}>
         <ActivityIndicator />
@@ -88,7 +107,19 @@ export default function SmartWheelScreen() {
       <View style={{ flex: 1 }}>
         {tab === 'drive' ? <DriveView drive={drive} busy={busy} guard={guard} /> : null}
         {tab === 'history' ? <HistoryView refreshKey={`${drive.session?.id ?? ''}:${drive.session?.status ?? ''}:${drive.fold.state}`} /> : null}
-        {tab === 'settings' ? <SettingsView drive={drive} autoOn={autoOn} setAutoOn={setAutoOn} /> : null}
+        {tab === 'settings' ? (
+          <SettingsView
+            drive={drive}
+            autoOn={autoOn}
+            setAutoOn={setAutoOn}
+            onWiped={async () => {
+              await drive.leaveDriver();
+              await reload();
+              setTab('drive');
+            }}
+            onShowIntro={() => setShowIntro(true)}
+          />
+        ) : null}
       </View>
 
       <VoiceCheckModal drive={drive} />

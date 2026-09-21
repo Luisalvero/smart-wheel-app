@@ -13,6 +13,7 @@ import { Deframer, SeqTracker, uuidv4 } from '../ble/protocol';
 import { LiveUploader, type LinkState, type LiveStatus } from '../db/liveSync';
 import * as repo from '../db/repositories';
 import { syncToSupabase } from '../db/sync';
+import { processPendingDeletes } from '../db/deletion';
 import type { DriveSession, DriverProfile, StorageMode } from '../db/repositories';
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
 import type { Baseline } from '../analysis/baseline';
@@ -381,6 +382,7 @@ export function useDriveSession() {
   useEffect(() => {
     void (async () => {
       // Sessions a crash left open: close them locally, then publish that.
+      void processPendingDeletes().catch(() => undefined);
       const closed = await repo.recoverInterruptedSessions();
       if (closed) void syncToSupabase().catch(() => undefined);
       dispatch({ type: 'storageMode', mode: await repo.getStorageMode() });

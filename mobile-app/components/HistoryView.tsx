@@ -4,9 +4,10 @@
  * archive after checking its SHA-256.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import * as repo from '../lib/db/repositories';
+import { deleteDriveEverywhere } from '../lib/db/deletion';
 import type { DriveAlertRow, RobustSessionStats, SessionSummary } from '../lib/db/repositories';
 import { archiveInfo, unfoldSession, type ArchiveInfo } from '../lib/archive/archiveStore';
 import type { Archive } from '../lib/archive/codec';
@@ -155,6 +156,27 @@ function Detail(props: { session: SessionSummary; onBack: () => void }) {
           </>
         )}
       </Card>
+
+      {s.status !== 'active' ? (
+        <Btn
+          title="Delete this drive"
+          kind="danger"
+          onPress={() =>
+            Alert.alert('Delete this drive?', 'Removes its readings, alerts and waveform on this phone and on the dashboard. It cannot be undone.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete everywhere',
+                style: 'destructive',
+                onPress: async () => {
+                  const where = await deleteDriveEverywhere(s.id);
+                  props.onBack();
+                  if (where === 'queued') Alert.alert('Deleted on this phone', 'The dashboard copy will be deleted the next time the phone is online.');
+                },
+              },
+            ])
+          }
+        />
+      ) : null}
     </ScrollView>
   );
 }
@@ -178,7 +200,16 @@ export function HistoryView(props: { refreshKey: string }) {
     void load();
   }, [load, props.refreshKey]);
 
-  if (open) return <Detail session={open} onBack={() => setOpen(null)} />;
+  if (open)
+    return (
+      <Detail
+        session={open}
+        onBack={() => {
+          setOpen(null);
+          void load();
+        }}
+      />
+    );
   return (
     <ScrollView
       contentContainerStyle={st.container}

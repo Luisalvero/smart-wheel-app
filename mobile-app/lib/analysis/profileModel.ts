@@ -115,8 +115,19 @@ export type ProfilePrior = {
   hrMean: number;
   /** Between-person spread for this profile (bpm, 1 SD). */
   hrSd: number;
-  /** Tanaka 2001: 208 − 0.7 × age (bpm); null without an age. */
+  /** Tanaka 2001: 208 − 0.7 × age (bpm); null without an age. Shown for context. */
   hrMax: number | null;
+  /**
+   * The profile's own "unusually high" line before any drives are learned:
+   * Avram 2019's real-world 95th percentile for the age group (≤ 110 bpm at
+   * 18–45, ≤ 100 at 45–60, ≤ 95 over 60), shifted by the same sex, BMI and
+   * condition adjustments as the expected mean. Using the population SD here
+   * instead would put every profile at the NEWS2 limit (the spread between
+   * people is ± 14 bpm), and the profile would change nothing.
+   */
+  hrP95: number;
+  /** Known arrhythmia: the irregular-pulse advisory would only repeat it. */
+  knownArrhythmia: boolean;
   /** COPD drivers: oxygen is judged relative to this awake baseline (Little
    *  et al. 1999 population mean until the driver's own median is known). */
   spo2Baseline: number | null;
@@ -163,6 +174,10 @@ export function profilePrior(p: DriverProfileInput): ProfilePrior {
       explain.push(`${m.label}: +${m.hr} bpm`);
     }
   }
+  const age95 = !p.age ? 110 : p.age < 45 ? 110 : p.age <= 60 ? 100 : 95;
+  const shift = hrMean - (stratum ? stratum.mean : ALL_AGES.mean);
+  const hrP95 = Math.round((age95 + shift) * 10) / 10;
+  explain.push(`unusually high for this profile: above ${Math.round(hrP95)} bpm (age-group 95th percentile ${age95}${shift ? ` ${shift >= 0 ? '+' : '−'} ${Math.abs(shift).toFixed(1)}` : ''}, Avram 2019)`);
   const copd = p.conditions.includes('copd');
   if (copd) explain.push(`COPD: oxygen judged against your own baseline (start ${COPD_AWAKE_SPO2}%, Little 1999)`);
   return {
@@ -170,6 +185,8 @@ export function profilePrior(p: DriverProfileInput): ProfilePrior {
     hrSd,
     hrMax: p.age ? Math.round(208 - 0.7 * p.age) : null,
     spo2Baseline: copd ? COPD_AWAKE_SPO2 : null,
+    hrP95,
+    knownArrhythmia: p.conditions.includes('arrhythmia'),
     bmi: b,
     explain,
   };

@@ -84,7 +84,7 @@ export const NOTICE_REPEAT_S = 120;
 const HYSTERESIS_BPM = 5;
 const HYSTERESIS_SPO2 = 1;
 
-export type Band = { mean: number; sd: number };
+export type Band = { mean: number; sd: number; weight?: number };
 
 /**
  * "I'm OK" feedback. When the driver answers OK to a WARNING-level heart-rate
@@ -109,7 +109,13 @@ export function thresholds(prior: ProfilePrior, band: Band, spo2Median: number |
   // COPD: fall of MORE than 4 points from baseline = warning (Little 1999);
   // readings are whole percent, so "< base − 4" is "≤ ceil(base − 4) − 1".
   const copdWarn = copdBase === null ? 0 : Math.max(86, Math.ceil(copdBase - 4) - 1);
-  const highWarn = Math.min(111, Math.max(91, Math.round(band.mean + 3 * band.sd)));
+  // High line: the profile's real-world 95th percentile until the driver's own
+  // drives are known, then (in proportion to how much we know) their personal
+  // mean + 3 SD. Always inside NEWS2's 91–111 band: never alarming on a
+  // clinically normal rate, never waiting past NEWS2's "2".
+  const w = band.weight ?? 0;
+  const personalLine = band.mean + 3 * band.sd;
+  const highWarn = Math.min(111, Math.max(91, Math.round(w * personalLine + (1 - w) * prior.hrP95)));
   const lowWarn = Math.max(41, Math.min(50, Math.round(band.mean - 3 * band.sd)));
   return {
     highWarn: ack.high === null ? highWarn : Math.min(ACK_HIGH_CAP, Math.max(highWarn, Math.round(ack.high))),

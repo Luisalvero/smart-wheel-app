@@ -2,7 +2,7 @@
  * The in-car screen: is everything connected, what are the vitals, is data
  * flowing, and one big start/stop button. Technical detail lives in Settings.
  */
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { useDriveSession } from '../lib/hooks/useDriveSession';
 import { CHART_SECONDS } from '../lib/hooks/useDriveSession';
@@ -189,6 +189,18 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
             {sf.last.result.channel === 'voice' ? ' (by voice)' : sf.last.result.channel === 'button' ? ' (button)' : ''}.
           </Text>
         ) : null}
+        {sf.last && sf.last.result.outcome !== 'ok' ? (
+          <View style={st.callRow}>
+            {d.driver?.emergency_phone ? (
+              <Btn
+                title={`Call ${d.driver.emergency_name || 'emergency contact'}`}
+                onPress={() => void Linking.openURL(`tel:${d.driver!.emergency_phone!.replace(/[^\d+]/g, '')}`)}
+                style={{ flex: 1 }}
+              />
+            ) : null}
+            <Btn title="Call 911" kind="danger" onPress={() => void Linking.openURL('tel:911')} style={{ flex: 1 }} />
+          </View>
+        ) : null}
         {sf.advisory ? (
           <Text style={[st.body, { color: C.warn }]}>
             An irregular pulse pattern was noticed during this drive. This is not a diagnosis — if you see it again, consider
@@ -265,6 +277,7 @@ const st = StyleSheet.create({
   alertTitle: { fontSize: 24, fontWeight: '800', color: C.ink },
   alertBody: { fontSize: 16, color: C.ink, lineHeight: 22 },
   alertHint: { fontSize: 12, color: C.sub },
+  callRow: { flexDirection: 'row', gap: 10 },
   watch: { backgroundColor: C.warnSoft, borderRadius: 12, padding: 10 },
   watchText: { color: C.warn, fontWeight: '700', fontSize: 14 },
   phase: { flexDirection: 'row', alignItems: 'center', gap: 8 },

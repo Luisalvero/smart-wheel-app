@@ -153,3 +153,19 @@ test('"I\'m OK" feedback moves a warning line, within safe limits', () => {
   assert.ok(!run(e, 20, 60, () => ({ bpm: 118 })).some((x) => x.type === 'emergency'));
   assert.ok(run(e, 80, 30, () => ({ bpm: 140 })).some((x) => x.type === 'emergency'));
 });
+
+test('the profile sets the starting warning line (Avram 2019 age-group 95th percentile)', () => {
+  const line = (p: Partial<Parameters<typeof profilePrior>[0]>) => {
+    const pr = profilePrior({ age: 30, sex: null, weight_kg: null, height_cm: null, conditions: [], medications: [], ...p });
+    return thresholds(pr, personalBand(pr, null)).highWarn;
+  };
+  assert.equal(line({ age: 30 }), 110);
+  assert.equal(line({ age: 50 }), 100);
+  assert.equal(line({ age: 70 }), 95);
+  assert.ok(line({ age: 70, sex: 'female' }) > line({ age: 70, sex: 'male' }), 'women run ~4 bpm higher');
+  assert.ok(line({ age: 50, conditions: ['diabetes'] }) > line({ age: 50 }), 'diabetes raises the usual rate');
+  assert.equal(line({ age: 25, sex: 'female', conditions: ['diabetes', 'sleep_apnea'] }), 111); // never past NEWS2 "2"
+  assert.equal(line({ age: 85, sex: 'male', weight_kg: 50, height_cm: 185 }), 91); // never below a clinically normal rate
+  const afib = profilePrior({ age: 60, sex: 'male', weight_kg: null, height_cm: null, conditions: ['arrhythmia'], medications: [] });
+  assert.equal(afib.knownArrhythmia, true);
+});

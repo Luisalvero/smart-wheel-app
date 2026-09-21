@@ -17,6 +17,7 @@
  */
 import { getDatabase } from './database';
 import { LiveUploader } from './liveSync';
+import { processPendingDeletes } from './deletion';
 
 export type SyncResult = {
   sessions: number;
@@ -33,6 +34,7 @@ export type SyncResult = {
  * Only *finished* sessions: an active one is being streamed live already.
  */
 export async function syncToSupabase(): Promise<SyncResult> {
+  await processPendingDeletes(); // deletions made offline go first
   const db = await getDatabase();
   const pending = await db.getAllAsync<{ id: string; n: number }>(
     `SELECT s.id, (SELECT COUNT(*) FROM telemetry_events e

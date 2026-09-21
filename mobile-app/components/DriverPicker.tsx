@@ -3,9 +3,10 @@
  * app knows whose baseline to compare against (proposal: user profiles).
  */
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import * as repo from '../lib/db/repositories';
+import { deleteDriverEverywhere } from '../lib/db/deletion';
 import type { DriverProfile, Gender } from '../lib/db/repositories';
 import { CONDITIONS, MEDICATIONS, bmi, bmiCategory } from '../lib/analysis/profileModel';
 import { Btn, C, Card, SectionTitle } from './ui';
@@ -234,6 +235,37 @@ export function DriverPicker(props: {
           {input('emergency_phone', 'Phone', false)}
           {error ? <Text style={st.error}>{error}</Text> : null}
           <Btn title="Save driver" onPress={create} busy={busy} />
+          {editing ? (
+            <Btn
+              title={`Delete ${editing.display_name}`}
+              kind="danger"
+              onPress={() =>
+                Alert.alert(
+                  `Delete ${editing.display_name}?`,
+                  'This removes the driver and every drive, reading, alert and waveform recorded for them — on this phone and on the dashboard. It cannot be undone.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                      text: 'Delete everywhere',
+                      style: 'destructive',
+                      onPress: async () => {
+                        setBusy(true);
+                        const where = await deleteDriverEverywhere(editing.id);
+                        setBusy(false);
+                        setEditing(null);
+                        setAdding(false);
+                        setForm(blank);
+                        await props.onCreated();
+                        if (where === 'queued') {
+                          Alert.alert('Deleted on this phone', 'The dashboard copy will be deleted automatically the next time the phone is online.');
+                        }
+                      },
+                    },
+                  ],
+                )
+              }
+            />
+          ) : null}
           {props.profiles.length ? <Btn
               title="Cancel"
               kind="ghost"
