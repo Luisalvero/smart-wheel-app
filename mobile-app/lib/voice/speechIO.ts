@@ -3,9 +3,19 @@
  *
  * Speaking: expo-speech → the phone's own text-to-speech (iOS
  * AVSpeechSynthesizer, Android TextToSpeech). No network, no cost. We pick the
- * best installed voice for the language: an "Enhanced" voice if the phone has
- * one (free to download on iPhone: Settings → Accessibility → Spoken Content →
- * Voices), otherwise the default.
+ * best installed voice for the language: Premium, then Enhanced, then the
+ * default -- never the novelty voices. Premium/Enhanced voices are free
+ * downloads on iPhone: Settings → Accessibility → Read & Speak → Voices (iOS
+ * 26; "Spoken Content" on iOS 17-18). expo-speech reports Premium voices as
+ * "Default" quality, so they are recognised by their identifier.
+ *
+ * Loudness: before every prompt the iOS audio session is set to playback /
+ * voicePrompt with duckOthers -- the mode navigation apps use: full speaker
+ * volume (or the car's Bluetooth audio), music lowered underneath, and it
+ * plays even with the ring/silent switch on silent. Without this, speech after
+ * the microphone has been used can come out of the quiet earpiece. Listening
+ * uses playAndRecord with defaultToSpeaker + Bluetooth, not the recogniser's
+ * default "measurement" mode.
  *
  * Listening: expo-speech-recognition → iOS SFSpeechRecognizer / Android
  * SpeechRecognizer with requiresOnDeviceRecognition when the device supports
@@ -19,6 +29,7 @@
  *
  * Nothing is recorded or stored: transcripts only live for the check.
  */
+import { Platform } from 'react-native';
 import * as Speech from 'expo-speech';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
@@ -33,11 +44,17 @@ async function bestVoice(lang: Lang): Promise<string | undefined> {
   try {
     const voices = await Speech.getAvailableVoicesAsync();
     const prefix = LOCALE[lang].slice(0, 2);
-    const mine = voices.filter((v) => v.language?.toLowerCase().startsWith(prefix));
+    const rank = (v: Speech.Voice) => {
+      const id = v.identifier.toLowerCase();
+      if (id.includes('speech.synthesis') || id.includes('eloquence')) return 0; // novelty / robotic voices
+      if (id.includes('.premium.')) return 3;
+      if (id.includes('.enhanced.') || String(v.quality) === 'Enhanced') return 2;
+      return 1;
+    };
+    const mine = voices.filter((v) => v.language?.toLowerCase().startsWith(prefix) && rank(v) > 0);
     const exact = mine.filter((v) => v.language === LOCALE[lang]);
-    const pool = exact.length ? exact : mine;
-    const pick = pool.find((v) => String(v.quality) === 'Enhanced') ?? pool[0];
-    voiceCache[lang] = pick?.identifier ?? null;
+    const pool = (exact.length ? exact : mine).sort((a, b) => rank(b) - rank(a));
+    voiceCache[lang] = pool[0]?.identifier ?? null;
   } catch {
     voiceCache[lang] = null;
   }
@@ -55,17 +72,41 @@ export async function prepareVoice(): Promise<{ granted: boolean; onDevice: bool
   }
 }
 
+/** Loud prompt mode (see header). No-op off iOS. */
+function promptAudio() {
+  if (Platform.OS !== 'ios') return;
+  try {
+    ExpoSpeechRecognitionModule.setCategoryIOS({ category: 'playback', categoryOptions: ['duckOthers'], mode: 'voicePrompt' });
+    ExpoSpeechRecognitionModule.setAudioSessionActiveIOS(true);
+  } catch {
+    // keep whatever session is active
+  }
+}
+
+/** Let other audio (music, navigation) return to full volume afterwards. */
+export function releaseAudio() {
+  if (Platform.OS !== 'ios') return;
+  try {
+    ExpoSpeechRecognitionModule.setAudioSessionActiveIOS(false, { notifyOthersOnDeactivation: true });
+  } catch {
+    // nothing active
+  }
+}
+
 export function phoneVoiceIO(): VoiceIO {
   let cancelListen: (() => void) | null = null;
 
   return {
     async speak(text, lang) {
       const voice = await bestVoice(lang);
+      promptAudio();
       await new Promise<void>((resolve) => {
         Speech.speak(text, {
           language: LOCALE[lang],
           voice,
           rate: 0.95,
+          volume: 1.0,
+          useApplicationAudioSession: true,
           onDone: () => resolve(),
           onStopped: () => resolve(),
           onError: () => resolve(),
@@ -116,6 +157,11 @@ export function phoneVoiceIO(): VoiceIO {
             addsPunctuation: false,
             contextualStrings: hints,
             iosTaskHint: 'confirmation',
+            iosCategory: {
+              category: 'playAndRecord',
+              categoryOptions: ['defaultToSpeaker', 'allowBluetooth', 'duckOthers'],
+              mode: 'default',
+            },
           });
         } catch {
           // Recognition unavailable: wait out the window (buttons still work).

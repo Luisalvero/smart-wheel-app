@@ -70,6 +70,8 @@ export const initialSafety: SafetyState = {
 
 type Deps = {
   voiceIO: () => VoiceIO;
+  /** Called when a voice check ends, so other audio returns to full volume. */
+  releaseAudio?: () => void;
   save: (row: Omit<DriveAlertRow, 'sync_status'>) => Promise<void>;
   saveAck: (profileId: string, ack: Ack) => Promise<void>;
   haptic: (kind: 'warning' | 'error') => void;
@@ -307,6 +309,7 @@ export class SafetyController {
       result = { outcome: 'no_response', urgent: false, channel: 'none', attempts: 0, confidence: null };
     }
     this.voice = null;
+    this.deps.releaseAudio?.();
     if (rehearsal) {
       this.set({ check: null });
       return result;

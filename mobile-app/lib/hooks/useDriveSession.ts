@@ -17,7 +17,7 @@ import type { DriveSession, DriverProfile, StorageMode } from '../db/repositorie
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
 import type { Baseline } from '../analysis/baseline';
 import { SafetyController, initialSafety, type DemoScenario, type SafetyState } from '../analysis/safetyController';
-import { phoneVoiceIO, prepareVoice } from '../voice/speechIO';
+import { phoneVoiceIO, prepareVoice, releaseAudio, resetVoiceCache } from '../voice/speechIO';
 
 /** Seconds of vitals kept for the on-screen charts. */
 export const CHART_SECONDS = 120;
@@ -241,6 +241,7 @@ export function useDriveSession() {
     () =>
       new SafetyController({
         voiceIO: phoneVoiceIO,
+        releaseAudio,
         save: repo.saveAlert,
         saveAck: repo.setAck,
         haptic: (k) =>
@@ -466,6 +467,7 @@ export function useDriveSession() {
   /** Settings: hear and answer the real voice check once (nothing recorded). */
   const rehearseVoice = useCallback(async () => {
     if (!state.voice?.granted) dispatch({ type: 'voice', voice: await prepareVoice() });
+    resetVoiceCache(); // pick up a voice downloaded since the app started
     return safety.rehearse();
   }, [safety, state.voice]);
 

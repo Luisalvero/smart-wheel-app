@@ -607,8 +607,15 @@ above their normal.
 When an emergency is confirmed, the phone vibrates, then:
 
 1. It **speaks**, using the phone's own text-to-speech (iOS
-   AVSpeechSynthesizer via `expo-speech`) and the best installed voice for
-   the language. "Enhanced" voices are free downloads on iPhone. For example:
+   AVSpeechSynthesizer via `expo-speech`). It uses the best installed voice
+   for the language, in this order: Premium, then Enhanced, then default,
+   never novelty voices. Premium and Enhanced voices are free downloads:
+   **Settings → Accessibility → Read & Speak → Voices** (iOS 26; called
+   Spoken Content on iOS 17–18). They are about 100–400 MB each, on Wi-Fi.
+
+   Prompts play in iOS "voice prompt" mode, the one navigation apps use: full
+   volume through the speaker or the car's Bluetooth, music ducked, even with
+   the silent switch on. For example:
    "Luis, your heart rate has been unusually high. Are you feeling okay?
    Please say yes, or no."
 2. It **listens for 6 s** with the phone's speech recognizer

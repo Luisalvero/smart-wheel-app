@@ -140,8 +140,11 @@ export function SettingsView(props: { drive: Drive; autoOn: boolean; setAutoOn: 
         />
         {rehearsal ? <Text style={st.note}>{rehearsal}</Text> : null}
         <Text style={st.note}>
-          Speech is handled by the phone itself (no paid services). For the most natural voice on iPhone, download an "Enhanced"
-          voice in Settings → Accessibility → Spoken Content → Voices.
+          Speech is handled by the phone itself (no paid services). The check speaks at full volume through the speaker or your
+          car's Bluetooth, even on silent; turn the phone's volume up. For the most natural voice, download a free Premium or
+          Enhanced voice: iPhone Settings → Accessibility → Read & Speak → Voices → English (and Español) → pick one marked
+          Premium or Enhanced (about 100–400 MB, on Wi-Fi). On iOS 17–18 the menu is called Spoken Content. The app picks the
+          best one automatically (tap "Try the voice check" to hear the new one).
         </Text>
       </Card>
 
