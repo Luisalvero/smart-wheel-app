@@ -392,6 +392,11 @@ Run these in **Supabase → SQL Editor**, in this order. Each is safe to re-run.
    - alert `level`, `channel` and `answer_confidence`.
 
    The emergency contact is deliberately not stored in the cloud.
+6. `mobile-app/supabase/v6_quality.sql` — adds:
+   - per-second quality labels (`hr_beats`, `sqi_good`, `template_r`,
+     `perfusion`, `skewness`);
+   - calibration fields on the profile;
+   - `driver_baselines` computed from clean seconds only.
 5. `mobile-app/supabase/v5_delete.sql` — lets the app remove waveform files
    from Storage when a driver or drive is deleted. The table rows already
    delete and cascade without it.
@@ -814,6 +819,95 @@ emergencies, not for notices.
 - **Voice dialogue:** yes / unclear→no / silence×2 / urgent / Spanish /
   button mid-listen.
 
+### 11.7 Accuracy and learning
+
+Accuracy on a steering wheel is hard. In the only real-road study of wheel
+sensors we found, beat detection scored just **45–58 %** (Warnecke et al.
+2023, 19 drivers), mainly because of hand position and vehicle motion. So
+the app works in three steps: judge every second first, learn only from good
+seconds, and keep checking itself against the driver.
+
+**1. Every second is quality-checked on the phone** (`lib/analysis/signal.ts`).
+It analyses the last **10 s** of the 100 Hz waveform:
+
+- **Beat heart rate:** the median of beat-to-beat intervals from the Elgendi
+  detector. This is a second heart-rate estimate, independent of the ESP32.
+- **Feasibility** (Orphanidou et al. 2015):
+  - rate 40–180 BPM;
+  - no gap over 3 s;
+  - longest / shortest interval < 2.2.
+- **Template match** (Orphanidou 2015): every beat is correlated with the
+  window's average beat. It must be **≥ 0.86** (reported 91 % sensitivity,
+  95 % specificity).
+- **Skewness** (Elgendi 2016, the best single quality index): clean PPG is
+  positively skewed, so it must be **≥ 0**.
+- **Agreement:** the ESP32's heart rate and the beat heart rate must agree
+  within **±5 BPM** (the criterion used by Gao et al. 2025 for in-vehicle
+  PPG).
+
+A second is **good** only if all of these hold. Only good seconds count
+toward warnings, baselines and trends.
+
+**Perfusion index** (pulse strength) is recorded and shown as a "weak pulse"
+hint, but it does not reject seconds. The published cut-offs are for
+clinical clip probes, and Elgendi found the perfusion index not significant.
+
+Every quality metric is **saved with the reading** (`v6_quality.sql`), so
+the dataset carries its own labels for future algorithm work.
+
+**2. Learning the driver** (`learnBaseline` in `lib/analysis/baseline.ts`):
+
+- **Window:** the last **28 days** of drives, like the wearable studies
+  (Mishra et al. 2020; Alavi et al. 2022). If there are fewer than 10 drives
+  in it, it uses the last **10 drives** (Cacheda et al. 2026 require ≥ 10
+  observations).
+- **Only good seconds count.**
+- **Emergencies are never learned as normal:** everything from 60 s before
+  to 120 s after an episode the driver answered "not OK" (or didn't answer)
+  is excluded.
+- **Driving data only.** Heart rate while driving runs about 11 BPM above
+  rest (a taxi-driver study), so resting norms would mislead.
+- **Personal thresholds take over gradually:** weight = min(1, drives / 10)
+  × seconds / (seconds + 600).
+- "I'm OK" answers adjust the warning line (§11.3).
+
+**3. Trend check** (`lib/analysis/trend.ts`). After each drive:
+
+- "This week" = the median of the per-drive median heart rates over the last
+  7 days (at least 3 drives).
+- "Usual" = the same over the 28 days before that (at least 10 drives).
+- It is flagged when this week is at least **4 BPM** (Alavi 2022) **and 0.5
+  SD** (Radin 2020) above usual. The SD is floored at 3 BPM, the typical
+  day-to-day variation (Quer 2020).
+- This is how the wearable studies spotted illness days before symptoms; the
+  median elevation Mishra found was 7 BPM.
+- It shows on the Drive screen and is logged once a week as an advisory. It
+  is never an alarm and never a diagnosis.
+
+**4. Personal calibration** (Settings → Calibrate with a reference device):
+
+- Sit still for 60 s with a reference device on the other hand. The app
+  records the wheel's clean seconds, and you enter the reference average.
+- **Heart rate:** the difference becomes a personal correction of at most
+  ±10 BPM. It is **averaged over every session**, because agreement studies
+  use about 100 paired readings (Bland). The target is within ±10 % (the
+  consumer standard CTA-2065) and ideally a bias of about 2–3 BPM.
+- **Oxygen** is compared but **never corrected**. The FDA validates
+  oximeters against arterial blood, and a home oximeter has its own 2–3 %
+  error.
+- SpO₂ is labelled an *estimate* everywhere. Pulse oximeters miss low
+  oxygen about 3× more often in Black patients (Sjoding et al. 2020: 11.7 %
+  vs 3.6 % occult hypoxaemia).
+
+**What would make it more accurate next (hardware):**
+
+- An accelerometer or gyroscope on the ESP32, to discard seconds while
+  steering. Babusiak et al. 2021 did this with the wheel's gyroscope Z axis.
+- A second sensor under the other hand (the proposal's multiple sensing
+  points).
+- Validating against a chest-strap ECG on real drives, then tuning the
+  thresholds on the team's own labelled data.
+
 *These thresholds are prototype values built from published references. They
 are not clinically validated for this device. Validating them on real drives
 is future work.*
@@ -1066,6 +1160,35 @@ Before collecting real subject data:
   COPD", *Respiratory Medicine* 93:202–207, 1999 (awake SaO₂ 93.9 ± 1.6 % in
   stable COPD; significant desaturation = a fall of more than 4 % from the
   awake baseline). https://doi.org/10.1016/S0954-6111(99)90009-4
+- Orphanidou C. et al., "Signal-quality indices for the electrocardiogram and
+  photoplethysmogram: derivation and applications to wireless monitoring",
+  *IEEE J Biomed Health Inform* 19(3):832–838, 2015.
+  https://www.robots.ox.ac.uk/~davidc/pubs/jbhi_sqi2015.pdf
+- Gao et al., in-vehicle PPG signal quality, *Sensors* 2025 (±5 BPM
+  agreement criterion). https://pmc.ncbi.nlm.nih.gov/articles/PMC12736534/
+- Warnecke J. M., Lasenby J., Deserno T. M., *Sci Rep* 2023 (steering-wheel
+  PPG/ECG on real roads). https://pmc.ncbi.nlm.nih.gov/articles/PMC10682004/
+- Babusiak B. et al., *Sensors* 2021 (MAX30102 on a steering wheel, gyroscope
+  artefact rejection). https://pmc.ncbi.nlm.nih.gov/articles/PMC8399225/
+- Radin J. M. et al., *Lancet Digital Health* 2020 (weekly RHR > 0.5 SD above
+  a personal baseline).
+- Mishra T. et al., "Pre-symptomatic detection of COVID-19 from smartwatch
+  data", *Nat Biomed Eng* 2020 (28-day baselines).
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC9020268/
+- Alavi A. et al., *Nat Med* 2022 (NightSignal, +4 BPM).
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC8240687/
+- Quer G. et al., *PLOS One* 2020 (92,457 adults; within-person daily RHR
+  SD ≈ 3 BPM). https://journals.plos.org/plosone/article?id=10.1371%2Fjournal.pone.0227709
+- Cacheda F. et al., *Digital Health* 2026 (≥ 10 observations for a personal
+  baseline). https://pmc.ncbi.nlm.nih.gov/articles/PMC13487130/
+- Heart rate while driving vs rest (taxi drivers), *Ann Occup Environ Med*
+  2016. https://pmc.ncbi.nlm.nih.gov/articles/PMC5054562/
+- Sjoding M. W. et al., "Racial bias in pulse oximetry measurement", *NEJM*
+  383:2477, 2020. https://pmc.ncbi.nlm.nih.gov/articles/PMC7808260
+- Bland J. M., sample size for agreement studies.
+  https://www-users.york.ac.uk/~mb55/meas/sizemeth.htm
+- Nelson B. W., Allen N. B., *JMIR mHealth* 2019 (±10 % MAPE standard).
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC6431828/
 - Pearson R. K. et al., "Generalized Hampel Filters", *EURASIP J Adv Signal
   Process* 2016:87. https://doi.org/10.1186/s13634-016-0383-6
 - Elgendi M. et al., "Systolic peak detection in acceleration

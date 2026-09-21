@@ -169,9 +169,12 @@ export class LiveUploader {
               conditions: parseList(profile.conditions),
               medications: parseList(profile.medications),
               language: profile.language ?? 'en',
+              cal_hr: profile.cal_hr ?? null,
+              cal_spo2: profile.cal_spo2 ?? null,
+              cal_at: profile.cal_at ?? null,
             },
           ],
-          ['conditions', 'medications', 'language'],
+          ['conditions', 'medications', 'language', 'cal_hr', 'cal_spo2', 'cal_at'],
         );
         if (err) return this.report(`profile: ${err.message}`);
         this.profilePushed = profile.id;
@@ -223,8 +226,14 @@ export class LiveUploader {
             received_at: e.received_at,
             finger: e.finger === null || e.finger === undefined ? null : e.finger === 1,
             quality: e.quality ?? null,
+            // v6 signal-quality labels
+            hr_beats: e.hr_beats ?? null,
+            sqi_good: e.sqi_good === null || e.sqi_good === undefined ? null : e.sqi_good === 1,
+            template_r: e.template_r ?? null,
+            perfusion: e.perfusion ?? null,
+            skewness: e.skewness ?? null,
           })),
-          ['finger', 'quality'],
+          ['finger', 'quality', 'hr_beats', 'sqi_good', 'template_r', 'perfusion', 'skewness'],
         );
         if (e2) return this.report(`telemetry: ${e2.message}`, pushed);
         await db.runAsync(

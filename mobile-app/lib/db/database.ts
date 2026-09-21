@@ -18,7 +18,7 @@ export const DB_NAME = 'smart_wheel.db';
  * version the device is on, so an existing install keeps its recorded drives
  * instead of being wiped.
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -200,6 +200,26 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
     await addColumn('drive_alerts', 'level TEXT');
     await addColumn('drive_alerts', 'channel TEXT');
     await addColumn('drive_alerts', 'answer_confidence REAL');
+  }
+
+  if (current < 5) {
+    // v5: per-second signal-quality labels computed on the phone from the
+    // 100 Hz waveform (lib/analysis/signal.ts), and per-driver calibration.
+    const addColumn = async (table: string, ddl: string) => {
+      try {
+        await db.execAsync(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+      } catch {
+        // already present
+      }
+    };
+    await addColumn('telemetry_events', 'hr_beats REAL');
+    await addColumn('telemetry_events', 'sqi_good INTEGER');
+    await addColumn('telemetry_events', 'template_r REAL');
+    await addColumn('telemetry_events', 'perfusion REAL');
+    await addColumn('telemetry_events', 'skewness REAL');
+    await addColumn('driver_profiles', 'cal_hr REAL');
+    await addColumn('driver_profiles', 'cal_spo2 REAL');
+    await addColumn('driver_profiles', 'cal_at TEXT');
   }
 
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);

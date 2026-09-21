@@ -8,6 +8,7 @@ import type { useDriveSession } from '../lib/hooks/useDriveSession';
 import { CHART_SECONDS } from '../lib/hooks/useDriveSession';
 import { Btn, C, Card, Pill, Row, SectionTitle, fmtBytes, fmtClock, fmtDuration, fmtNum, type Tone } from './ui';
 import { RateDot, VitalChart } from './charts';
+import { PERFUSION_HINT } from '../lib/analysis/signal';
 
 type Drive = ReturnType<typeof useDriveSession>;
 
@@ -103,11 +104,23 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
       <Card>
         <View style={st.between}>
           <Pill tone={signal.tone}>{signal.text}</Pill>
-          {d.quality !== null && d.finger ? <Text style={st.subtle}>quality {d.quality}%</Text> : null}
+          {d.finger && d.signal?.hrBeats != null ? (
+            <Text style={[st.subtle, { color: d.signal.good ? C.good : C.warn }]}>
+              {d.signal.good
+                ? 'clean pulse ✓'
+                : d.signal.agree === false
+                  ? 'readings disagree'
+                  : d.signal.perfusion !== null && d.signal.perfusion < PERFUSION_HINT
+                    ? 'weak pulse — press flatter'
+                    : 'movement — hold steady'}
+            </Text>
+          ) : d.quality !== null && d.finger ? (
+            <Text style={st.subtle}>quality {d.quality}%</Text>
+          ) : null}
         </View>
         <View style={st.tiles}>
           <VitalTile label="Heart rate" value={d.bpm} unit="BPM" avg={d.avgBpm} color={C.heart} soft={C.heartSoft} />
-          <VitalTile label="Oxygen" value={d.spo2} unit="% SpO₂" avg={d.avgSpo2} color={C.oxygen} soft={C.oxygenSoft} />
+          <VitalTile label="Oxygen (estimate)" value={d.spo2} unit="% SpO₂" avg={d.avgSpo2} color={C.oxygen} soft={C.oxygenSoft} />
         </View>
         {sf.demo ? (
           <View style={[st.watch, { backgroundColor: C.brandSoft }]}>
@@ -200,6 +213,13 @@ export function DriveView(props: { drive: Drive; busy: boolean; guard: (fn: () =
             ) : null}
             <Btn title="Call 911" kind="danger" onPress={() => void Linking.openURL('tel:911')} style={{ flex: 1 }} />
           </View>
+        ) : null}
+        {d.trend && d.trend.status === 'elevated' ? (
+          <Text style={[st.body, { color: C.warn }]}>
+            Your typical heart rate while driving this week is {d.trend.delta} BPM above your usual ({Math.round(d.trend.recent)} vs{' '}
+            {Math.round(d.trend.usual)}). Illness, poor sleep, stress, caffeine or a new medication can all do this. If it
+            continues or you feel unwell, consider checking with a doctor. Not a diagnosis.
+          </Text>
         ) : null}
         {sf.advisory ? (
           <Text style={[st.body, { color: C.warn }]}>

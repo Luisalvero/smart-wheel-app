@@ -20,6 +20,7 @@ const KIND: Record<string, string> = {
   spo2_low: 'low oxygen',
   no_contact: 'no hand on sensor',
   irregular_rhythm: 'irregular pulse pattern',
+  hr_trend: 'heart rate higher than usual this week',
 };
 const OUTCOME: Record<string, string> = {
   ok: 'said OK',

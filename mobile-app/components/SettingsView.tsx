@@ -11,6 +11,7 @@ import { pendingCount, syncToSupabase } from '../lib/db/sync';
 import { wipeEverything } from '../lib/db/deletion';
 import { Btn, C, Card, Row, SectionTitle, fmtClock, fmtDuration } from './ui';
 import { VoicePicker } from './VoicePicker';
+import { CalibrationCard } from './CalibrationCard';
 
 type Drive = ReturnType<typeof useDriveSession>;
 
@@ -119,7 +120,8 @@ export function SettingsView(props: {
             <Text style={st.note}>
               A warning is watched for 15 s (8 s if critical). Only if readings stay out of range does the phone ask "Are you
               feeling OK?" out loud. Sources: NEWS2 (Royal College of Physicians 2017), Avram et al. 2019 real-world heart-rate
-              norms, alarm-delay studies (Görges 2009).
+              norms, alarm-delay studies (Görges 2009). Oxygen is an estimate: pulse oximeters can read several points high on
+              darker skin (Sjoding et al. 2020), so a normal-looking value is not proof of normal oxygen.
             </Text>
           </>
         ) : (
@@ -159,6 +161,8 @@ export function SettingsView(props: {
           best one automatically (tap "Try the voice check" to hear the new one).
         </Text>
       </Card>
+
+      <CalibrationCard drive={d} />
 
       <Card>
         <SectionTitle>Demo — trigger a warning</SectionTitle>

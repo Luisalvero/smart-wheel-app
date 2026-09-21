@@ -49,7 +49,7 @@ mobile-app/                     Expo SDK 54 app (TypeScript)
   lib/voice/                    intent.ts + intentModel.ts (local yes/no/help classifier + safety rules),
                                 voiceCheck.ts (dialogue policy), speechIO.ts (expo-speech + expo-speech-recognition)
   tools/intent/                 phrases.py (EN+ES training/test phrases), train.py, check.py
-  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql -> v5_delete.sql (in order;
+  supabase/                     schema.sql -> live.sql -> v3_dashboard.sql -> v4_flags.sql -> v5_delete.sql -> v6_quality.sql (in order;
                                 the live project has v3 and v4 applied as of 2026-09-21)
   tests/                        node --test (TypeScript stripped natively; Node >= 22)
 website/                        Vite + vanilla JS dashboard; src/lib/codec.ts is a byte-identical copy (tested)
@@ -124,6 +124,21 @@ docs/SYSTEM_GUIDE.md            human guide (setup on any distro, algorithms, re
     It is capped at 125 and floored at 43, never applies to critical or
     oxygen, and is stored per driver as app_settings `ack:<profileId>`.
     Settings has a reset.
+  - **Data quality (signal.ts):** a second is `good` when Orphanidou
+    feasibility holds, template r ≥ 0.86, skewness ≥ 0, and ESP32-vs-beat HR
+    agree within ±5 BPM. Only good seconds reach the engine, the baseline
+    and the trend. Perfusion is recorded, not gating (no validated MAX30102
+    cut-off).
+  - **Learning (baseline.ts learnBaseline):**
+    - 28-day window, or the last 10 drives;
+    - good seconds only;
+    - "not OK" episodes excluded (−60 s … +120 s);
+    - personal weight = min(1, drives/10) × n/(n+600).
+  - **Trend (trend.ts):** week median of drive medians ≥ max(4 BPM,
+    0.5 SD), with the SD floored at 3, vs the prior 28 days. Needs ≥ 3 and
+    ≥ 10 drives. It is an advisory `hr_trend` row, logged once per week.
+  - **Calibration (calibration.ts):** HR offset only (±10), accumulated
+    across sessions (app_settings `caln:<id>`). SpO₂ is never corrected.
   - **Starting high line** = the age-group real-world 95th percentile
     (Avram 2019: 110 / 100 / 95) plus the profile shifts, blended toward the
     personal mean + 3 SD as own data accumulates, clamped to 91–111.
@@ -225,7 +240,7 @@ left `~/PPG_Logger/backup-*`.
 - The ESP32↔Pi link is steady with the Pi's Wi-Fi off.
 - The website is deployed at https://smart-wheel-dashboard.vercel.app.
 - `v3_dashboard.sql` was validated on Postgres 17 (PGlite).
-- All unit tests pass: Python 20, TypeScript 43, C++ vitals.
+- All unit tests pass: Python 20, TypeScript 53, C++ vitals.
 - The iOS bundle compiles with Metro and Hermes.
 
 **Not yet verified on real devices** (do these next):

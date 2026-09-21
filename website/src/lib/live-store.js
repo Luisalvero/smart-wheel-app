@@ -296,6 +296,7 @@ export const ALERT_KIND = {
   spo2_low: 'Blood oxygen low',
   no_contact: 'No hand on the sensor',
   irregular_rhythm: 'Irregular pulse pattern (advisory)',
+  hr_trend: 'Heart rate higher than usual this week (advisory)',
 }
 
 /**

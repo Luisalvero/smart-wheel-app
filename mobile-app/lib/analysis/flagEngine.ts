@@ -67,6 +67,9 @@ export type Reading = {
   spo2: number | null;
   quality: number | null; // 0..100 (null on v2 frames: treated as good)
   finger: boolean;
+  /** Phone-side verdict from lib/analysis/signal.ts (clean pulse AND two
+   *  estimators agree). false rejects the second; null = not available. */
+  good?: boolean | null;
 };
 
 export const QUALITY_MIN = 50;
@@ -197,7 +200,7 @@ export class FlagEngine {
   }
 
   private accept(r: Reading): { bpm: number | null; spo2: number | null } {
-    const good = r.finger && (r.quality === null || r.quality >= QUALITY_MIN);
+    const good = r.finger && (r.quality === null || r.quality >= QUALITY_MIN) && r.good !== false;
     let bpm = good ? r.bpm : null;
     let spo2 = good ? r.spo2 : null;
     if (bpm !== null) {

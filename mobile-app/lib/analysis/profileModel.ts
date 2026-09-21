@@ -217,19 +217,21 @@ export function news2Spo2(spo2: number, scale: 1 | 2): 0 | 1 | 2 | 3 {
 
 /**
  * The band a driver is judged against: the profile prior blended with their
- * own learned baseline. Weight on the personal baseline grows with evidence,
- * w = n / (n + 600): 10 minutes of good signal counts as much as the whole
- * population prior. SD never drops below 6 bpm, so a very steady driver isn't
+ * own learned baseline. Weight on the personal baseline grows with evidence:
+ * w = min(1, drives / 10) × n / (n + 600), where n is clean seconds. SD never drops below 6 bpm, so a very steady driver isn't
  * flagged for ordinary variation.
  */
 export function personalBand(
   prior: ProfilePrior,
-  baseline: { readings: number; bpmMedian: number | null; bpmP10: number | null; bpmP90: number | null } | null,
+  baseline: { readings: number; sessions: number; bpmMedian: number | null; bpmP10: number | null; bpmP90: number | null } | null,
 ): { mean: number; sd: number; weight: number } {
   if (!baseline || baseline.bpmMedian === null || baseline.bpmP10 === null || baseline.bpmP90 === null || baseline.readings < 30) {
     return { mean: prior.hrMean, sd: prior.hrSd, weight: 0 };
   }
-  const w = baseline.readings / (baseline.readings + 600);
+  // Evidence = enough seconds AND enough separate drives: one long drive is
+  // one day's physiology, so personal thresholds only fully take over after
+  // MIN_DRIVES (10) drives (Cacheda et al. 2026: ≥ 10 observations).
+  const w = Math.min(1, baseline.sessions / 10) * (baseline.readings / (baseline.readings + 600));
   // p10..p90 of a normal distribution spans 2 × 1.2816 SD.
   const personalSd = Math.max(6, (baseline.bpmP90 - baseline.bpmP10) / 2.5631);
   return {

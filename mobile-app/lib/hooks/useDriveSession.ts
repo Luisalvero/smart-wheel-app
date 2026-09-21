@@ -17,6 +17,9 @@ import { processPendingDeletes } from '../db/deletion';
 import type { DriveSession, DriverProfile, StorageMode } from '../db/repositories';
 import { foldSession, type ArchiveInfo } from '../archive/archiveStore';
 import type { Baseline } from '../analysis/baseline';
+import { SignalAnalyzer, type SignalQuality } from '../analysis/signal';
+import { CAL_SECONDS, applyCalibration } from '../analysis/calibration';
+import { computeTrend, type Trend } from '../analysis/trend';
 import { SafetyController, initialSafety, type DemoScenario, type SafetyState } from '../analysis/safetyController';
 import { phoneVoiceIO, prepareVoice, releaseAudio, resetVoiceCache, setPreferredVoice } from '../voice/speechIO';
 
@@ -66,6 +69,10 @@ type State = {
   rollovers: number;
   notice: string | null;
   live: LiveStatus | null;
+  /** Phone-side analysis of the last 10 s of waveform (signal.ts). */
+  signal: SignalQuality | null;
+  /** This week's driving heart rate vs the driver's usual (trend.ts). */
+  trend: Trend | null;
   storageMode: StorageMode;
   baseline: Baseline | null;
   /** Flags, the voice check and the rhythm advisory (lib/analysis/safetyController.ts). */
@@ -79,8 +86,9 @@ type Action =
   | { type: 'link'; link: LinkInfo }
   | { type: 'relay'; relay: RelayStatus }
   | { type: 'driver'; driver: DriverProfile | null }
+  | { type: 'driverUpdated'; driver: DriverProfile }
   | { type: 'session'; session: DriveSession | null }
-  | { type: 'frame'; frame: import('../ble/protocol').Frame; rx: Date; avgBpm: number | null; avgSpo2: number | null; lost: number; crc: number }
+  | { type: 'frame'; frame: import('../ble/protocol').Frame; rx: Date; avgBpm: number | null; avgSpo2: number | null; lost: number; crc: number; signal: SignalQuality | null }
   | { type: 'stored' }
   | { type: 'duplicate' }
   | { type: 'ignored' }
@@ -90,7 +98,7 @@ type Action =
   | { type: 'live'; live: LiveStatus }
   | { type: 'rate'; point: RatePoint }
   | { type: 'storageMode'; mode: StorageMode }
-  | { type: 'baseline'; baseline: Baseline | null }
+  | { type: 'baseline'; baseline: Baseline | null; trend: Trend | null }
   | { type: 'safety'; safety: SafetyState }
   | { type: 'voice'; voice: State['voice'] }
   | { type: 'fold'; fold: FoldState };
@@ -124,6 +132,8 @@ const initial: State = {
   rollovers: 0,
   notice: null,
   live: null,
+  signal: null,
+  trend: null,
   storageMode: 'vitals',
   baseline: null,
   safety: initialSafety,
@@ -159,6 +169,8 @@ function reducer(s: State, a: Action): State {
         voice: s.voice,
         driver: a.driver,
       };
+    case 'driverUpdated':
+      return { ...s, driver: a.driver };
     case 'session':
       return { ...s, session: a.session };
     case 'frame': {
@@ -181,6 +193,7 @@ function reducer(s: State, a: Action): State {
         lastRx: a.rx,
         lost: a.lost,
         crcErrors: a.crc,
+        signal: a.signal,
       };
     }
     case 'stored':
@@ -209,7 +222,7 @@ function reducer(s: State, a: Action): State {
     case 'storageMode':
       return { ...s, storageMode: a.mode };
     case 'baseline':
-      return { ...s, baseline: a.baseline };
+      return { ...s, baseline: a.baseline, trend: a.trend };
     case 'safety':
       return { ...s, safety: a.safety };
     case 'voice':
@@ -235,6 +248,11 @@ export function useDriveSession() {
   const lastRx = useRef(0);
   const espOnPi = useRef(true);
   const rxBytes = useRef(0);
+  const analyzer = useRef(new SignalAnalyzer());
+  // Personal calibration offsets of the selected driver, and an in-progress
+  // calibration measurement (raw, uncalibrated clean readings).
+  const calRef = useRef<{ hr: number | null; spo2: number | null }>({ hr: null, spo2: null });
+  const measuring = useRef<{ until: number; bpm: number[]; spo2: number[]; done: (r: { bpm: number[]; spo2: number[] }) => void } | null>(null);
   // Serialises database writes so back-to-back frames cannot interleave.
   const queue = useRef<Promise<void>>(Promise.resolve());
   // Flags → voice check. Created once; reports its state into the reducer.
@@ -282,7 +300,16 @@ export function useDriveSession() {
     (bytes: Uint8Array) => {
       const rx = new Date(); // stamped on arrival, before any queueing
       rxBytes.current += bytes.length;
-      for (const f of deframer.current.feed(bytes)) {
+      for (const raw of deframer.current.feed(bytes)) {
+        // Calibration: corrected vitals everywhere downstream; raw bytes untouched.
+        const c = calRef.current;
+        const f =
+          raw.usable && (c.hr || c.spo2)
+            ? (() => {
+                const adj = applyCalibration(raw.heartRate, raw.spo2, c);
+                return { ...raw, heartRate: adj.bpm, spo2: adj.spo2 };
+              })()
+            : raw;
         lastRx.current = rx.getTime();
         const resetsBefore = seq.current.resets;
         const missingNow = seq.current.update(f.seq); // frames lost just before this one
@@ -298,6 +325,23 @@ export function useDriveSession() {
           avgSpo2.current = [...avgSpo2.current, f.spo2].slice(-AVG_WINDOW);
         }
         const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+        // Independent beat-based HR + quality from the raw waveform (v3 frames).
+        const sq =
+          f.version >= 3 && f.rateHz
+            ? analyzer.current.feed(f.samples.map((x) => x.ir), f.rateHz, f.finger && missingNow === 0, raw.usable ? raw.heartRate : null)
+            : null;
+        // Calibration measurement collects the RAW values of clean seconds.
+        const m = measuring.current;
+        if (m) {
+          if (raw.usable && sq?.good !== false) {
+            m.bpm.push(raw.heartRate);
+            m.spo2.push(raw.spo2);
+          }
+          if (rx.getTime() >= m.until) {
+            measuring.current = null;
+            m.done({ bpm: m.bpm, spo2: m.spo2 });
+          }
+        }
         dispatch({
           type: 'frame',
           frame: f,
@@ -306,9 +350,10 @@ export function useDriveSession() {
           avgSpo2: mean(avgSpo2.current),
           lost,
           crc: deframer.current.crcErrors,
+          signal: sq,
         });
         if (sessionRef.current?.status === 'active') {
-          safety.onFrame(f, rx, missingNow);
+          safety.onFrame(f, rx, missingNow, sq);
           live.nudge(); // flags and answers reach the dashboard without waiting for the tick
         }
 
@@ -345,7 +390,7 @@ export function useDriveSession() {
                 session.sample_rate_hz = f.rateHz;
                 await repo.setSessionSampleRate(session.id, f.rateHz);
               }
-              const r = await repo.storeFrame(session.id, f, rx, session.storage_mode === 'full');
+              const r = await repo.storeFrame(session.id, f, rx, session.storage_mode === 'full', sq);
               dispatch({ type: r === 'stored' ? 'stored' : 'duplicate' });
             } catch {
               seen.current.delete(f.seq); // let a retry through
@@ -406,13 +451,16 @@ export function useDriveSession() {
     async (driver: DriverProfile) => {
       const b = await repo.driverBaseline(driver.id);
       safety.configure(driver, b, await repo.getAck(driver.id));
-      dispatch({ type: 'baseline', baseline: b });
+      const trend = computeTrend(await repo.driveMedians(driver.id), Date.now());
+      dispatch({ type: 'baseline', baseline: b, trend });
+      return trend;
     },
     [safety],
   );
 
   const selectDriver = useCallback(
     (driver: DriverProfile) => {
+      calRef.current = { hr: driver.cal_hr ?? null, spo2: driver.cal_spo2 ?? null };
       sessionRef.current = null;
       seen.current.clear();
       avgBpm.current = [];
@@ -454,7 +502,25 @@ export function useDriveSession() {
       }
     }
     await live.finish(ended.id);
-    if (state.driver) void loadBaseline(state.driver); // this drive now counts toward the baseline
+    if (state.driver) {
+      // This drive now counts toward the baseline and the weekly trend. An
+      // elevated trend is logged once per week as an advisory on this drive.
+      const driver = state.driver;
+      const trend = await loadBaseline(driver);
+      if (trend.status === 'elevated') {
+        const key = `trend:${driver.id}`;
+        const last = Number((await repo.getSetting(key)) ?? 0);
+        if (Date.now() - last > 7 * 86_400_000) {
+          await repo.setSetting(key, String(Date.now()));
+          await repo.saveAlert({
+            id: uuidv4(), session_id: ended.id, kind: 'hr_trend', value: trend.delta, threshold: 4,
+            started_at: new Date().toISOString(), prompted_at: null, response: null, responded_at: null,
+            escalated: 0, level: 'notice', channel: null, answer_confidence: null,
+          });
+          void live.finish(ended.id); // re-push: uploads the new advisory row
+        }
+      }
+    }
   }, [live, safety, loadBaseline, state.driver]);
 
   /** Back to the driver list. An active session is ended first, never dropped. */
@@ -501,5 +567,24 @@ export function useDriveSession() {
       [safety, state.voice],
     ),
     resetAck: useCallback(() => safety.resetAck(), [safety]),
+    /** Records CAL_SECONDS of clean raw readings for a calibration. */
+    measureCalibration: useCallback(
+      () =>
+        new Promise<{ bpm: number[]; spo2: number[] }>((done) => {
+          measuring.current = { until: Date.now() + CAL_SECONDS * 1000, bpm: [], spo2: [], done };
+        }),
+      [],
+    ),
+    /** Saves (or clears, with nulls) the selected driver's offsets. */
+    saveCalibration: useCallback(
+      async (hr: number | null, spo2: number | null) => {
+        if (!state.driver) return;
+        await repo.setCalibration(state.driver.id, hr, spo2);
+        calRef.current = { hr, spo2 };
+        const updated = await repo.getProfile(state.driver.id);
+        if (updated) dispatch({ type: 'driverUpdated', driver: updated });
+      },
+      [state.driver],
+    ),
   };
 }

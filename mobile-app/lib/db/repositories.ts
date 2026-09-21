@@ -6,7 +6,8 @@
  */
 import { getDatabase } from './database';
 import { bytesToBase64, uuidv4, type Frame } from '../ble/protocol';
-import { computeBaseline, type Baseline } from '../analysis/baseline';
+import type { SignalQuality } from '../analysis/signal';
+import { learnBaseline, type Baseline } from '../analysis/baseline';
 import { robustStats, type RobustStats } from '../analysis/stats';
 
 export type Gender = 'male' | 'female' | 'other' | 'prefer_not_to_say';
@@ -29,6 +30,10 @@ export type DriverProfile = {
   language?: string;
   emergency_name?: string | null;
   emergency_phone?: string | null;
+  /** Personal calibration against a reference device (lib/analysis/calibration.ts). */
+  cal_hr?: number | null;
+  cal_spo2?: number | null;
+  cal_at?: string | null;
 };
 
 export { parseList } from '../util/json';
@@ -81,6 +86,11 @@ export type TelemetryEvent = {
   sync_status: string;
   finger?: number | null; // SQLite boolean
   quality?: number | null;
+  hr_beats?: number | null;
+  sqi_good?: number | null;
+  template_r?: number | null;
+  perfusion?: number | null;
+  skewness?: number | null;
 };
 
 /** Aggregate physiological stats for one session. */
@@ -160,6 +170,22 @@ export async function createProfile(
     ],
   );
   return profile;
+}
+
+export async function setCalibration(id: string, hr: number | null, spo2: number | null): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE driver_profiles SET cal_hr = ?, cal_spo2 = ?, cal_at = ?, updated_at = ? WHERE id = ?', [
+    hr,
+    spo2,
+    hr === null && spo2 === null ? null : nowIso(),
+    nowIso(),
+    id,
+  ]);
+}
+
+export async function getProfile(id: string): Promise<DriverProfile | null> {
+  const db = await getDatabase();
+  return db.getFirstAsync<DriverProfile>('SELECT * FROM driver_profiles WHERE id = ?', [id]);
 }
 
 /** Updates an existing profile (the form's edit mode). */
@@ -362,6 +388,7 @@ export async function storeFrame(
   frame: Frame,
   receivedAt: Date = new Date(),
   keepRaw = false,
+  sq: SignalQuality | null = null,
 ): Promise<StoreResult> {
   const db = await getDatabase();
   // raw_payload only in 'full' storage mode: the proposal commits to keeping
@@ -370,8 +397,9 @@ export async function storeFrame(
   const result = await db.runAsync(
     `INSERT OR IGNORE INTO telemetry_events
        (id, session_id, sequence_number, event_type, bpm, spo2,
-        signal_quality, battery, received_at, raw_payload, sync_status, finger, quality)
-     VALUES (?, ?, ?, 'vitals', ?, ?, ?, NULL, ?, ?, 'local', ?, ?)`,
+        signal_quality, battery, received_at, raw_payload, sync_status, finger, quality,
+        hr_beats, sqi_good, template_r, perfusion, skewness)
+     VALUES (?, ?, ?, 'vitals', ?, ?, ?, NULL, ?, ?, 'local', ?, ?, ?, ?, ?, ?, ?)`,
     [
       uuidv4(),
       sessionId,
@@ -383,6 +411,11 @@ export async function storeFrame(
       keepRaw ? bytesToBase64(frame.raw) : null,
       frame.finger ? 1 : 0,
       frame.version >= 3 ? frame.quality : null,
+      sq?.hrBeats === null || sq?.hrBeats === undefined ? null : Math.round(sq.hrBeats * 10) / 10,
+      sq ? (sq.good ? 1 : 0) : null,
+      sq?.templateR === null || sq?.templateR === undefined ? null : Math.round(sq.templateR * 1000) / 1000,
+      sq?.perfusion === null || sq?.perfusion === undefined ? null : Math.round(sq.perfusion * 1000) / 1000,
+      sq?.skewness === null || sq?.skewness === undefined ? null : Math.round(sq.skewness * 1000) / 1000,
     ],
   );
   return result.changes > 0 ? 'stored' : 'duplicate';
@@ -473,19 +506,58 @@ export async function robustSessionStats(sessionId: string): Promise<RobustSessi
   };
 }
 
-/** The driver's usual range from their completed sessions on this phone. */
+/** Median clean heart rate of each finished drive (≥ 2 min of clean seconds), for the trend check. */
+export async function driveMedians(profileId: string): Promise<{ start: number; bpm: number }[]> {
+  const db = await getDatabase();
+  const since = new Date(Date.now() - 40 * 86_400_000).toISOString();
+  const rows = await db.getAllAsync<{ session_id: string; started_at: string; bpm: number }>(
+    `SELECT e.session_id, s.started_at, e.bpm FROM telemetry_events e
+     JOIN drive_sessions s ON s.id = e.session_id
+     WHERE s.profile_id = ? AND s.status = 'completed' AND s.started_at >= ?
+       AND e.bpm IS NOT NULL AND (e.sqi_good IS NULL OR e.sqi_good = 1)`,
+    [profileId, since],
+  );
+  const by = new Map<string, { start: number; v: number[] }>();
+  for (const r of rows) {
+    const g = by.get(r.session_id) ?? { start: Date.parse(r.started_at), v: [] };
+    g.v.push(r.bpm);
+    by.set(r.session_id, g);
+  }
+  return [...by.values()]
+    .filter((g) => g.v.length >= 120)
+    .map((g) => ({ start: g.start, bpm: g.v.sort((a, b) => a - b)[g.v.length >> 1]! }));
+}
+
+/**
+ * The driver's usual range, learned from their finished drives on this phone
+ * (lib/analysis/baseline.ts learnBaseline: 28-day window / last 10 drives,
+ * clean seconds only, "not OK" episodes excluded). Last 180 days fetched.
+ */
 export async function driverBaseline(profileId: string): Promise<Baseline> {
   const db = await getDatabase();
-  const rows = await db.getAllAsync<{ bpm: number; spo2: number | null; session_id: string }>(
-    `SELECT e.bpm, e.spo2, e.session_id FROM telemetry_events e
+  const since = new Date(Date.now() - 180 * 86_400_000).toISOString();
+  const rows = await db.getAllAsync<{ bpm: number; spo2: number | null; session_id: string; received_at: string; sqi_good: number | null }>(
+    `SELECT e.bpm, e.spo2, e.session_id, e.received_at, e.sqi_good FROM telemetry_events e
      JOIN drive_sessions s ON s.id = e.session_id
-     WHERE s.profile_id = ? AND s.status = 'completed' AND e.bpm IS NOT NULL`,
+     WHERE s.profile_id = ? AND s.status = 'completed' AND e.bpm IS NOT NULL AND e.received_at >= ?`,
+    [profileId, since],
+  );
+  const eps = await db.getAllAsync<{ started_at: string; responded_at: string | null; prompted_at: string | null }>(
+    `SELECT a.started_at, a.responded_at, a.prompted_at FROM drive_alerts a
+     JOIN drive_sessions s ON s.id = a.session_id
+     WHERE s.profile_id = ? AND (a.response IN ('not_ok', 'no_response') OR a.escalated = 1)`,
     [profileId],
   );
-  return computeBaseline(
-    rows.map((r) => r.bpm),
-    rows.map((r) => r.spo2).filter((v): v is number => v !== null),
-    new Set(rows.map((r) => r.session_id)).size,
+  return learnBaseline(
+    rows.map((r) => ({
+      t: Date.parse(r.received_at),
+      bpm: r.bpm,
+      spo2: r.spo2,
+      session: r.session_id,
+      good: r.sqi_good === null ? null : r.sqi_good === 1,
+    })),
+    eps.map((e) => ({ from: Date.parse(e.started_at), to: Date.parse(e.responded_at ?? e.prompted_at ?? e.started_at) })),
+    Date.now(),
   );
 }
 

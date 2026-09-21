@@ -30,6 +30,7 @@ import {
 } from './flagEngine.ts';
 import { personalBand, profilePrior, type ProfilePrior, type Sex } from './profileModel.ts';
 import { RhythmMonitor } from './rhythm.ts';
+import type { SignalQuality } from './signal.ts';
 import { VoiceCheck, type CheckResult, type Lang, type VoiceIO } from '../voice/voiceCheck.ts';
 
 export type CheckPhase = 'speaking' | 'listening';
@@ -217,7 +218,7 @@ export class SafetyController {
     this.voice?.answerByButton(r);
   }
 
-  onFrame(f: Frame, rx: Date, missingBefore: number) {
+  onFrame(f: Frame, rx: Date, missingBefore: number, sq: SignalQuality | null = null) {
     if (!this.sessionId || !this.engine) return;
     const quality = f.version >= 3 ? f.quality : null;
     const events = this.engine.feed({
@@ -226,6 +227,7 @@ export class SafetyController {
       spo2: f.usable ? f.spo2 : null,
       quality,
       finger: f.finger,
+      good: sq && sq.hrBeats !== null ? sq.good : null,
     });
     for (const e of events) this.handle(e);
     if (this.engine.rejected !== this.state.rejected) this.set({ rejected: this.engine.rejected });

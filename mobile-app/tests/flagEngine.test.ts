@@ -89,7 +89,7 @@ test('poor signal cannot confirm: closed as unconfirmed after 60 s', () => {
 });
 
 test('personal baseline: an athlete at 47 bpm is fine, the general profile only notices', () => {
-  const athleteBand = personalBand(adult, { readings: 6000, bpmMedian: 50, bpmP10: 45, bpmP90: 56 });
+  const athleteBand = personalBand(adult, { readings: 6000, sessions: 12, bpmMedian: 50, bpmP10: 45, bpmP90: 56 });
   const a = engine(adult, athleteBand);
   assert.deepEqual(run(a, 0, 300, () => ({ bpm: 47 })).map((x) => x.type), []);
   const g = engine();
