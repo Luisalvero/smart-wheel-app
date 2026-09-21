@@ -1,16 +1,17 @@
-# PPG System — ESP32 → Raspberry Pi → Laptop
+# PPG System — ESP32 → Raspberry Pi → phone / laptop
 
 ```
-MAX30102 ──I²C──▶ ESP32 ──BLE──▶ Raspberry Pi ──BLE──▶ Laptop
-                  1 frame/s      logs CSV,             live BPM / SpO₂
-                  8 readings     verifies CRC,         charts, waveform,
-                  + CRC-16       relays verbatim       packet log
+MAX30102 ──I²C──▶ ESP32 ──BLE──▶ Raspberry Pi ──BLE──▶ phone app (or laptop viewer)
+                  1 packet/s     logs CSV,             live BPM / SpO₂, storage,
+                  100 samples    verifies CRC,         cloud upload
+                  + CRC-16       relays verbatim
 ```
 
-One frame per second, 104 bytes: header, BPM, SpO₂, validity flags, 8 raw
-Red/IR samples, CRC-16. The Pi forwards frames byte-for-byte, so the laptop
-re-checks the ESP32's own CRC — corruption anywhere on the path is detected.
-Full byte layout: `common/ppg_protocol.py` (docstring).
+Protocol v3 (since 2026-09-20): one 472-byte packet per second carrying all
+100 raw Red/IR samples (18-bit packed), BPM, SpO₂, quality, flags and a
+CRC-16. The Pi forwards packets byte-for-byte, so every receiver re-checks the
+ESP32's own CRC. Byte layout: `common/ppg_protocol.py` (docstring). The full
+project guide is `../docs/SYSTEM_GUIDE.md`; agent handoff is `../HANDOFF.md`.
 
 ## Layout
 
