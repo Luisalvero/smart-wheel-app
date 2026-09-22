@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2448" height="1584" viewBox="0 0 2448 1584" font-family="Liberation Sans, Helvetica, Arial, sans-serif">
+<rect width="2448" height="1584" fill="#f6f7fa"/>
+<defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#e4e8ef" stroke-width="1"/></pattern></defs>
+<rect width="2448" height="1584" fill="url(#g)"/>
+<rect x="26" y="26" width="2396" height="1532" fill="none" stroke="#1c1e23" stroke-width="2.5"/>
+<rect x="70" y="70" width="2308" height="1444" fill="none" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="214.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">1</text>
+<text x="214.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">1</text>
+<text x="502.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">2</text>
+<text x="502.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">2</text>
+<line x1="358.5" y1="26" x2="358.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="358.5" y1="1514" x2="358.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="791.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">3</text>
+<text x="791.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">3</text>
+<line x1="647.0" y1="26" x2="647.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="647.0" y1="1514" x2="647.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1079.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">4</text>
+<text x="1079.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">4</text>
+<line x1="935.5" y1="26" x2="935.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="935.5" y1="1514" x2="935.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1368.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">5</text>
+<text x="1368.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">5</text>
+<line x1="1224.0" y1="26" x2="1224.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1224.0" y1="1514" x2="1224.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1656.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">6</text>
+<text x="1656.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">6</text>
+<line x1="1512.5" y1="26" x2="1512.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1512.5" y1="1514" x2="1512.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1945.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">7</text>
+<text x="1945.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">7</text>
+<line x1="1801.0" y1="26" x2="1801.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1801.0" y1="1514" x2="1801.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="2233.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">8</text>
+<text x="2233.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">8</text>
+<line x1="2089.5" y1="26" x2="2089.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2089.5" y1="1514" x2="2089.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="196.33333333333331" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">A</text>
+<text x="2400" y="196.33333333333331" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">A</text>
+<text x="48" y="437.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">B</text>
+<text x="2400" y="437.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">B</text>
+<line x1="26" y1="310.66666666666663" x2="70" y2="310.66666666666663" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="310.66666666666663" x2="2422" y2="310.66666666666663" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="677.6666666666666" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">C</text>
+<text x="2400" y="677.6666666666666" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">C</text>
+<line x1="26" y1="551.3333333333333" x2="70" y2="551.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="551.3333333333333" x2="2422" y2="551.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="918.3333333333333" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">D</text>
+<text x="2400" y="918.3333333333333" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">D</text>
+<line x1="26" y1="792.0" x2="70" y2="792.0" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="792.0" x2="2422" y2="792.0" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="1159.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">E</text>
+<text x="2400" y="1159.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">E</text>
+<line x1="26" y1="1032.6666666666665" x2="70" y2="1032.6666666666665" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="1032.6666666666665" x2="2422" y2="1032.6666666666665" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="1399.6666666666665" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">F</text>
+<text x="2400" y="1399.6666666666665" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">F</text>
+<line x1="26" y1="1273.3333333333333" x2="70" y2="1273.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="1273.3333333333333" x2="2422" y2="1273.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<rect x="1618" y="1364" width="760" height="150" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="1618" y1="1416" x2="2378" y2="1416" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1618" y1="1464" x2="2378" y2="1464" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1918" y1="1416" x2="1918" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2088" y1="1416" x2="2088" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2218" y1="1416" x2="2218" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1632" y="1388" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#5b6270" font-weight="normal" text-anchor="start">Team 18 - FIU Senior Design</text>
+<text x="1632" y="1408" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="16" fill="#1c1e23" font-weight="bold" text-anchor="start">Biometric Steering Wheel - 16 PPG pad harness</text>
+<text x="1632" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SUBTITLE</text>
+<text x="1632" y="1454" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">Sheet 5 - findings, fixes and limits</text>
+<text x="1932" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DRAWING No.</text>
+<text x="1932" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">TD18-HW-002</text>
+<text x="2102" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">REV</text>
+<text x="2102" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">A</text>
+<text x="2232" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SHEET</text>
+<text x="2232" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">5 of 5</text>
+<text x="1632" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DRAWN</text>
+<text x="1632" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Team 18</text>
+<text x="1932" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DATE</text>
+<text x="1932" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="2102" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SCALE</text>
+<text x="2102" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">NTS</text>
+<text x="2232" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SIZE</text>
+<text x="2232" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">B</text>
+<rect x="1618" y="1266" width="760" height="86" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="1618" y1="1294" x2="2378" y2="1294" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1688" y1="1266" x2="1688" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2118" y1="1266" x2="2118" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2248" y1="1266" x2="2248" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1630" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">REV</text>
+<text x="1700" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">DESCRIPTION</text>
+<text x="2130" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">DATE</text>
+<text x="2260" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">BY</text>
+<text x="1630" y="1320" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">A</text>
+<text x="1700" y="1320" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Initial release - 16 pads, two multiplexers</text>
+<text x="2130" y="1320" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="2260" y="1320" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Team 18</text>
+<text x="80" y="1500" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="normal" text-anchor="start">NOT A MEDICAL DEVICE - student prototype. Interconnect drawing: not to scale, not a PCB layout.</text>
+<g transform="translate(76,74)">
+<rect x="10" y="20" width="2290" height="730" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="26" y="50" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">WHAT THE CHECKS FOUND, AND WHAT WAS CHANGED</text>
+<line x1="10" y1="62" x2="2300" y2="62" stroke="#c9cfda" stroke-width="1"/>
+<text x="26" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">ID</text>
+<text x="110" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">DATE / FIXED IN</text>
+<text x="300" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">FOUND BY</text>
+<text x="480" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">WHAT WAS WRONG</text>
+<text x="900" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">WHY IT MATTERS</text>
+<text x="1430" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">THE FIX</text>
+<text x="1900" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">HOW IT WAS VERIFIED</text>
+<line x1="10" y1="94" x2="2300" y2="94" stroke="#c9cfda" stroke-width="1"/>
+<text x="26" y="116" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-01</text>
+<text x="110" y="116" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="131" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2ff2bc2</text>
+<text x="300" y="116" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">sim/i2c_bus.py, then ngspice</text>
+<text x="480" y="116" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">4.7 k pull-ups, as first drawn, give a 327 ns rise time on a ~1 m branch</text>
+<text x="900" y="116" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Over the 300 ns fast-mode limit (UM10204 Table 10). The bus would still often work, but</text>
+<text x="900" y="131" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">outside spec, and worse as the harness grows.</text>
+<text x="1430" y="116" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Sheets and parts list changed to 2.2 k; note 5 rewritten with the number and the</text>
+<text x="1430" y="131" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">citation.</text>
+<text x="1900" y="116" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">ngspice: 152.8 ns at 2.2 k, 326.5 ns at 4.7 k on the same segment.</text>
+<line x1="10" y1="182" x2="2300" y2="182" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="208" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-02</text>
+<text x="110" y="208" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="223" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">93857ab</text>
+<text x="300" y="208" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">harness_spec.py self-check</text>
+<text x="480" y="208" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">The ESP32's USB input and its 5 V output pin were modelled as one pin</text>
+<text x="900" y="208" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">The spec refused to build: one pin cannot be on both +5V_ESP and +5V_PAD. On a real board</text>
+<text x="900" y="223" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">these are different nets with a fuse/diode between them.</text>
+<text x="1430" y="208" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 now has VBUS_USB (power input, from PS2) and a separate 5V pin (power output, to</text>
+<text x="1430" y="223" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">the pads).</text>
+<text x="1900" y="208" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Spec self-check passes: 177 pins, no pin on two nets.</text>
+<line x1="10" y1="274" x2="2300" y2="274" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="300" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-03</text>
+<text x="110" y="300" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="315" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">d70a3fd</text>
+<text x="300" y="300" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad ERC</text>
+<text x="480" y="300" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">power_pin_not_driven on PS1 IN+ and PS2 IN+</text>
+<text x="900" y="300" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">A fuse is a passive part, so ERC could not see that the battery drives the rails past F2/F3.</text>
+<text x="900" y="315" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Real designs answer this with a power flag.</text>
+<text x="1430" y="300" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">PWR2 and PWR3 flags added on +12V_PI and +12V_ESP.</text>
+<text x="1900" y="300" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Those two errors gone from the ERC report.</text>
+<line x1="10" y1="366" x2="2300" y2="366" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="392" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-04</text>
+<text x="110" y="392" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="407" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">d70a3fd</text>
+<text x="300" y="392" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad ERC</text>
+<text x="480" y="392" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">pin_to_pin: three power outputs fighting on GND</text>
+<text x="900" y="392" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">The battery negative and both converter returns were all marked as drivers. Two drivers on one</text>
+<text x="900" y="407" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">net is an error worth catching: on a real board it hides a wiring assumption.</text>
+<text x="1430" y="392" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Battery '-' and both OUT- pins are now passive; PWR1 alone drives GND.</text>
+<text x="1900" y="392" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">No pin_to_pin violations remain.</text>
+<line x1="10" y1="458" x2="2300" y2="458" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="484" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-05</text>
+<text x="110" y="484" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="499" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">d70a3fd</text>
+<text x="300" y="484" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad ERC</text>
+<text x="480" y="484" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">pin_not_connected on pins that the drawing shows as wired</text>
+<text x="900" y="484" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Stub wire ends were snapped to the 1.27 mm grid while the pins themselves sat at 135.84 mm: a</text>
+<text x="900" y="499" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">0.05 mm gap. Electrically open, visually identical. A picture can never catch this.</text>
+<text x="1430" y="484" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Symbol bodies are whole 2.54 mm steps and stubs now use the exact pin coordinate.</text>
+<text x="1900" y="484" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">161 pin connections, all extracted by KiCad and matched against the spec.</text>
+<line x1="10" y1="550" x2="2300" y2="550" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="576" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-06</text>
+<text x="110" y="576" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="591" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">d70a3fd</text>
+<text x="300" y="576" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad ERC</text>
+<text x="480" y="576" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">lib_symbol_issues on all 38 symbols</text>
+<text x="900" y="576" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">The symbols were embedded in the sheet with no library to compare against, so KiCad could not</text>
+<text x="900" y="591" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">confirm the placed symbol still matches its definition.</text>
+<text x="1430" y="576" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">gen_schematic.py now also writes harness.kicad_sym and a sym-lib-table.</text>
+<text x="1900" y="576" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">ERC: 0 errors, 0 warnings.</text>
+<line x1="10" y1="642" x2="2300" y2="642" stroke="#e4e8ef" stroke-width="1"/>
+<text x="26" y="668" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11" fill="#1c1e23" font-weight="bold" text-anchor="start">F-07</text>
+<text x="110" y="668" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="110" y="683" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">684bf60</text>
+<text x="300" y="668" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">visual review of sheet 1</text>
+<text x="480" y="668" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">The F3 -&gt; PS2 feed crossed over the PS1 block and its caption</text>
+<text x="900" y="668" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Readability only, no electrical effect, but a wire that runs through a part is exactly what a</text>
+<text x="900" y="683" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">reviewer marks up.</text>
+<text x="1430" y="668" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Rerouted: out of F3, down the gap before PS1, above the bus bar, then down a clear</text>
+<text x="1430" y="683" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">lane.</text>
+<text x="1900" y="668" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#1c1e23" font-weight="normal" text-anchor="start">Re-rendered and checked; no wire now crosses a board on sheet 1.</text>
+<line x1="10" y1="734" x2="2300" y2="734" stroke="#e4e8ef" stroke-width="1"/>
+<rect x="10" y="770" width="1120" height="330" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="26" y="800" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">ASSUMPTIONS AND LIMITS - READ BEFORE TRUSTING A NUMBER</text>
+<line x1="10" y1="812" x2="1130" y2="812" stroke="#c9cfda" stroke-width="1"/>
+<text x="26" y="836" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Cable capacitance</text>
+<text x="250" y="836" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#d62828" font-weight="normal" text-anchor="start">60 pF/m ASSUMED</text>
+<text x="470" y="836" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">The rise-time result scales directly with it. Measure the finished harness with an LCR meter,</text>
+<text x="470" y="850" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">or read tr on a scope, then re-run sim/i2c_bus.py --cpm.</text>
+<text x="26" y="874" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Per-pad current</text>
+<text x="250" y="874" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#d62828" font-weight="normal" text-anchor="start">25 mA ASSUMED</text>
+<text x="470" y="874" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Used only for the +5V_PAD ladder. Measure one module at the firmware's LED setting before</text>
+<text x="470" y="888" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">sizing PS2.</text>
+<text x="26" y="912" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Wire resistance</text>
+<text x="250" y="912" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">nominal AWG at 20 C</text>
+<text x="470" y="912" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Ignores connectors, splices and temperature. Treat the simulated drop as a floor.</text>
+<text x="26" y="950" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">IMU address</text>
+<text x="250" y="950" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#d62828" font-weight="normal" text-anchor="start">unverified</text>
+<text x="470" y="950" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">ST's site blocked the automated download. Confirm against the datasheet of the module actually</text>
+<text x="470" y="964" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">fitted; it must not clash with 0x70 / 0x71.</text>
+<text x="26" y="988" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Module regulator</text>
+<text x="250" y="988" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">assumed present</text>
+<text x="470" y="988" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">5 V goes to module VIN, never to the bare chip (VDD 1.7-2.0 V). Confirm the module regulates</text>
+<text x="470" y="1002" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">and that its I2C idles near 3.3 V.</text>
+<text x="26" y="1026" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Schematic style</text>
+<text x="250" y="1026" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">labels, not drawn wires</text>
+<text x="470" y="1026" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">Connectivity is by net label, which is normal for a repetitive design and is what ERC and the</text>
+<text x="470" y="1040" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">netlist check verify.</text>
+<text x="26" y="1064" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Scope</text>
+<text x="250" y="1064" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">electrical only</text>
+<text x="470" y="1064" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">No PCB layout, no thermal or mechanical analysis, no EMC. Student prototype: NOT A MEDICAL</text>
+<text x="470" y="1078" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="normal" text-anchor="start">DEVICE.</text>
+<rect x="1160" y="770" width="1130" height="300" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="1176" y="800" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">WHAT THIS PACKAGE CONTAINS</text>
+<line x1="1160" y1="812" x2="2290" y2="812" stroke="#c9cfda" stroke-width="1"/>
+<text x="1184" y="836" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">SHEET</text>
+<text x="1364" y="836" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">CONTENT</text>
+<line x1="1176" y1="842" x2="2286" y2="842" stroke="#c9cfda" stroke-width="1"/>
+<text x="1184" y="854" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">1</text>
+<text x="1364" y="854" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Interconnect diagram: boards, wires, colour key, 9 notes</text>
+<text x="1184" y="880" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">2</text>
+<text x="1364" y="880" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Parts list (15 lines) and wire list (21 nets), power-up checklist</text>
+<text x="1184" y="906" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">3</text>
+<text x="1364" y="906" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad schematic, generated from harness_spec.py, ERC clean</text>
+<text x="1184" y="932" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">4</text>
+<text x="1364" y="932" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Verification record: environment, commands, results, datasheet evidence</text>
+<text x="1184" y="958" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">5</text>
+<text x="1364" y="958" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">This sheet: findings, fixes, assumptions and limits</text>
+<text x="1184" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start"></text>
+<text x="1364" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start"></text>
+<text x="1184" y="1010" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Sources</text>
+<text x="1364" y="1010" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">docs/hardware/ - drawing generator, spec, KiCad project, simulations</text>
+<text x="1184" y="1036" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Rebuild</text>
+<text x="1364" y="1036" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">python3 verify.py &amp;&amp; python3 report_sheets.py &amp;&amp; ./assemble.sh</text>
+</g>
+</svg>

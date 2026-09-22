@@ -144,9 +144,12 @@ def save(name: str):
     return p
 
 # =============================================== sheet 1: interconnect ======
+SHEETS = 5          # 1 drawn, 2 lists, 3 KiCad schematic, 4-5 verification
+
+
 def sheet1():
     start_svg()
-    ix0, iy0, ix1, iy1 = frame(1, 2, "Sheet 1 - interconnect diagram")
+    ix0, iy0, ix1, iy1 = frame(1, SHEETS, "Sheet 1 - interconnect diagram")
     OX, OY = ix0 + 6, iy0 + 4          # content origin inside the frame
     add(f'<g transform="translate({OX},{OY})">')
 
@@ -370,7 +373,7 @@ def sheet1():
 # ================================================ sheet 2: lists ============
 def sheet2():
     start_svg()
-    ix0, iy0, ix1, iy1 = frame(2, 2, "Sheet 2 - parts list and wire list")
+    ix0, iy0, ix1, iy1 = frame(2, SHEETS, "Sheet 2 - parts list and wire list")
     OX, OY = ix0 + 6, iy0 + 4
     add(f'<g transform="translate({OX},{OY})">')
 

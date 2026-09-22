@@ -1,6 +1,25 @@
 # Hardware drawings
 
-**TD18-HW-002 — 16 PPG pad wheel harness**, 2 sheets, revision A.
+**TD18-HW-002 — 16 PPG pad wheel harness**, 5 sheets, revision A.
+
+The deliverable is **`TD18-HW-002_wheel_harness_package.pdf`** (A1, 5 sheets):
+
+| Sheet | Content |
+|---|---|
+| 1 | Interconnect diagram — boards, wires, colour key, 9 notes |
+| 2 | Parts list and wire list, plus the before-power-up checklist |
+| 3 | **KiCad schematic**, generated from `harness_spec.py`, ERC clean |
+| 4 | **Verification record** — machine, tool versions, every command with its timestamp and result, datasheet evidence, evidence-file hashes, the ERC report verbatim |
+| 5 | **Findings and fixes** — what each check caught, why it matters, the fix, the commit it landed in, and the assumptions that limit the results |
+
+Rebuild the whole package:
+
+```
+python3 verify.py          # runs all 10 checks, writes verification.json
+python3 report_sheets.py   # sheets 4 and 5 from that evidence
+python3 wheel_harness_16pads.py
+./assemble.sh              # one A1 PDF, 5 sheets
+```
 
 | File | What |
 |---|---|
