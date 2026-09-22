@@ -1,0 +1,327 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2448" height="1584" viewBox="0 0 2448 1584" font-family="Liberation Sans, Helvetica, Arial, sans-serif">
+<rect width="2448" height="1584" fill="#f6f7fa"/>
+<defs><pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#e4e8ef" stroke-width="1"/></pattern></defs>
+<rect width="2448" height="1584" fill="url(#g)"/>
+<rect x="26" y="26" width="2396" height="1532" fill="none" stroke="#1c1e23" stroke-width="2.5"/>
+<rect x="70" y="70" width="2308" height="1444" fill="none" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="214.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">1</text>
+<text x="214.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">1</text>
+<text x="502.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">2</text>
+<text x="502.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">2</text>
+<line x1="358.5" y1="26" x2="358.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="358.5" y1="1514" x2="358.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="791.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">3</text>
+<text x="791.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">3</text>
+<line x1="647.0" y1="26" x2="647.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="647.0" y1="1514" x2="647.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1079.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">4</text>
+<text x="1079.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">4</text>
+<line x1="935.5" y1="26" x2="935.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="935.5" y1="1514" x2="935.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1368.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">5</text>
+<text x="1368.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">5</text>
+<line x1="1224.0" y1="26" x2="1224.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1224.0" y1="1514" x2="1224.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1656.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">6</text>
+<text x="1656.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">6</text>
+<line x1="1512.5" y1="26" x2="1512.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1512.5" y1="1514" x2="1512.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1945.25" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">7</text>
+<text x="1945.25" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">7</text>
+<line x1="1801.0" y1="26" x2="1801.0" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1801.0" y1="1514" x2="1801.0" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="2233.75" y="56" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">8</text>
+<text x="2233.75" y="1544" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">8</text>
+<line x1="2089.5" y1="26" x2="2089.5" y2="70" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2089.5" y1="1514" x2="2089.5" y2="1558" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="196.33333333333331" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">A</text>
+<text x="2400" y="196.33333333333331" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">A</text>
+<text x="48" y="437.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">B</text>
+<text x="2400" y="437.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">B</text>
+<line x1="26" y1="310.66666666666663" x2="70" y2="310.66666666666663" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="310.66666666666663" x2="2422" y2="310.66666666666663" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="677.6666666666666" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">C</text>
+<text x="2400" y="677.6666666666666" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">C</text>
+<line x1="26" y1="551.3333333333333" x2="70" y2="551.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="551.3333333333333" x2="2422" y2="551.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="918.3333333333333" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">D</text>
+<text x="2400" y="918.3333333333333" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">D</text>
+<line x1="26" y1="792.0" x2="70" y2="792.0" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="792.0" x2="2422" y2="792.0" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="1159.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">E</text>
+<text x="2400" y="1159.0" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">E</text>
+<line x1="26" y1="1032.6666666666665" x2="70" y2="1032.6666666666665" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="1032.6666666666665" x2="2422" y2="1032.6666666666665" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="48" y="1399.6666666666665" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">F</text>
+<text x="2400" y="1399.6666666666665" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="middle">F</text>
+<line x1="26" y1="1273.3333333333333" x2="70" y2="1273.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2378" y1="1273.3333333333333" x2="2422" y2="1273.3333333333333" stroke="#1c1e23" stroke-width="1.2"/>
+<rect x="1618" y="1364" width="760" height="150" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="1618" y1="1416" x2="2378" y2="1416" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1618" y1="1464" x2="2378" y2="1464" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1918" y1="1416" x2="1918" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2088" y1="1416" x2="2088" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2218" y1="1416" x2="2218" y2="1514" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1632" y="1388" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#5b6270" font-weight="normal" text-anchor="start">Team 18 - FIU Senior Design</text>
+<text x="1632" y="1408" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="16" fill="#1c1e23" font-weight="bold" text-anchor="start">Biometric Steering Wheel - 16 PPG pad harness</text>
+<text x="1632" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SUBTITLE</text>
+<text x="1632" y="1454" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">Sheet 2 - parts list and wire list</text>
+<text x="1932" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DRAWING No.</text>
+<text x="1932" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">TD18-HW-002</text>
+<text x="2102" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">REV</text>
+<text x="2102" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">A</text>
+<text x="2232" y="1434" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SHEET</text>
+<text x="2232" y="1454" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">2 of 2</text>
+<text x="1632" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DRAWN</text>
+<text x="1632" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Team 18</text>
+<text x="1932" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">DATE</text>
+<text x="1932" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="2102" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SCALE</text>
+<text x="2102" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">NTS</text>
+<text x="2232" y="1482" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9" fill="#5b6270" font-weight="normal" text-anchor="start">SIZE</text>
+<text x="2232" y="1502" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">B</text>
+<rect x="1618" y="1266" width="760" height="86" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="1618" y1="1294" x2="2378" y2="1294" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="1688" y1="1266" x2="1688" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2118" y1="1266" x2="2118" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<line x1="2248" y1="1266" x2="2248" y2="1352" stroke="#1c1e23" stroke-width="1.2"/>
+<text x="1630" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">REV</text>
+<text x="1700" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">DESCRIPTION</text>
+<text x="2130" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">DATE</text>
+<text x="2260" y="1285" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10" fill="#5b6270" font-weight="bold" text-anchor="start">BY</text>
+<text x="1630" y="1320" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">A</text>
+<text x="1700" y="1320" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Initial release - 16 pads, two multiplexers</text>
+<text x="2130" y="1320" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22</text>
+<text x="2260" y="1320" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#1c1e23" font-weight="normal" text-anchor="start">Team 18</text>
+<text x="80" y="1500" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="normal" text-anchor="start">NOT A MEDICAL DEVICE - student prototype. Interconnect drawing: not to scale, not a PCB layout.</text>
+<g transform="translate(76,74)">
+<text x="10" y="48" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="start">PARTS LIST</text>
+<rect x="10" y="60" width="1120" height="420" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="10" y1="90" x2="1130" y2="90" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="100" y1="60" x2="100" y2="480" stroke="#1c1e23" stroke-width="1"/>
+<line x1="160" y1="60" x2="160" y2="480" stroke="#1c1e23" stroke-width="1"/>
+<line x1="630" y1="60" x2="630" y2="480" stroke="#1c1e23" stroke-width="1"/>
+<text x="20" y="80" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">REF</text>
+<text x="110" y="80" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">QTY</text>
+<text x="170" y="80" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">DESCRIPTION</text>
+<text x="640" y="80" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">KEY RATINGS / NOTES</text>
+<text x="20" y="108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">BT1</text>
+<text x="110" y="108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="108" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">12 V LiFePO4 battery, 200 Ah, internal BMS</text>
+<text x="640" y="108" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">10-14.6 V working range</text>
+<line x1="10" y1="116" x2="1130" y2="116" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="134" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">F1</text>
+<text x="110" y="134" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="134" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Fuse + holder, 10 A</text>
+<text x="640" y="134" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">within 15 cm of BT1 +</text>
+<line x1="10" y1="142" x2="1130" y2="142" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="160" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SW1</text>
+<text x="110" y="160" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="160" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Battery master switch</text>
+<text x="640" y="160" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">disconnects the whole system</text>
+<line x1="10" y1="168" x2="1130" y2="168" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="186" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB1</text>
+<text x="110" y="186" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="186" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Fused distribution block, 2 ways</text>
+<text x="640" y="186" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">F2 5 A -&gt; PS1, F3 2 A -&gt; PS2</text>
+<line x1="10" y1="194" x2="1130" y2="194" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="212" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB2</text>
+<text x="110" y="212" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="212" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Negative bus bar</text>
+<text x="640" y="212" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">single return point</text>
+<line x1="10" y1="220" x2="1130" y2="220" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="238" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS1</text>
+<text x="110" y="238" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="238" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Buck converter 12 V -&gt; 5.1 V, 5 A or more</text>
+<text x="640" y="238" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">set off-load before connecting A2</text>
+<line x1="10" y1="246" x2="1130" y2="246" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="264" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS2</text>
+<text x="110" y="264" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="264" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Buck converter 12 V -&gt; 5 V USB</text>
+<text x="640" y="264" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1 A or more; size by note 5, sheet 1</text>
+<line x1="10" y1="272" x2="1130" y2="272" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="290" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1</text>
+<text x="110" y="290" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="290" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">ESP32-WROOM-32 DevKitC, 38-pin</text>
+<text x="640" y="290" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">I2C on IO21/IO22; BLE to A2</text>
+<line x1="10" y1="298" x2="1130" y2="298" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="316" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A2</text>
+<text x="110" y="316" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="316" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Raspberry Pi 5</text>
+<text x="640" y="316" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">USB-C power only; Wi-Fi off</text>
+<line x1="10" y1="324" x2="1130" y2="324" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="342" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1, U2</text>
+<text x="110" y="342" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">2</text>
+<text x="170" y="342" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TCA9548A 8-channel I2C switch module</text>
+<text x="640" y="342" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">0x70 / 0x71; VCC 1.65-5.5 V; 400 kHz</text>
+<line x1="10" y1="350" x2="1130" y2="350" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="368" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD01-16</text>
+<text x="110" y="368" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">16</text>
+<text x="170" y="368" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MAX30102 pulse-oximetry module</text>
+<text x="640" y="368" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">0x57; module VIN, onboard regulator</text>
+<line x1="10" y1="376" x2="1130" y2="376" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="394" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U3</text>
+<text x="110" y="394" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1</text>
+<text x="170" y="394" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">IMU module (optional)</text>
+<text x="640" y="394" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">on the main bus; address must not clash</text>
+<line x1="10" y1="402" x2="1130" y2="402" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="420" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">R1-R4</text>
+<text x="110" y="420" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">a/r</text>
+<text x="170" y="420" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Pull-up resistors 4.7 k</text>
+<text x="640" y="420" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">one pair per enabled segment (note 5)</text>
+<line x1="10" y1="428" x2="1130" y2="428" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="446" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">R5, R6</text>
+<text x="110" y="446" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">2</text>
+<text x="170" y="446" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Pull-up resistors 10 k</text>
+<text x="640" y="446" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">RESET of U1/U2 to +3V3 (note 3)</text>
+<line x1="10" y1="454" x2="1130" y2="454" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="472" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">-</text>
+<text x="110" y="472" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">a/r</text>
+<text x="170" y="472" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Harness wire, sleeving, strain relief</text>
+<text x="640" y="472" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">size from the measured current (note 7)</text>
+<text x="10" y="542" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="15" fill="#1c1e23" font-weight="bold" text-anchor="start">WIRE LIST</text>
+<rect x="10" y="554" width="1120" height="534" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="10" y1="584" x2="1130" y2="584" stroke="#1c1e23" stroke-width="1.6"/>
+<line x1="340" y1="554" x2="340" y2="1088" stroke="#1c1e23" stroke-width="1"/>
+<line x1="760" y1="554" x2="760" y2="1088" stroke="#1c1e23" stroke-width="1"/>
+<line x1="1010" y1="554" x2="1010" y2="1088" stroke="#1c1e23" stroke-width="1"/>
+<text x="20" y="574" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">FROM</text>
+<text x="350" y="574" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">TO</text>
+<text x="770" y="574" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">NET</text>
+<text x="1020" y="574" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11" fill="#5b6270" font-weight="bold" text-anchor="start">WIRE</text>
+<text x="20" y="600" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">BT1 +</text>
+<text x="350" y="600" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">F1 in</text>
+<text x="770" y="600" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+12V_RAW</text>
+<text x="1020" y="600" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">red</text>
+<line x1="10" y1="608" x2="1130" y2="608" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="624" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">F1 out</text>
+<text x="350" y="624" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SW1 1</text>
+<text x="770" y="624" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+12V_FUSED</text>
+<text x="1020" y="624" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">red</text>
+<line x1="10" y1="632" x2="1130" y2="632" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="648" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SW1 2</text>
+<text x="350" y="648" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB1 in</text>
+<text x="770" y="648" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+12V_SW</text>
+<text x="1020" y="648" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">red</text>
+<line x1="10" y1="656" x2="1130" y2="656" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="672" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB1 F2 out</text>
+<text x="350" y="672" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS1 IN+</text>
+<text x="770" y="672" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+12V_PI</text>
+<text x="1020" y="672" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">red</text>
+<line x1="10" y1="680" x2="1130" y2="680" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="696" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB1 F3 out</text>
+<text x="350" y="696" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS2 IN+</text>
+<text x="770" y="696" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+12V_ESP</text>
+<text x="1020" y="696" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">red</text>
+<line x1="10" y1="704" x2="1130" y2="704" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="720" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">BT1 -</text>
+<text x="350" y="720" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB2</text>
+<text x="770" y="720" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">GND</text>
+<text x="1020" y="720" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">black</text>
+<line x1="10" y1="728" x2="1130" y2="728" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="744" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TB2</text>
+<text x="350" y="744" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS1 IN- , PS2 IN-</text>
+<text x="770" y="744" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">GND</text>
+<text x="1020" y="744" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">black</text>
+<line x1="10" y1="752" x2="1130" y2="752" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="768" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS1 OUT+ / OUT-</text>
+<text x="350" y="768" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A2 USB-C</text>
+<text x="770" y="768" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+5V_PI</text>
+<text x="1020" y="768" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">USB cable</text>
+<line x1="10" y1="776" x2="1130" y2="776" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="792" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PS2 OUT</text>
+<text x="350" y="792" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 micro-USB</text>
+<text x="770" y="792" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+5V_ESP</text>
+<text x="1020" y="792" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">USB cable</text>
+<line x1="10" y1="800" x2="1130" y2="800" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="816" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 3V3</text>
+<text x="350" y="816" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 VIN, U2 VIN</text>
+<text x="770" y="816" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+3V3</text>
+<text x="1020" y="816" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">pink</text>
+<line x1="10" y1="824" x2="1130" y2="824" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="840" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 5V</text>
+<text x="350" y="840" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD01-16 VIN</text>
+<text x="770" y="840" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+5V_PAD</text>
+<text x="1020" y="840" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">orange</text>
+<line x1="10" y1="848" x2="1130" y2="848" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="864" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 GND</text>
+<text x="350" y="864" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1/U2 GND, MOD01-16 GND, U3 GND</text>
+<text x="770" y="864" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">GND</text>
+<text x="1020" y="864" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">black</text>
+<line x1="10" y1="872" x2="1130" y2="872" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="888" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 IO21</text>
+<text x="350" y="888" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 SDA, U2 SDA, U3 SDA</text>
+<text x="770" y="888" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SDA_MAIN</text>
+<text x="1020" y="888" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">blue</text>
+<line x1="10" y1="896" x2="1130" y2="896" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="912" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">A1 IO22</text>
+<text x="350" y="912" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 SCL, U2 SCL, U3 SCL</text>
+<text x="770" y="912" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SCL_MAIN</text>
+<text x="1020" y="912" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">yellow</text>
+<line x1="10" y1="920" x2="1130" y2="920" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="936" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 SD0..SD7</text>
+<text x="350" y="936" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD01..MOD08 SDA</text>
+<text x="770" y="936" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SDA_A0..A7</text>
+<text x="1020" y="936" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">blue</text>
+<line x1="10" y1="944" x2="1130" y2="944" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="960" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 SC0..SC7</text>
+<text x="350" y="960" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD01..MOD08 SCL</text>
+<text x="770" y="960" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SCL_A0..A7</text>
+<text x="1020" y="960" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">yellow</text>
+<line x1="10" y1="968" x2="1130" y2="968" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U2 SD0..SD7</text>
+<text x="350" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD09..MOD16 SDA</text>
+<text x="770" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SDA_B0..B7</text>
+<text x="1020" y="984" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">blue</text>
+<line x1="10" y1="992" x2="1130" y2="992" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="1008" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U2 SC0..SC7</text>
+<text x="350" y="1008" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MOD09..MOD16 SCL</text>
+<text x="770" y="1008" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SCL_B0..B7</text>
+<text x="1020" y="1008" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">yellow</text>
+<line x1="10" y1="1016" x2="1130" y2="1016" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="1032" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 A0, A1, A2</text>
+<text x="350" y="1032" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">GND</text>
+<text x="770" y="1032" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">ADDR_U1 = 0x70</text>
+<text x="1020" y="1032" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">-</text>
+<line x1="10" y1="1040" x2="1130" y2="1040" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="1056" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U2 A0</text>
+<text x="350" y="1056" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+3V3   (A1, A2 to GND)</text>
+<text x="770" y="1056" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">ADDR_U2 = 0x71</text>
+<text x="1020" y="1056" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">-</text>
+<line x1="10" y1="1064" x2="1130" y2="1064" stroke="#c9cfda" stroke-width="1"/>
+<text x="20" y="1080" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">U1 RESET, U2 RESET</text>
+<text x="350" y="1080" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">+3V3 through 10 k</text>
+<text x="770" y="1080" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">RST_MUX</text>
+<text x="1020" y="1080" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">-</text>
+<rect x="1200" y="60" width="1050" height="300" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="1216" y="92" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">DEVICE DATA - AS VERIFIED AGAINST THE PRIMARY DATASHEETS</text>
+<text x="1216" y="120" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TCA9548A   TI SCPS207H, MAY 2012 - REVISED SEPTEMBER 2024</text>
+<text x="1216" y="139" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           8 bidirectional channels; address byte 1110 A2 A1 A0 -&gt; 0x70-0x77 (Figure 7-3, section 7.5.2)</text>
+<text x="1216" y="158" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           VCC 1.65-5.5 V (recommended operating conditions); fSCL 0-400 kHz; 5 V tolerant I/O</text>
+<text x="1216" y="177" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           RESET active low; connect to VCC through a pull-up when unused (pin functions table)</text>
+<text x="1216" y="196" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start"></text>
+<text x="1216" y="215" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">MAX30102   Maxim 19-7740; Rev 1; 10/18</text>
+<text x="1216" y="234" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           I2C write address 0xAE, read address 0xAF (7-bit 0x57); fSCL 0-400 kHz (electrical characteristics)</text>
+<text x="1216" y="253" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           VDD 1.7-2.0 V (1.8 typ); VLED+ 3.1-5.0 V (3.3 typ) - the module's regulator makes 5 V VIN safe</text>
+<text x="1216" y="272" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           FIFO depth 32 samples - read in bursts instead of switching channel per sample</text>
+<text x="1216" y="291" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start"></text>
+<text x="1216" y="310" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">IMU U3     address unverified here: confirm against the datasheet of the module actually fitted,</text>
+<text x="1216" y="329" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">           and check it does not clash with 0x70 / 0x71</text>
+<rect x="1200" y="394" width="1050" height="250" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="1216" y="426" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">BEFORE POWER-UP</text>
+<text x="1216" y="456" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">1  Set PS1 to 5.1-5.2 V with no load, then connect A2.</text>
+<text x="1216" y="480" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">2  Check +5V_PAD and +3V3 at the far end of the harness, not only at the source.</text>
+<text x="1216" y="504" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">3  With power on and no I2C traffic, SDA and SCL must idle high near 3.3 V.</text>
+<text x="1216" y="528" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">4  Scan the bus: only 0x70 and 0x71 answer until a channel is enabled.</text>
+<text x="1216" y="552" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">5  Enable one channel at a time and confirm exactly one 0x57 answers.</text>
+<text x="1216" y="576" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">6  Check the SDA/SCL rise time on a scope with the full harness fitted.</text>
+<text x="1216" y="600" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">7  Shut A2 down cleanly before opening SW1.</text>
+<rect x="1200" y="678" width="1050" height="190" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
+<text x="1216" y="710" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">HOW THE FIRMWARE USES THE PADS</text>
+<text x="1216" y="740" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Scan     step through the segments, read each pad's IR level and test for skin contact</text>
+<text x="1216" y="764" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Stream   keep the pad with the best signal selected; one pad streams at a time</text>
+<text x="1216" y="788" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Standby  keep a second candidate sampling so a handover does not restart the estimator</text>
+<text x="1216" y="812" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Hand over  when the streaming pad loses contact, switch to the standby and pick the next</text>
+<text x="1216" y="836" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="11.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Rate     100 Hz per streaming pad, one 1 s packet per second over BLE (unchanged)</text>
+</g>
+</svg>
