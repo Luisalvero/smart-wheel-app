@@ -137,7 +137,7 @@
 <path d="M454 74 L498 74" fill="none" stroke="#d62828" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M648 74 L690 74" fill="none" stroke="#d62828" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M864 83 L964 83 L964 66 L986 66" fill="none" stroke="#d62828" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M864 129 L1070 129 L1070 1300 L174 1300 L174 1090" fill="none" stroke="#d62828" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M864 129 L964 129 L964 190 L436 190 L436 1300 L174 1300 L174 1090" fill="none" stroke="#d62828" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M250 136 L270 136 L270 229 L690 229" fill="none" stroke="#111417" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M940 229 L974 229 L974 110 L986 110" fill="none" stroke="#111417" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M614 252 L614 1330 L224 1330 L224 1090" fill="none" stroke="#111417" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
