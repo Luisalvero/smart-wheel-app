@@ -29,3 +29,27 @@ Device data on the sheets is cited from the primary datasheets:
   of whichever module is fitted.
 
 The bench prototype sheet (2 pads, revision A) is Andrew's separate drawing.
+
+## Simulations (`sim/`)
+
+| Tool | Question it answers |
+|---|---|
+| `sim/i2c_bus.py` | does a bus segment still meet the I²C timing spec with this harness length and pull-up? |
+| `sim/rail_drop.py` | how much of the 5 V reaches the far pad, given a **measured** per-pad current? |
+
+```
+python3 sim/i2c_bus.py --len 1.0 --pads 1        # rise-time table, PASS/FAIL
+python3 sim/i2c_bus.py --len 1.0 --spice bus.cir # netlist for a real SPICE run
+ngspice -b bus.cir                               # needs: sudo pacman -S ngspice
+python3 sim/rail_drop.py --ma 25 --pads 16 --awg 22 --len 1.2
+```
+
+Limits are from the **I²C-bus specification, NXP UM10204 Rev 7.0, 1 October
+2021, Table 10**: fast mode (400 kbit/s) needs a rise time of 300 ns or less,
+with at most 400 pF on a line.
+
+**A result that changed the drawing:** at an assumed 60 pF/m, a 1 m branch is
+about 82 pF, and a 4.7 kΩ pull-up gives a 327 ns rise — over the limit. The
+sheets now specify **2.2 kΩ**. Cable capacitance is an assumption until the
+harness is measured, so re-run `i2c_bus.py --cpm <measured>` and check the rise
+time on a scope before trusting it.

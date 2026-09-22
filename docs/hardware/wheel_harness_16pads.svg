@@ -500,21 +500,22 @@
 <text x="1854" y="798" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   pull-up when unused.  [SCPS207H, pin table]</text>
 <text x="1854" y="815" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">4  Bus speed &lt;= 400 kHz: both parts are rated</text>
 <text x="1854" y="832" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   0-400 kHz.  [SCPS207H; 19-7740 Rev 1]</text>
-<text x="1854" y="849" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">5  Pull-ups: one 4.7 k pair per ENABLED segment;</text>
-<text x="1854" y="866" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   the modules carry their own. Check SDA/SCL rise</text>
-<text x="1854" y="883" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   time on a scope once the harness length is set.</text>
-<text x="1854" y="900" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">6  +5V_PAD goes to the MODULE input, never to the</text>
-<text x="1854" y="917" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   bare chip: MAX30102 VDD is 1.7-2.0 V and VLED+</text>
-<text x="1854" y="934" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   3.1-5.0 V; the module regulates. Confirm the</text>
-<text x="1854" y="951" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   module's I2C idles near 3.3 V, not 1.8 V.</text>
-<text x="1854" y="968" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">7  Power budget by MEASUREMENT: measure one pad at</text>
-<text x="1854" y="985" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   the firmware's LED setting, multiply by 16, add</text>
-<text x="1854" y="1002" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   margin, then size PS2. Do not use a web figure.</text>
-<text x="1854" y="1019" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">8  One segment is enabled at a time. Firmware scans</text>
-<text x="1854" y="1036" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   for skin contact, streams the best pad and keeps</text>
-<text x="1854" y="1053" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   a second as standby for handover.</text>
-<text x="1854" y="1070" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">9  A2 keeps Wi-Fi off: its Wi-Fi and Bluetooth share</text>
-<text x="1854" y="1087" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   one radio, and the BLE link fails with Wi-Fi on.</text>
+<text x="1854" y="849" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">5  Pull-ups: 2.2 k per ENABLED segment. 4.7 k FAILS</text>
+<text x="1854" y="866" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   fast mode once the harness is ~1 m: tr 327 ns vs</text>
+<text x="1854" y="883" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   the 300 ns limit [UM10204 Rev 7.0, Table 10].</text>
+<text x="1854" y="900" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   See sim/i2c_bus.py; confirm on a scope.</text>
+<text x="1854" y="917" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">6  +5V_PAD goes to the MODULE input, never to the</text>
+<text x="1854" y="934" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   bare chip: MAX30102 VDD is 1.7-2.0 V and VLED+</text>
+<text x="1854" y="951" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   3.1-5.0 V; the module regulates. Confirm the</text>
+<text x="1854" y="968" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   module's I2C idles near 3.3 V, not 1.8 V.</text>
+<text x="1854" y="985" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">7  Power budget by MEASUREMENT: measure one pad at</text>
+<text x="1854" y="1002" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   the firmware's LED setting, multiply by 16, add</text>
+<text x="1854" y="1019" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   margin, then size PS2. Do not use a web figure.</text>
+<text x="1854" y="1036" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">8  One segment is enabled at a time. Firmware scans</text>
+<text x="1854" y="1053" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   for skin contact, streams the best pad and keeps</text>
+<text x="1854" y="1070" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   a second as standby for handover.</text>
+<text x="1854" y="1087" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">9  A2 keeps Wi-Fi off: its Wi-Fi and Bluetooth share</text>
+<text x="1854" y="1104" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">   one radio, and the BLE link fails with Wi-Fi on.</text>
 <text x="20" y="1358" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="12" fill="#5b6270" font-weight="normal" text-anchor="start">Pads 01-08 hang off U1, pads 09-16 off U2. Both multiplexers and the IMU share the single I2C bus from A1; the ESP32 selects which pad is visible. Wire list: sheet 2.</text>
 </g>
 </svg>

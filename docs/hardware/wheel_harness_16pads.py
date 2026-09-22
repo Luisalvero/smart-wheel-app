@@ -341,9 +341,10 @@ def sheet1():
         "   pull-up when unused.  [SCPS207H, pin table]",
         "4  Bus speed <= 400 kHz: both parts are rated",
         "   0-400 kHz.  [SCPS207H; 19-7740 Rev 1]",
-        "5  Pull-ups: one 4.7 k pair per ENABLED segment;",
-        "   the modules carry their own. Check SDA/SCL rise",
-        "   time on a scope once the harness length is set.",
+        "5  Pull-ups: 2.2 k per ENABLED segment. 4.7 k FAILS",
+        "   fast mode once the harness is ~1 m: tr 327 ns vs",
+        "   the 300 ns limit [UM10204 Rev 7.0, Table 10].",
+        "   See sim/i2c_bus.py; confirm on a scope.",
         "6  +5V_PAD goes to the MODULE input, never to the",
         "   bare chip: MAX30102 VDD is 1.7-2.0 V and VLED+",
         "   3.1-5.0 V; the module regulates. Confirm the",
@@ -412,7 +413,7 @@ def sheet2():
         ("U1, U2", "2", "TCA9548A 8-channel I2C switch module", "0x70 / 0x71; VCC 1.65-5.5 V; 400 kHz"),
         ("MOD01-16", "16", "MAX30102 pulse-oximetry module", "0x57; module VIN, onboard regulator"),
         ("U3", "1", "IMU module (optional)", "on the main bus; address must not clash"),
-        ("R1-R4", "a/r", "Pull-up resistors 4.7 k", "one pair per enabled segment (note 5)"),
+        ("R1-R4", "a/r", "Pull-up resistors 2.2 k", "one pair per enabled segment (note 5)"),
         ("R5, R6", "2", "Pull-up resistors 10 k", "RESET of U1/U2 to +3V3 (note 3)"),
         ("-", "a/r", "Harness wire, sleeving, strain relief", "size from the measured current (note 7)"),
     ]
@@ -466,7 +467,7 @@ def sheet2():
     for i, r in enumerate(ROWS):
         text(VX + 16, 120 + i * 19, r, 10.5, C["ink"] if r[:1].isalpha() else C["muted"], font=MONO)
 
-    box(VX, 394, VW, 250, C["panel"], 0, C["ink"], 1.6)
+    box(VX, 394, VW, 274, C["panel"], 0, C["ink"], 1.6)
     text(VX + 16, 426, "BEFORE POWER-UP", 13, C["ink"], "bold")
     CHECK = [
         "1  Set PS1 to 5.1-5.2 V with no load, then connect A2.",
@@ -474,14 +475,15 @@ def sheet2():
         "3  With power on and no I2C traffic, SDA and SCL must idle high near 3.3 V.",
         "4  Scan the bus: only 0x70 and 0x71 answer until a channel is enabled.",
         "5  Enable one channel at a time and confirm exactly one 0x57 answers.",
-        "6  Check the SDA/SCL rise time on a scope with the full harness fitted.",
+        "6  Check the SDA/SCL rise time on a scope with the full harness fitted:",
+        "   it must reach 0.3->0.7 VDD within 300 ns at 400 kHz.",
         "7  Shut A2 down cleanly before opening SW1.",
     ]
     for i, l in enumerate(CHECK):
         text(VX + 16, 456 + i * 24, l, 11.5, C["ink"], font=MONO)
 
-    box(VX, 678, VW, 190, C["panel"], 0, C["ink"], 1.6)
-    text(VX + 16, 710, "HOW THE FIRMWARE USES THE PADS", 13, C["ink"], "bold")
+    box(VX, 700, VW, 190, C["panel"], 0, C["ink"], 1.6)
+    text(VX + 16, 732, "HOW THE FIRMWARE USES THE PADS", 13, C["ink"], "bold")
     FW = [
         "Scan     step through the segments, read each pad's IR level and test for skin contact",
         "Stream   keep the pad with the best signal selected; one pad streams at a time",
@@ -490,7 +492,7 @@ def sheet2():
         "Rate     100 Hz per streaming pad, one 1 s packet per second over BLE (unchanged)",
     ]
     for i, l in enumerate(FW):
-        text(VX + 16, 740 + i * 24, l, 11.5, C["ink"], font=MONO)
+        text(VX + 16, 762 + i * 24, l, 11.5, C["ink"], font=MONO)
     add("</g>")
     return save("wheel_harness_16pads_sheet2.svg")
 
