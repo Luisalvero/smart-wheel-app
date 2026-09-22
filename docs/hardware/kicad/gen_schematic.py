@@ -33,6 +33,7 @@ def body_size(pins):
     h = rows * 2.54 + 2.54
     longest = max((len(p[1]) for p in pins), default=4)
     w = max(20.32, 2.54 * 4 + longest * 1.6)
+    w = 2.54 * round(w / 2.54)          # whole grid steps, so pins land on grid
     return w, h, left, right
 
 def pin_positions(pins):
@@ -69,18 +70,18 @@ def lib_symbol(name, pins) -> str:
 def place() -> dict[str, tuple[float, float]]:
     """Columns: power chain, controllers, multiplexers, pads, passives."""
     at: dict[str, tuple[float, float]] = {}
-    col = {"power": 40.0, "ctrl": 150.0, "mux": 300.0, "pad": 460.0, "misc": 620.0}
+    col = {"power": 45.0, "ctrl": 165.0, "mux": 285.0, "pad": 420.0, "misc": 700.0}
     for i, ref in enumerate(["BT1", "F1", "SW1", "F2", "F3", "PS1", "PS2", "TB2"]):
-        at[ref] = (col["power"], 40.0 + i * 46.0)
+        at[ref] = (col["power"], 45.0 + i * 45.0)
     for i, ref in enumerate(["A1", "A2", "U3"]):
-        at[ref] = (col["ctrl"], 50.0 + i * 90.0)
-    at["U1"] = (col["mux"], 120.0)
-    at["U2"] = (col["mux"], 340.0)
+        at[ref] = (col["ctrl"], 60.0 + i * 85.0)
+    at["U1"] = (col["mux"], 135.0)
+    at["U2"] = (col["mux"], 375.0)
     for n in range(1, 17):
         row, c = (n - 1) % 8, (n - 1) // 8
-        at[f"MOD{n:02d}"] = (col["pad"] + c * 110.0, 40.0 + row * 46.0)
+        at[f"MOD{n:02d}"] = (col["pad"] + c * 130.0, 45.0 + row * 60.0)
     for i, ref in enumerate(["R1", "R2", "R3", "R4", "R5", "R6", "PWR1", "PWR2", "PWR3"]):
-        at[ref] = (col["misc"] + 220.0, 40.0 + i * 34.0)
+        at[ref] = (col["misc"], 50.0 + i * 45.0)
     return {k: (snap(x), snap(y)) for k, (x, y) in at.items()}
 
 def main():
@@ -127,9 +128,9 @@ def main():
 
         for num, pname, _ptype, side in pins:
             px, py, _ang = pos[num]
-            ax, ay = snap(X + px), snap(Y - py)          # library +Y up -> sheet +Y down
-            out = -STUB if side == "L" else STUB
-            bx = snap(ax + out)
+            ax, ay = round(X + px, 4), round(Y - py, 4)   # library +Y up -> sheet +Y down
+            out = -STUB if side == "L" else STUB          # exact: a snapped end misses the pin
+            bx = round(ax + out, 4)
             net = idx.get((ref, num))
             if net is None:
                 ncs.append(f'  (no_connect (at {ax:.2f} {ay:.2f}) (uuid "{uid()}"))')
@@ -143,6 +144,17 @@ def main():
     S += wires + labels + ncs
     S.append('  (sheet_instances (path "/" (page "1")))')
     S.append(')')
+
+    # A real symbol library so ERC can compare the placed symbols against it
+    # (without one, every symbol reports lib_symbol_issues).
+    lib = ['(kicad_symbol_lib (version 20231120) (generator "ppg_harness_gen")']
+    for sym, pins in used.items():
+        lib.append(lib_symbol(sym, pins).replace(f'"harness:{sym}"', f'"{sym}"', 1))
+    lib.append(')')
+    (Path(__file__).parent / "harness.kicad_sym").write_text("\n".join(lib) + "\n")
+    (Path(__file__).parent / "sym-lib-table").write_text(
+        '(sym_lib_table\n  (lib (name "harness")(type "KiCad")'
+        '(uri "${KIPRJMOD}/harness.kicad_sym")(options "")(descr "TD18-HW-002 parts"))\n)\n')
 
     out = Path(__file__).parent / f"{PROJECT}.kicad_sch"
     out.write_text("\n".join(S) + "\n")

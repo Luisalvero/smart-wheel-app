@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "harness")(type "KiCad")(uri "${KIPRJMOD}/harness.kicad_sym")(options "")(descr "TD18-HW-002 parts"))
+)

@@ -29,10 +29,10 @@ python3 check_netlist.py wheel_harness.net
 
 step "6. SPICE: I2C segment rise time"
 python3 ../sim/i2c_bus.py --len 1.0 --pads 1 --spice /tmp/i2c_seg.cir >/dev/null
-ngspice -b /tmp/i2c_seg.cir 2>&1 | grep -Ei "tr|error" | head -5
+ngspice -b /tmp/i2c_seg.cir 2>&1 | grep -Ei "^tr =|VERDICT|error" | head -5
 
 step "7. SPICE: 5 V ring drop"
 python3 ../sim/rail_spice.py --ma 25 --pads 16 --awg 22 --len 1.2 --spice /tmp/rail.cir
-ngspice -b /tmp/rail.cir 2>&1 | grep -Ei "v\(|error" | head -8
+ngspice -b /tmp/rail.cir 2>&1 | grep -Ei "^worst|error" | head -4
 
 printf '\nAll steps finished. Outputs: erc_report.txt, wheel_harness_schematic.pdf, wheel_harness.net, wheel_harness_bom.csv\n'

@@ -53,3 +53,34 @@ about 82 pF, and a 4.7 kΩ pull-up gives a 327 ns rise — over the limit. The
 sheets now specify **2.2 kΩ**. Cable capacitance is an assumption until the
 harness is measured, so re-run `i2c_bus.py --cpm <measured>` and check the rise
 time on a scope before trusting it.
+
+## KiCad schematic and full verification (`kicad/`)
+
+`kicad/harness_spec.py` is the single source of truth: parts, pins, pin
+electrical types and nets. From it, `gen_schematic.py` writes a real KiCad
+schematic and its symbol library; KiCad then re-extracts connectivity from the
+schematic's own geometry and `check_netlist.py` compares that back to the spec.
+A stub that missed a pin or a mistyped label shows up as a difference.
+
+```
+kicad/run_all.sh          # spec check, generate, ERC, exports, cross-check, both SPICE runs
+```
+
+Needs `kicad` and `ngspice`. Outputs land in `kicad/`: `erc_report.txt`,
+`wheel_harness_schematic.pdf`, `wheel_harness.net`, `wheel_harness_bom.csv`.
+
+### Results (2026-09-22, KiCad 10, ngspice 47)
+
+| Check | Result |
+|---|---|
+| Spec self-check | 38 parts, 45 nets, 177 pins, 161 connected, 16 no-connect |
+| KiCad ERC | **0 errors, 0 warnings** |
+| Netlist vs spec | **45 nets, all match** |
+| Design rules | each channel reaches exactly one pad; all 16 pads on +5V_PAD; every board grounded |
+| KiCad BOM vs the drawing's parts list | same counts: 16 × MAX30102, 2 × TCA9548A, 4 × 2k2, 2 × 10k |
+| SPICE, I²C rise time, 2.2 kΩ, 1 m branch | **152.8 ns — PASS** (limit 300 ns) |
+| SPICE, same branch with 4.7 kΩ | **326.5 ns — FAIL**, which is why the sheet says 2.2 kΩ |
+| SPICE, +5V_PAD ladder, 16 pads × 25 mA, AWG 22, 1.2 m | worst pad **4.97 V** |
+
+The rise-time figures come out of ngspice within 0.2 % of the closed-form RC
+result in `sim/i2c_bus.py`, so the two methods agree.

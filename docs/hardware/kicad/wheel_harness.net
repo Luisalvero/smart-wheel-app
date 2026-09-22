@@ -1,0 +1,4030 @@
+(export
+	(version "E")
+	(design
+		(source "/home/luis/fiu-senior/docs/hardware/kicad/wheel_harness.kicad_sch")
+		(date "2026-09-22T17:47:37")
+		(tool "Eeschema 10.0.6")
+		(sheet
+			(number "1")
+			(name "/")
+			(tstamps "/")
+			(title_block
+				(title "Biometric Steering Wheel - 16 PPG pad harness")
+				(company "Team 18 - FIU Senior Design")
+				(rev "A")
+				(date "2026-09-22")
+				(source "wheel_harness.kicad_sch")
+				(comment
+					(number "1")
+					(value "TD18-HW-002 - generated from harness_spec.py")
+				)
+				(comment
+					(number "2")
+					(value "NOT A MEDICAL DEVICE - student prototype")
+				)
+				(comment
+					(number "3")
+					(value "")
+				)
+				(comment
+					(number "4")
+					(value "")
+				)
+				(comment
+					(number "5")
+					(value "")
+				)
+				(comment
+					(number "6")
+					(value "")
+				)
+				(comment
+					(number "7")
+					(value "")
+				)
+				(comment
+					(number "8")
+					(value "")
+				)
+				(comment
+					(number "9")
+					(value "")
+				)
+			)
+		)
+	)
+	(components
+		(comp
+			(ref "A1")
+			(value "ESP32-WROOM-32")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "ESP32_DEVKITC")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "5eaa5874-4881-428b-b630-9fb15289fb0f")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "A2")
+			(value "Raspberry Pi 5")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "RPI5")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "309eabb4-0ca0-4fd8-a717-98b2bffe79fd")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "BT1")
+			(value "12V LiFePO4 200Ah")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "BATTERY")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "76e84a70-e8bf-4cca-b337-64fe46e128e3")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "F1")
+			(value "10A")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "FUSE")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "f7526c0d-0370-423f-9aaf-b54e4805a37c")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "F2")
+			(value "5A")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "FUSE")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "7041f8c0-8b37-470f-a42b-a3a4f91c8815")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "F3")
+			(value "2A")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "FUSE")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "8d16de9f-f7ed-4d28-a28e-48a1f6fd435e")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD01")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "f132d132-58bf-4a28-be5f-af3318e3049c")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD02")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "ac4bf0a2-6974-45cc-a9f8-9aff79712748")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD03")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "08bfd2ce-c736-4980-b7d2-cccb4e454256")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD04")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "f71829cb-53ff-4b71-9658-14005a2e3aaa")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD05")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "ce412ce5-0380-4502-a0e1-faa8ed20d4c0")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD06")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "bbb1a737-9313-4db4-9c48-601bfb2e57aa")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD07")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "a41abac9-70e1-49d5-8ea4-4312d0c21f78")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD08")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "783554e2-8f6d-47de-92b2-7b50678b80f6")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD09")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "97d8f599-cf6a-4cc0-8ba5-c4f25e594716")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD10")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "df1c0440-6f4d-435c-8475-1dacf8344cc7")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD11")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "1a4baada-d97f-4cf8-af4f-098020796778")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD12")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "37d6526e-3918-4cb2-9a0d-2f9c7a6ff0f4")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD13")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "638c48ca-d944-47ac-8345-8676030f1beb")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD14")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "a9dfe121-d6ce-4887-bb52-81fedd083a47")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD15")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "3c52752e-73da-43b1-9c73-e1abd2efb385")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "MOD16")
+			(value "MAX30102 0x57")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "MAX30102")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "435dad58-62ad-4e7e-a47d-ec2ec5c32297")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "PS1")
+			(value "12V->5.1V 5A")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "BUCK")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "25eda671-e09d-4949-b390-1665a600a9e8")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "PS2")
+			(value "12V->5V USB")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "BUCK")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "f8d51f21-83d8-4760-9d6f-a5a3b07ae3a2")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "PWR1")
+			(value "PWR_FLAG")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "PWR_FLAG")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "7abf46c3-bcc4-46b0-b949-706fd4b0afb3")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "PWR2")
+			(value "PWR_FLAG")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "PWR_FLAG")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "b3eefba0-c3af-43c8-b978-916b2a1a43da")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "PWR3")
+			(value "PWR_FLAG")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "PWR_FLAG")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "382e6dbc-1726-472f-8e8c-80d405f9cef1")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R1")
+			(value "2k2")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "146283ab-1ed1-43ca-bb61-5715be875eac")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R2")
+			(value "2k2")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "fccfa029-cb0a-4988-b3bd-55031fcebcf1")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R3")
+			(value "2k2")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "52579836-820a-4f9b-a4e6-3dd8e8cc84b9")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R4")
+			(value "2k2")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "f08d86f8-c61f-4113-be5a-a88d66e17cb4")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R5")
+			(value "10k")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "2de35e72-ea49-4955-a028-c5400b97c375")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "R6")
+			(value "10k")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "R")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "5e136b41-93da-4629-a6ff-0cd06d25af15")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "SW1")
+			(value "battery master")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "SWITCH")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "7bc0746c-43f6-491e-aa73-17248624aaa1")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "TB2")
+			(value "negative bus")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "BUSBAR")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "6fbc1992-b3a9-41c2-b2f7-c698154c9edd")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "U1")
+			(value "TCA9548A 0x70")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "TCA9548A")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "c15295b7-eddf-4f3b-ba65-e5bc1b05a28b")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "10")
+						)
+						(pin
+							(num "11")
+						)
+						(pin
+							(num "12")
+						)
+						(pin
+							(num "13")
+						)
+						(pin
+							(num "14")
+						)
+						(pin
+							(num "15")
+						)
+						(pin
+							(num "16")
+						)
+						(pin
+							(num "17")
+						)
+						(pin
+							(num "18")
+						)
+						(pin
+							(num "19")
+						)
+						(pin
+							(num "20")
+						)
+						(pin
+							(num "21")
+						)
+						(pin
+							(num "22")
+						)
+						(pin
+							(num "23")
+						)
+						(pin
+							(num "24")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "U2")
+			(value "TCA9548A 0x71")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "TCA9548A")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "c20fb17e-8aef-46e1-995c-734d04fee063")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+						(pin
+							(num "5")
+						)
+						(pin
+							(num "6")
+						)
+						(pin
+							(num "7")
+						)
+						(pin
+							(num "8")
+						)
+						(pin
+							(num "9")
+						)
+						(pin
+							(num "10")
+						)
+						(pin
+							(num "11")
+						)
+						(pin
+							(num "12")
+						)
+						(pin
+							(num "13")
+						)
+						(pin
+							(num "14")
+						)
+						(pin
+							(num "15")
+						)
+						(pin
+							(num "16")
+						)
+						(pin
+							(num "17")
+						)
+						(pin
+							(num "18")
+						)
+						(pin
+							(num "19")
+						)
+						(pin
+							(num "20")
+						)
+						(pin
+							(num "21")
+						)
+						(pin
+							(num "22")
+						)
+						(pin
+							(num "23")
+						)
+						(pin
+							(num "24")
+						)
+					)
+				)
+			)
+		)
+		(comp
+			(ref "U3")
+			(value "IMU module")
+			(fields
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(libsource
+				(lib "harness")
+				(part "IMU")
+				(description "")
+			)
+			(property
+				(name "Sheetname")
+				(value "wheel_harness")
+			)
+			(property
+				(name "Sheetfile")
+				(value "wheel_harness.kicad_sch")
+			)
+			(sheetpath
+				(names "/")
+				(tstamps "/")
+			)
+			(tstamps "053c87c5-863a-42fe-b515-2d0618647b5c")
+			(units
+				(unit
+					(name "A")
+					(pins
+						(pin
+							(num "1")
+						)
+						(pin
+							(num "2")
+						)
+						(pin
+							(num "3")
+						)
+						(pin
+							(num "4")
+						)
+					)
+				)
+			)
+		)
+	)
+	(groups)
+	(variants)
+	(libparts
+		(libpart
+			(lib "harness")
+			(part "BATTERY")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "BATTERY")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "+")
+					(type "power_out")
+				)
+				(pin
+					(num "2")
+					(name "-")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "BUCK")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "BUCK")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "IN+")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "IN-")
+					(type "power_in")
+				)
+				(pin
+					(num "3")
+					(name "OUT+")
+					(type "power_out")
+				)
+				(pin
+					(num "4")
+					(name "OUT-")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "BUSBAR")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "BUSBAR")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "1")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "2")
+					(type "passive")
+				)
+				(pin
+					(num "3")
+					(name "3")
+					(type "passive")
+				)
+				(pin
+					(num "4")
+					(name "4")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "ESP32_DEVKITC")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "ESP32_DEVKITC")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "VBUS_USB")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "GND")
+					(type "power_in")
+				)
+				(pin
+					(num "3")
+					(name "3V3")
+					(type "power_out")
+				)
+				(pin
+					(num "4")
+					(name "IO21_SDA")
+					(type "bidirectional")
+				)
+				(pin
+					(num "5")
+					(name "IO22_SCL")
+					(type "bidirectional")
+				)
+				(pin
+					(num "6")
+					(name "5V")
+					(type "power_out")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "FUSE")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "FUSE")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "A")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "B")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "IMU")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "IMU")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "VIN")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "GND")
+					(type "power_in")
+				)
+				(pin
+					(num "3")
+					(name "SDA")
+					(type "bidirectional")
+				)
+				(pin
+					(num "4")
+					(name "SCL")
+					(type "bidirectional")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "MAX30102")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "MAX30102")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "VIN")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "GND")
+					(type "power_in")
+				)
+				(pin
+					(num "3")
+					(name "SDA")
+					(type "bidirectional")
+				)
+				(pin
+					(num "4")
+					(name "SCL")
+					(type "bidirectional")
+				)
+				(pin
+					(num "5")
+					(name "INT")
+					(type "output")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "PWR_FLAG")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "PWR_FLAG")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "pwr")
+					(type "power_out")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "R")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "R")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "1")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "2")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "RPI5")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "RPI5")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "VBUS")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "GND")
+					(type "power_in")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "SWITCH")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "SWITCH")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "A")
+					(type "passive")
+				)
+				(pin
+					(num "2")
+					(name "B")
+					(type "passive")
+				)
+			)
+		)
+		(libpart
+			(lib "harness")
+			(part "TCA9548A")
+			(fields
+				(field
+					(name "Reference") "U")
+				(field
+					(name "Value") "TCA9548A")
+				(field
+					(name "Footprint")
+				)
+				(field
+					(name "Datasheet")
+				)
+				(field
+					(name "Description")
+				)
+			)
+			(pins
+				(pin
+					(num "1")
+					(name "VIN")
+					(type "power_in")
+				)
+				(pin
+					(num "2")
+					(name "GND")
+					(type "power_in")
+				)
+				(pin
+					(num "3")
+					(name "SDA")
+					(type "bidirectional")
+				)
+				(pin
+					(num "4")
+					(name "SCL")
+					(type "bidirectional")
+				)
+				(pin
+					(num "5")
+					(name "RESET")
+					(type "input")
+				)
+				(pin
+					(num "6")
+					(name "A0")
+					(type "input")
+				)
+				(pin
+					(num "7")
+					(name "A1")
+					(type "input")
+				)
+				(pin
+					(num "8")
+					(name "A2")
+					(type "input")
+				)
+				(pin
+					(num "9")
+					(name "SD0")
+					(type "bidirectional")
+				)
+				(pin
+					(num "10")
+					(name "SC0")
+					(type "bidirectional")
+				)
+				(pin
+					(num "11")
+					(name "SD1")
+					(type "bidirectional")
+				)
+				(pin
+					(num "12")
+					(name "SC1")
+					(type "bidirectional")
+				)
+				(pin
+					(num "13")
+					(name "SD2")
+					(type "bidirectional")
+				)
+				(pin
+					(num "14")
+					(name "SC2")
+					(type "bidirectional")
+				)
+				(pin
+					(num "15")
+					(name "SD3")
+					(type "bidirectional")
+				)
+				(pin
+					(num "16")
+					(name "SC3")
+					(type "bidirectional")
+				)
+				(pin
+					(num "17")
+					(name "SD4")
+					(type "bidirectional")
+				)
+				(pin
+					(num "18")
+					(name "SC4")
+					(type "bidirectional")
+				)
+				(pin
+					(num "19")
+					(name "SD5")
+					(type "bidirectional")
+				)
+				(pin
+					(num "20")
+					(name "SC5")
+					(type "bidirectional")
+				)
+				(pin
+					(num "21")
+					(name "SD6")
+					(type "bidirectional")
+				)
+				(pin
+					(num "22")
+					(name "SC6")
+					(type "bidirectional")
+				)
+				(pin
+					(num "23")
+					(name "SD7")
+					(type "bidirectional")
+				)
+				(pin
+					(num "24")
+					(name "SC7")
+					(type "bidirectional")
+				)
+			)
+		)
+	)
+	(libraries
+		(library
+			(logical "harness")
+			(uri "${KIPRJMOD}/harness.kicad_sym")
+		)
+	)
+	(nets
+		(net
+			(code "1")
+			(name "/+3V3")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "3")
+				(pinfunction "3V3_3")
+				(pintype "power_out")
+			)
+			(node
+				(ref "R1")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "R2")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "R3")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "R4")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "R5")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "R6")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "U2")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "U2")
+				(pin "6")
+				(pinfunction "A0_6")
+				(pintype "input")
+			)
+			(node
+				(ref "U3")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+		)
+		(net
+			(code "2")
+			(name "/+5V_ESP")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "1")
+				(pinfunction "VBUS_USB_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PS2")
+				(pin "3")
+				(pinfunction "OUT+_3")
+				(pintype "power_out")
+			)
+		)
+		(net
+			(code "3")
+			(name "/+5V_PAD")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "6")
+				(pinfunction "5V_6")
+				(pintype "power_out")
+			)
+			(node
+				(ref "MOD01")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD02")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD03")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD04")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD05")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD06")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD07")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD08")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD09")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD10")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD11")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD12")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD13")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD14")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD15")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD16")
+				(pin "1")
+				(pinfunction "VIN_1")
+				(pintype "power_in")
+			)
+		)
+		(net
+			(code "4")
+			(name "/+5V_PI")
+			(class "Default")
+			(node
+				(ref "A2")
+				(pin "1")
+				(pinfunction "VBUS_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PS1")
+				(pin "3")
+				(pinfunction "OUT+_3")
+				(pintype "power_out")
+			)
+		)
+		(net
+			(code "5")
+			(name "/+12V_ESP")
+			(class "Default")
+			(node
+				(ref "F3")
+				(pin "2")
+				(pinfunction "B_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "PS2")
+				(pin "1")
+				(pinfunction "IN+_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PWR3")
+				(pin "1")
+				(pinfunction "pwr_1")
+				(pintype "power_out")
+			)
+		)
+		(net
+			(code "6")
+			(name "/+12V_FUSED")
+			(class "Default")
+			(node
+				(ref "F1")
+				(pin "2")
+				(pinfunction "B_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "SW1")
+				(pin "1")
+				(pinfunction "A_1")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "7")
+			(name "/+12V_PI")
+			(class "Default")
+			(node
+				(ref "F2")
+				(pin "2")
+				(pinfunction "B_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "PS1")
+				(pin "1")
+				(pinfunction "IN+_1")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PWR2")
+				(pin "1")
+				(pinfunction "pwr_1")
+				(pintype "power_out")
+			)
+		)
+		(net
+			(code "8")
+			(name "/+12V_RAW")
+			(class "Default")
+			(node
+				(ref "BT1")
+				(pin "1")
+				(pinfunction "+_1")
+				(pintype "power_out")
+			)
+			(node
+				(ref "F1")
+				(pin "1")
+				(pinfunction "A_1")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "9")
+			(name "/+12V_SW")
+			(class "Default")
+			(node
+				(ref "F2")
+				(pin "1")
+				(pinfunction "A_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "F3")
+				(pin "1")
+				(pinfunction "A_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "SW1")
+				(pin "2")
+				(pinfunction "B_2")
+				(pintype "passive")
+			)
+		)
+		(net
+			(code "10")
+			(name "/GND")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "A2")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "BT1")
+				(pin "2")
+				(pinfunction "-_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "MOD01")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD02")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD03")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD04")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD05")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD06")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD07")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD08")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD09")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD10")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD11")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD12")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD13")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD14")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD15")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "MOD16")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PS1")
+				(pin "2")
+				(pinfunction "IN-_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PS1")
+				(pin "4")
+				(pinfunction "OUT-_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "PS2")
+				(pin "2")
+				(pinfunction "IN-_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "PS2")
+				(pin "4")
+				(pinfunction "OUT-_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "PWR1")
+				(pin "1")
+				(pinfunction "pwr_1")
+				(pintype "power_out")
+			)
+			(node
+				(ref "TB2")
+				(pin "1")
+				(pinfunction "1_1")
+				(pintype "passive")
+			)
+			(node
+				(ref "TB2")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "TB2")
+				(pin "3")
+				(pinfunction "3_3")
+				(pintype "passive")
+			)
+			(node
+				(ref "TB2")
+				(pin "4")
+				(pinfunction "4_4")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "U1")
+				(pin "6")
+				(pinfunction "A0_6")
+				(pintype "input")
+			)
+			(node
+				(ref "U1")
+				(pin "7")
+				(pinfunction "A1_7")
+				(pintype "input")
+			)
+			(node
+				(ref "U1")
+				(pin "8")
+				(pinfunction "A2_8")
+				(pintype "input")
+			)
+			(node
+				(ref "U2")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+			(node
+				(ref "U2")
+				(pin "7")
+				(pinfunction "A1_7")
+				(pintype "input")
+			)
+			(node
+				(ref "U2")
+				(pin "8")
+				(pinfunction "A2_8")
+				(pintype "input")
+			)
+			(node
+				(ref "U3")
+				(pin "2")
+				(pinfunction "GND_2")
+				(pintype "power_in")
+			)
+		)
+		(net
+			(code "11")
+			(name "/RST_MUX")
+			(class "Default")
+			(node
+				(ref "R5")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "R6")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "5")
+				(pinfunction "RESET_5")
+				(pintype "input")
+			)
+			(node
+				(ref "U2")
+				(pin "5")
+				(pinfunction "RESET_5")
+				(pintype "input")
+			)
+		)
+		(net
+			(code "12")
+			(name "/SCL_A0")
+			(class "Default")
+			(node
+				(ref "MOD01")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "R4")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "10")
+				(pinfunction "SC0_10")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "13")
+			(name "/SCL_A1")
+			(class "Default")
+			(node
+				(ref "MOD02")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "12")
+				(pinfunction "SC1_12")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "14")
+			(name "/SCL_A2")
+			(class "Default")
+			(node
+				(ref "MOD03")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "14")
+				(pinfunction "SC2_14")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "15")
+			(name "/SCL_A3")
+			(class "Default")
+			(node
+				(ref "MOD04")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "16")
+				(pinfunction "SC3_16")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "16")
+			(name "/SCL_A4")
+			(class "Default")
+			(node
+				(ref "MOD05")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "18")
+				(pinfunction "SC4_18")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "17")
+			(name "/SCL_A5")
+			(class "Default")
+			(node
+				(ref "MOD06")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "20")
+				(pinfunction "SC5_20")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "18")
+			(name "/SCL_A6")
+			(class "Default")
+			(node
+				(ref "MOD07")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "22")
+				(pinfunction "SC6_22")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "19")
+			(name "/SCL_A7")
+			(class "Default")
+			(node
+				(ref "MOD08")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "24")
+				(pinfunction "SC7_24")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "20")
+			(name "/SCL_B0")
+			(class "Default")
+			(node
+				(ref "MOD09")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "10")
+				(pinfunction "SC0_10")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "21")
+			(name "/SCL_B1")
+			(class "Default")
+			(node
+				(ref "MOD10")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "12")
+				(pinfunction "SC1_12")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "22")
+			(name "/SCL_B2")
+			(class "Default")
+			(node
+				(ref "MOD11")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "14")
+				(pinfunction "SC2_14")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "23")
+			(name "/SCL_B3")
+			(class "Default")
+			(node
+				(ref "MOD12")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "16")
+				(pinfunction "SC3_16")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "24")
+			(name "/SCL_B4")
+			(class "Default")
+			(node
+				(ref "MOD13")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "18")
+				(pinfunction "SC4_18")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "25")
+			(name "/SCL_B5")
+			(class "Default")
+			(node
+				(ref "MOD14")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "20")
+				(pinfunction "SC5_20")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "26")
+			(name "/SCL_B6")
+			(class "Default")
+			(node
+				(ref "MOD15")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "22")
+				(pinfunction "SC6_22")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "27")
+			(name "/SCL_B7")
+			(class "Default")
+			(node
+				(ref "MOD16")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "24")
+				(pinfunction "SC7_24")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "28")
+			(name "/SCL_MAIN")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "5")
+				(pinfunction "IO22_SCL_5")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "R2")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U3")
+				(pin "4")
+				(pinfunction "SCL_4")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "29")
+			(name "/SDA_A0")
+			(class "Default")
+			(node
+				(ref "MOD01")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "R3")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "9")
+				(pinfunction "SD0_9")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "30")
+			(name "/SDA_A1")
+			(class "Default")
+			(node
+				(ref "MOD02")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "11")
+				(pinfunction "SD1_11")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "31")
+			(name "/SDA_A2")
+			(class "Default")
+			(node
+				(ref "MOD03")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "13")
+				(pinfunction "SD2_13")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "32")
+			(name "/SDA_A3")
+			(class "Default")
+			(node
+				(ref "MOD04")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "15")
+				(pinfunction "SD3_15")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "33")
+			(name "/SDA_A4")
+			(class "Default")
+			(node
+				(ref "MOD05")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "17")
+				(pinfunction "SD4_17")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "34")
+			(name "/SDA_A5")
+			(class "Default")
+			(node
+				(ref "MOD06")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "19")
+				(pinfunction "SD5_19")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "35")
+			(name "/SDA_A6")
+			(class "Default")
+			(node
+				(ref "MOD07")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "21")
+				(pinfunction "SD6_21")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "36")
+			(name "/SDA_A7")
+			(class "Default")
+			(node
+				(ref "MOD08")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U1")
+				(pin "23")
+				(pinfunction "SD7_23")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "37")
+			(name "/SDA_B0")
+			(class "Default")
+			(node
+				(ref "MOD09")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "9")
+				(pinfunction "SD0_9")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "38")
+			(name "/SDA_B1")
+			(class "Default")
+			(node
+				(ref "MOD10")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "11")
+				(pinfunction "SD1_11")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "39")
+			(name "/SDA_B2")
+			(class "Default")
+			(node
+				(ref "MOD11")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "13")
+				(pinfunction "SD2_13")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "40")
+			(name "/SDA_B3")
+			(class "Default")
+			(node
+				(ref "MOD12")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "15")
+				(pinfunction "SD3_15")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "41")
+			(name "/SDA_B4")
+			(class "Default")
+			(node
+				(ref "MOD13")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "17")
+				(pinfunction "SD4_17")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "42")
+			(name "/SDA_B5")
+			(class "Default")
+			(node
+				(ref "MOD14")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "19")
+				(pinfunction "SD5_19")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "43")
+			(name "/SDA_B6")
+			(class "Default")
+			(node
+				(ref "MOD15")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "21")
+				(pinfunction "SD6_21")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "44")
+			(name "/SDA_B7")
+			(class "Default")
+			(node
+				(ref "MOD16")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "23")
+				(pinfunction "SD7_23")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "45")
+			(name "/SDA_MAIN")
+			(class "Default")
+			(node
+				(ref "A1")
+				(pin "4")
+				(pinfunction "IO21_SDA_4")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "R1")
+				(pin "2")
+				(pinfunction "2_2")
+				(pintype "passive")
+			)
+			(node
+				(ref "U1")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U2")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+			(node
+				(ref "U3")
+				(pin "3")
+				(pinfunction "SDA_3")
+				(pintype "bidirectional")
+			)
+		)
+		(net
+			(code "46")
+			(name "unconnected-(MOD01-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD01")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "47")
+			(name "unconnected-(MOD02-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD02")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "48")
+			(name "unconnected-(MOD03-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD03")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "49")
+			(name "unconnected-(MOD04-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD04")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "50")
+			(name "unconnected-(MOD05-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD05")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "51")
+			(name "unconnected-(MOD06-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD06")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "52")
+			(name "unconnected-(MOD07-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD07")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "53")
+			(name "unconnected-(MOD08-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD08")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "54")
+			(name "unconnected-(MOD09-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD09")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "55")
+			(name "unconnected-(MOD10-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD10")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "56")
+			(name "unconnected-(MOD11-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD11")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "57")
+			(name "unconnected-(MOD12-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD12")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "58")
+			(name "unconnected-(MOD13-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD13")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "59")
+			(name "unconnected-(MOD14-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD14")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "60")
+			(name "unconnected-(MOD15-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD15")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+		(net
+			(code "61")
+			(name "unconnected-(MOD16-INT-Pad5)")
+			(class "Default")
+			(node
+				(ref "MOD16")
+				(pin "5")
+				(pinfunction "INT_5")
+				(pintype "output+no_connect")
+			)
+		)
+	)
+)

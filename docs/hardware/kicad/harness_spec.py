@@ -27,7 +27,7 @@ def _mux_pins():
 
 PARTS: dict[str, tuple[str, str, str, list]] = {
     "BT1": ("BATTERY", "12V LiFePO4 200Ah", "battery with internal BMS",
-            [("1", "+", "power_out", "R"), ("2", "-", "power_out", "R")]),
+            [("1", "+", "power_out", "R"), ("2", "-", "passive", "R")]),
     "F1": ("FUSE", "10A", "main fuse, within 15 cm of BT1 +",
            [("1", "A", "passive", "L"), ("2", "B", "passive", "R")]),
     "SW1": ("SWITCH", "battery master", "system disconnect",
@@ -41,10 +41,10 @@ PARTS: dict[str, tuple[str, str, str, list]] = {
              ("3", "3", "passive", "R"), ("4", "4", "passive", "R")]),
     "PS1": ("BUCK", "12V->5.1V 5A", "buck converter for the Pi",
             [("1", "IN+", "power_in", "L"), ("2", "IN-", "power_in", "L"),
-             ("3", "OUT+", "power_out", "R"), ("4", "OUT-", "power_out", "R")]),
+             ("3", "OUT+", "power_out", "R"), ("4", "OUT-", "passive", "R")]),
     "PS2": ("BUCK", "12V->5V USB", "buck converter for the ESP32",
             [("1", "IN+", "power_in", "L"), ("2", "IN-", "power_in", "L"),
-             ("3", "OUT+", "power_out", "R"), ("4", "OUT-", "power_out", "R")]),
+             ("3", "OUT+", "power_out", "R"), ("4", "OUT-", "passive", "R")]),
     "A1": ("ESP32_DEVKITC", "ESP32-WROOM-32", "sensor controller, BLE to A2",
            [("1", "VBUS_USB", "power_in", "L"), ("2", "GND", "power_in", "L"),
             ("3", "3V3", "power_out", "R"), ("4", "IO21_SDA", "bidirectional", "R"),
@@ -70,7 +70,7 @@ for ref, val, desc in (("R1", "2k2", "SDA_MAIN pull-up"), ("R2", "2k2", "SCL_MAI
                        ("R5", "10k", "U1 RESET pull-up"), ("R6", "10k", "U2 RESET pull-up")):
     PARTS[ref] = ("R", val, desc, [("1", "1", "passive", "L"), ("2", "2", "passive", "R")])
 # Power flags: tell ERC that these nets are really driven (KiCad convention).
-for ref, net in (("PWR1", "GND"), ("PWR2", "+5V_PAD"), ("PWR3", "+3V3")):
+for ref, net in (("PWR1", "GND"), ("PWR2", "+12V_PI"), ("PWR3", "+12V_ESP")):
     PARTS[ref] = ("PWR_FLAG", "PWR_FLAG", f"ERC flag on {net}",
                   [("1", "pwr", "power_out", "R")])
 
@@ -79,13 +79,13 @@ NETS: dict[str, list[tuple[str, str]]] = {
     "+12V_RAW":   [("BT1", "1"), ("F1", "1")],
     "+12V_FUSED": [("F1", "2"), ("SW1", "1")],
     "+12V_SW":    [("SW1", "2"), ("F2", "1"), ("F3", "1")],
-    "+12V_PI":    [("F2", "2"), ("PS1", "1")],
-    "+12V_ESP":   [("F3", "2"), ("PS2", "1")],
+    "+12V_PI":    [("F2", "2"), ("PS1", "1"), ("PWR2", "1")],
+    "+12V_ESP":   [("F3", "2"), ("PS2", "1"), ("PWR3", "1")],
     "+5V_PI":     [("PS1", "3"), ("A2", "1")],
     "+5V_ESP":    [("PS2", "3"), ("A1", "1")],
     "+3V3":       [("A1", "3"), ("U1", "1"), ("U2", "1"), ("U3", "1"),
                    ("R1", "1"), ("R2", "1"), ("R3", "1"), ("R4", "1"),
-                   ("R5", "1"), ("R6", "1"), ("PWR3", "1")],
+                   ("R5", "1"), ("R6", "1")],
     "SDA_MAIN":   [("A1", "4"), ("U1", "3"), ("U2", "3"), ("U3", "3"), ("R1", "2")],
     "SCL_MAIN":   [("A1", "5"), ("U1", "4"), ("U2", "4"), ("U3", "4"), ("R2", "2")],
     "RST_MUX":    [("U1", "5"), ("U2", "5"), ("R5", "2"), ("R6", "2")],
@@ -100,7 +100,7 @@ gnd += [("U1", "6"), ("U1", "7"), ("U1", "8"), ("U2", "7"), ("U2", "8")]
 NETS["+3V3"].append(("U2", "6"))
 # +5V_PAD: the ring that feeds every pad, from A1's 5 V pin (the DevKitC passes
 # USB 5 V to that pin; note 7 sizes PS2 for the total pad current)
-pad5 = [("A1", "6"), ("PWR2", "1")]
+pad5 = [("A1", "6")]
 for n in range(1, 17):
     ref = f"MOD{n:02d}"
     pad5.append((ref, "1"))
