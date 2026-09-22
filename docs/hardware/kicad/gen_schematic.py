@@ -17,7 +17,14 @@ import harness_spec as spec
 
 PROJECT = "wheel_harness"
 GRID = 1.27
-STUB = 5.08
+# Symbols are drawn at twice the usual 2.54 mm pin pitch: at default size an A1
+# sheet leaves the page mostly empty and the pin names unreadable. 5.08 keeps
+# every pin on the 1.27 mm grid - 3.81 does not, and KiCad then reports
+# endpoint_off_grid and loses connections.
+PITCH = 5.08
+FONT = 2.0
+FONT_SMALL = 1.5
+STUB = 7.62
 
 def uid() -> str:
     return str(_uuid.uuid4())
@@ -30,9 +37,9 @@ def body_size(pins):
     left = [p for p in pins if p[3] == "L"]
     right = [p for p in pins if p[3] == "R"]
     rows = max(len(left), len(right), 1)
-    h = rows * 2.54 + 2.54
+    h = rows * PITCH + PITCH
     longest = max((len(p[1]) for p in pins), default=4)
-    w = max(20.32, 2.54 * 4 + longest * 1.6)
+    w = max(30.48, PITCH * 4 + longest * 2.4)
     w = 2.54 * round(w / 2.54)          # whole grid steps, so pins land on grid
     return w, h, left, right
 
@@ -41,15 +48,15 @@ def pin_positions(pins):
     w, h, left, right = body_size(pins)
     pos = {}
     for i, p in enumerate(left):
-        pos[p[0]] = (-w / 2 - 2.54, h / 2 - 2.54 * (i + 1), 0)
+        pos[p[0]] = (-w / 2 - PITCH, h / 2 - PITCH * (i + 1), 0)
     for i, p in enumerate(right):
-        pos[p[0]] = (w / 2 + 2.54, h / 2 - 2.54 * (i + 1), 180)
+        pos[p[0]] = (w / 2 + PITCH, h / 2 - PITCH * (i + 1), 180)
     return pos, w, h
 
 def lib_symbol(name, pins) -> str:
     pos, w, h = pin_positions(pins)
     out = [f'    (symbol "harness:{name}" (pin_names (offset 0.508)) (in_bom yes) (on_board yes)',
-           f'      (property "Reference" "U" (at 0 {h/2+2.54:.2f} 0) (effects (font (size 1.27 1.27))))',
+           f'      (property "Reference" "U" (at 0 {h/2+2.54:.2f} 0) (effects (font (size {FONT} {FONT}))))',
            f'      (property "Value" "{name}" (at 0 {-h/2-2.54:.2f} 0) (effects (font (size 1.27 1.27))))',
            '      (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))',
            '      (property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))',
@@ -60,9 +67,9 @@ def lib_symbol(name, pins) -> str:
            f'      (symbol "{name}_1_1"']
     for num, pname, ptype, _side in pins:
         x, y, ang = pos[num]
-        out.append(f'        (pin {ptype} line (at {x:.2f} {y:.2f} {ang}) (length 2.54)')
-        out.append(f'          (name "{pname}" (effects (font (size 1.27 1.27))))')
-        out.append(f'          (number "{num}" (effects (font (size 1.016 1.016)))))')
+        out.append(f'        (pin {ptype} line (at {x:.2f} {y:.2f} {ang}) (length {PITCH:.2f})')
+        out.append(f'          (name "{pname}" (effects (font (size {FONT} {FONT}))))')
+        out.append(f'          (number "{num}" (effects (font (size {FONT_SMALL} {FONT_SMALL})))))')
     out += ['      )', '    )']
     return "\n".join(out)
 
@@ -70,18 +77,18 @@ def lib_symbol(name, pins) -> str:
 def place() -> dict[str, tuple[float, float]]:
     """Columns: power chain, controllers, multiplexers, pads, passives."""
     at: dict[str, tuple[float, float]] = {}
-    col = {"power": 45.0, "ctrl": 165.0, "mux": 285.0, "pad": 420.0, "misc": 700.0}
+    col = {"power": 60.0, "ctrl": 210.0, "mux": 350.0, "pad": 510.0, "misc": 740.0}
     for i, ref in enumerate(["BT1", "F1", "SW1", "F2", "F3", "PS1", "PS2", "TB2"]):
-        at[ref] = (col["power"], 45.0 + i * 45.0)
+        at[ref] = (col["power"], 55.0 + i * 62.0)
     for i, ref in enumerate(["A1", "A2", "U3"]):
-        at[ref] = (col["ctrl"], 60.0 + i * 85.0)
-    at["U1"] = (col["mux"], 135.0)
-    at["U2"] = (col["mux"], 375.0)
+        at[ref] = (col["ctrl"], 70.0 + i * 150.0)
+    at["U1"] = (col["mux"], 150.0)
+    at["U2"] = (col["mux"], 400.0)
     for n in range(1, 17):
         row, c = (n - 1) % 8, (n - 1) // 8
-        at[f"MOD{n:02d}"] = (col["pad"] + c * 130.0, 45.0 + row * 60.0)
+        at[f"MOD{n:02d}"] = (col["pad"] + c * 120.0, 55.0 + row * 66.0)
     for i, ref in enumerate(["R1", "R2", "R3", "R4", "R5", "R6", "PWR1", "PWR2", "PWR3"]):
-        at[ref] = (col["misc"], 50.0 + i * 45.0)
+        at[ref] = (col["misc"], 60.0 + i * 58.0)
     return {k: (snap(x), snap(y)) for k, (x, y) in at.items()}
 
 def main():
@@ -114,10 +121,10 @@ def main():
         S.append(f'  (symbol (lib_id "harness:{sym}") (at {X:.2f} {Y:.2f} 0) (unit 1)')
         S.append('    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced yes)')
         S.append(f'    (uuid "{uid()}")')
-        S.append(f'    (property "Reference" "{ref}" (at {X:.2f} {Y - h/2 - 3.5:.2f} 0)'
-                 '      (effects (font (size 1.27 1.27))))')
-        S.append(f'    (property "Value" "{value}" (at {X:.2f} {Y + h/2 + 3.5:.2f} 0)'
-                 '      (effects (font (size 1.27 1.27))))')
+        S.append(f'    (property "Reference" "{ref}" (at {X:.2f} {Y - h/2 - 4.5:.2f} 0)'
+                 f'      (effects (font (size {FONT} {FONT}))))')
+        S.append(f'    (property "Value" "{value}" (at {X:.2f} {Y + h/2 + 4.5:.2f} 0)'
+                 f'      (effects (font (size {FONT} {FONT}))))')
         S.append('    (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
         S.append('    (property "Datasheet" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))')
         for num, *_ in pins:
@@ -140,7 +147,7 @@ def main():
             rot = 180 if side == "L" else 0
             just = "right" if side == "L" else "left"
             labels.append(f'  (label "{net}" (at {bx:.2f} {ay:.2f} {rot})\n'
-                          f'    (effects (font (size 1.27 1.27)) (justify {just} bottom)) (uuid "{uid()}"))')
+                          f'    (effects (font (size {FONT} {FONT})) (justify {just} bottom)) (uuid "{uid()}"))')
     S += wires + labels + ncs
     S.append('  (sheet_instances (path "/" (page "1")))')
     S.append(')')

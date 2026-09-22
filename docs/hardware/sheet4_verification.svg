@@ -102,7 +102,7 @@
 <text x="314" y="86" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">VALUE</text>
 <line x1="26" y1="92" x2="1106" y2="92" stroke="#c9cfda" stroke-width="1"/>
 <text x="34" y="104" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Run finished</text>
-<text x="314" y="104" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22T17:53:38-04:00</text>
+<text x="314" y="104" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">2026-09-22T17:59:34-04:00</text>
 <text x="34" y="128" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Machine</text>
 <text x="314" y="128" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">hackerpc - Linux 7.2.5-3-omarchy</text>
 <text x="34" y="152" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Schematic tool</text>
@@ -114,7 +114,7 @@
 <text x="34" y="224" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Python</text>
 <text x="314" y="224" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">3.14.7</text>
 <text x="34" y="248" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Source</text>
-<text x="314" y="248" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">git luis/full-system @ d70a3fd - docs/hardware/</text>
+<text x="314" y="248" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">git luis/full-system @ f854593 - docs/hardware/</text>
 <text x="34" y="272" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="bold" text-anchor="start">Drawing</text>
 <text x="314" y="272" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">TD18-HW-002 rev A - sheets 1-2 drawn, sheet 3 from KiCad</text>
 <rect x="10" y="314" width="1100" height="372" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
@@ -125,43 +125,43 @@
 <text x="534" y="380" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">RESULT</text>
 <text x="624" y="380" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="9.5" fill="#5b6270" font-weight="bold" text-anchor="start">VALUES</text>
 <line x1="26" y1="386" x2="1116" y2="386" stroke="#c9cfda" stroke-width="1"/>
-<text x="34" y="398" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:39</text>
+<text x="34" y="398" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:34</text>
 <text x="144" y="398" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Spec self-check</text>
 <text x="534" y="398" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="398" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">parts=38 nets=45 pins=177 connected=161 no_connect=16</text>
-<text x="34" y="423" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:39</text>
+<text x="34" y="423" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:34</text>
 <text x="144" y="423" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Generate schematic from the spec</text>
 <text x="534" y="423" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="423" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start"></text>
-<text x="34" y="448" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:39</text>
+<text x="34" y="448" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:34</text>
 <text x="144" y="448" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad electrical rule check</text>
 <text x="534" y="448" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="448" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">messages=0 errors=0 warnings=0</text>
-<text x="34" y="473" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:39</text>
+<text x="34" y="473" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:35</text>
 <text x="144" y="473" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Export netlist from the schematic</text>
 <text x="534" y="473" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="473" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start"></text>
-<text x="34" y="498" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:40</text>
+<text x="34" y="498" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:35</text>
 <text x="144" y="498" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Netlist vs spec cross-check</text>
 <text x="534" y="498" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="498" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">nets=45 result=ALL MATCH</text>
-<text x="34" y="523" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:40</text>
+<text x="34" y="523" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:35</text>
 <text x="144" y="523" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Export the schematic sheet (PDF)</text>
 <text x="534" y="523" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="523" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start"></text>
-<text x="34" y="548" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:41</text>
+<text x="34" y="548" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:36</text>
 <text x="144" y="548" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Export the bill of materials</text>
 <text x="534" y="548" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="548" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">lines=17 pads=16</text>
-<text x="34" y="573" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:42</text>
+<text x="34" y="573" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:37</text>
 <text x="144" y="573" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SPICE transient: I2C rise time, Rp = 2.2 k</text>
 <text x="534" y="573" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="573" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">tr_ns=152.8 limit_ns=300 rp_ohm=2200 cb_pF=82.0</text>
-<text x="34" y="598" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:42</text>
+<text x="34" y="598" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:37</text>
 <text x="144" y="598" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SPICE transient: I2C rise time, Rp = 4.7 k</text>
 <text x="534" y="598" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">FAIL</text>
 <text x="624" y="598" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">tr_ns=326.5 limit_ns=300 rp_ohm=4700 cb_pF=82.0</text>
-<text x="34" y="623" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:53:42</text>
+<text x="34" y="623" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">17:59:37</text>
 <text x="144" y="623" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">SPICE operating point: +5V_PAD ring</text>
 <text x="534" y="623" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">PASS</text>
 <text x="624" y="623" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">pads=16 first_V=4.997 worst_V=4.971 total_mA=400 wire=</text>
@@ -203,19 +203,19 @@
 <text x="34" y="1108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">kicad/erc_report.txt</text>
 <text x="364" y="1108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">KiCad ERC output</text>
 <text x="664" y="1108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">      345 B</text>
-<text x="794" y="1108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">ff836acdca4d4d80</text>
+<text x="794" y="1108" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">c9158fd4c5e3d826</text>
 <text x="34" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">kicad/wheel_harness.kicad_sch</text>
 <text x="364" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">the schematic itself</text>
-<text x="664" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">  100,777 B</text>
-<text x="794" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">263ad3dea57d8576</text>
+<text x="664" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">   99,974 B</text>
+<text x="794" y="1129" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">dd44ffd657162343</text>
 <text x="34" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">kicad/harness.kicad_sym</text>
 <text x="364" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">symbol library</text>
-<text x="664" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">   17,843 B</text>
-<text x="794" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">df6c0a73ce01a2a3</text>
+<text x="664" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">   17,495 B</text>
+<text x="794" y="1150" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">5ec24a4755752dfb</text>
 <text x="34" y="1171" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">kicad/wheel_harness.net</text>
 <text x="364" y="1171" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">netlist extracted by KiCad</text>
 <text x="664" y="1171" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">   59,512 B</text>
-<text x="794" y="1171" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">95243b8282b8c9a7</text>
+<text x="794" y="1171" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">9e4a825dd839256f</text>
 <text x="34" y="1192" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">kicad/wheel_harness_bom.csv</text>
 <text x="364" y="1192" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">bill of materials</text>
 <text x="664" y="1192" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">      427 B</text>
@@ -223,7 +223,7 @@
 <text x="34" y="1213" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">verification.json</text>
 <text x="364" y="1213" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">this page's source data</text>
 <text x="664" y="1213" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">    7,368 B</text>
-<text x="794" y="1213" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">4f6e51b891dc4de5</text>
+<text x="794" y="1213" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="9.5" fill="#1c1e23" font-weight="normal" text-anchor="start">ec0446bc9619e19d</text>
 <rect x="1140" y="20" width="1150" height="420" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
 <text x="1156" y="50" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">DEVICE DATA: DOCUMENT, WHERE IT CAME FROM, WHAT WAS TAKEN</text>
 <line x1="1140" y1="62" x2="2290" y2="62" stroke="#c9cfda" stroke-width="1"/>
@@ -310,7 +310,7 @@
 <rect x="1140" y="784" width="1150" height="234" rx="0" fill="#ffffff" stroke="#1c1e23" stroke-width="1.6"/>
 <text x="1156" y="814" font-family="Liberation Sans, Helvetica, Arial, sans-serif" font-size="13" fill="#1c1e23" font-weight="bold" text-anchor="start">KICAD ERC REPORT, VERBATIM</text>
 <line x1="1140" y1="826" x2="2290" y2="826" stroke="#c9cfda" stroke-width="1"/>
-<text x="1156" y="850" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">ERC report (2026-09-22T17:53:39, Encoding UTF8)</text>
+<text x="1156" y="850" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">ERC report (2026-09-22T17:59:35, Encoding UTF8)</text>
 <text x="1156" y="869" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#1c1e23" font-weight="normal" text-anchor="start">Report includes: Errors, Warnings</text>
 <text x="1156" y="888" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start"> </text>
 <text x="1156" y="907" font-family="JetBrainsMono NF, Liberation Mono, monospace" font-size="10.5" fill="#5b6270" font-weight="normal" text-anchor="start">***** Sheet /</text>
