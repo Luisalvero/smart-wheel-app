@@ -28,7 +28,7 @@ const check = (name, ok, detail = '') => {
   if (!ok) fails.push(name)
 }
 
-async function freshDb() {
+async function freshDb(protectStorage = false) {
   const db = await PGlite.create()
   await db.exec(`
     create role anon; create role authenticated;
@@ -43,6 +43,20 @@ async function freshDb() {
       created_at timestamptz not null default now());
     insert into public.test_readings (value, device_name) values (72, 'team bench');
   `)
+  if (protectStorage) {
+    // What Supabase does on newer projects: a trigger refuses direct deletes
+    // from the storage tables ("Use the Storage API instead").
+    await db.exec(`
+      create function storage.protect_delete() returns trigger language plpgsql as $$
+      begin
+        raise exception 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
+          using errcode = '42501';
+      end $$;
+      create trigger protect_objects before delete on storage.objects
+        for each statement execute function storage.protect_delete();
+      create trigger protect_buckets before delete on storage.buckets
+        for each statement execute function storage.protect_delete();`)
+  }
   return db
 }
 const q = (db) => async (s) => (await db.query(s)).rows
@@ -163,6 +177,26 @@ console.log('\nC. rolled all the way back, then the legacy script')
   const ours = await q(db)(`select count(*)::int n from information_schema.tables
     where table_schema='public' and table_name in ('drive_alerts','threshold_history','session_archives')`)
   check('C: our extra tables are gone', ours[0].n === 0)
+}
+
+// ---------------------------------------------------------------- D -------
+console.log("\nD. revert on a project where Supabase protects the storage tables")
+{
+  const db = await freshDb(true)
+  await run(db, 'apply_all.sql', 'apply')
+  await db.exec(`insert into storage.objects (bucket_id, name) values ('session-archives','a.ppga');`)
+  const ok = await run(db, 'revert_all.sql', 'revert with protected storage')
+  check('D: revert still completes when the storage delete is refused', ok)
+  const left = await q(db)(`select count(*)::int n from information_schema.tables
+    where table_schema='public' and table_name in
+      ('driver_profiles','drive_sessions','telemetry_events','drive_alerts',
+       'session_archives','threshold_history')`)
+  check('D: our tables are gone anyway', left[0].n === 0, `${left[0].n} left`)
+  const pol = await q(db)(`select count(*)::int n from pg_policies
+    where schemaname='storage' and policyname like 'archives prototype%'`)
+  check('D: our storage policies are gone', pol[0].n === 0)
+  const bk = await q(db)(`select count(*)::int n from storage.buckets where id='session-archives'`)
+  check('D: the bucket survives, to be removed with the Storage API', bk[0].n === 1)
 }
 
 console.log(`\n${fails.length ? fails.length + ' CHECK(S) FAILED: ' + fails.join('; ') : 'ALL CHECKS PASSED'}`)

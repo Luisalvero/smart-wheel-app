@@ -68,11 +68,21 @@ drop policy if exists "archives prototype insert" on storage.objects;
 drop policy if exists "archives prototype update" on storage.objects;
 drop policy if exists "archives prototype delete" on storage.objects;
 
--- 6. The archive bucket and the files in it. This is the destructive step:
---    the folded waveform archives are deleted here. Delete these three
---    statements if you want to keep the bucket and its files.
-delete from storage.objects where bucket_id = 'session-archives';
-delete from storage.buckets where id = 'session-archives';
+-- 6. The archive bucket and the files in it.
+--    Newer Supabase projects refuse direct deletes from the storage tables
+--    ("Direct deletion from storage tables is not allowed. Use the Storage
+--    API instead.", from storage.protect_delete()). That error would abort
+--    this whole transaction and revert nothing, so the deletes are attempted
+--    and the refusal is caught: the rest of this script still applies, and
+--    the bucket is then removed with the Storage API, see step 9 below.
+do $$
+begin
+  delete from storage.objects where bucket_id = 'session-archives';
+  delete from storage.buckets where id = 'session-archives';
+  raise notice 'archive bucket and its files deleted';
+exception when others then
+  raise notice 'bucket NOT deleted (%), remove it with the Storage API - see step 9', sqlerrm;
+end $$;
 
 commit;
 
@@ -102,3 +112,20 @@ select table_name, table_type
 --
 --    delete from public.test_readings
 --     where device_name like '% BPM' or device_name like '% SpO2';
+
+-- 9. If step 6 reported "bucket NOT deleted", the storage tables are
+--    protected and the bucket has to go through the Storage API:
+--
+--    Dashboard:  Storage -> session-archives -> select all files -> Delete,
+--                then the bucket's three-dot menu -> Delete bucket.
+--
+--    Or from a terminal, with the SERVICE ROLE key (never the anon key, and
+--    never commit it):
+--      P=https://<project>.supabase.co ; K=<service-role-key>
+--      # list what is in the bucket
+--      curl -s -X POST "$P/storage/v1/object/list/session-archives" \
+--           -H "Authorization: Bearer $K" -H 'Content-Type: application/json' \
+--           -d '{"prefix":"","limit":1000}'
+--      # empty it, then delete it
+--      curl -s -X POST   "$P/storage/v1/bucket/session-archives/empty" -H "Authorization: Bearer $K"
+--      curl -s -X DELETE "$P/storage/v1/bucket/session-archives"       -H "Authorization: Bearer $K"
