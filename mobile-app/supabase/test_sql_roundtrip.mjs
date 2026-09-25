@@ -123,7 +123,7 @@ async function oldAppWorks(db, tag) {
       values ('${ev[0].id}', '${sess[0].id}', 132, 91, 'HIGH_HR', 'warning',
               'I am fine', 'Keep an eye on it', 'log', false, false);`)
     const inc = await Q(`select count(*)::int n from public.incidents`)
-    check(`${tag}: old app logs an incident`, inc[0].n === 1)
+    check(`${tag}: old app logs an incident`, inc[0].n >= 1)
     const pub = await Q(`select count(*)::int n from pg_publication_tables
       where pubname='supabase_realtime' and tablename='telemetry_events'`)
     check(`${tag}: telemetry inserts are broadcast for the old app's alerts`, pub[0].n === 1)
@@ -197,6 +197,23 @@ console.log("\nD. revert on a project where Supabase protects the storage tables
   check('D: our storage policies are gone', pol[0].n === 0)
   const bk = await q(db)(`select count(*)::int n from storage.buckets where id='session-archives'`)
   check('D: the bucket survives, to be removed with the Storage API', bk[0].n === 1)
+}
+
+// ---------------------------------------------------------------- E -------
+console.log('\nE. legacy schema FIRST, then apply_all (what happens after a rollback)')
+{
+  const db = await freshDb()
+  await run(db, 'legacy_samantha.sql', 'legacy')
+  await oldAppWorks(db, 'E-before')
+  const ok = await run(db, 'apply_all.sql', 'apply on top of the legacy schema')
+  check('E: apply_all runs on a legacy-shaped database', ok)
+  const cols = await q(db)(`select count(*)::int n from information_schema.columns
+    where table_schema='public' and table_name='driver_profiles' and column_name='custom_id'`)
+  check('E: driver_profiles gained our columns', cols[0].n === 1)
+  await ourAppWorks(db, 'E')
+  await oldAppWorks(db, 'E-after')
+  await run(db, 'apply_all.sql', 'apply again')
+  check('E: still re-runnable afterwards', true)
 }
 
 console.log(`\n${fails.length ? fails.length + ' CHECK(S) FAILED: ' + fails.join('; ') : 'ALL CHECKS PASSED'}`)

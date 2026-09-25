@@ -23,6 +23,20 @@ create table if not exists public.driver_profiles (
   updated_at    timestamptz not null default now()
 );
 
+-- The table may already exist in an older shape (the legacy app's profiles,
+-- or an earlier version of this schema), in which case "create table if not
+-- exists" above did nothing. Add whatever is missing before anything indexes
+-- or selects it. Constraints are deliberately NOT retrofitted: existing rows
+-- may hold values our CHECKs would reject, e.g. free-text gender.
+alter table public.driver_profiles add column if not exists custom_id    text;
+alter table public.driver_profiles add column if not exists display_name text;
+alter table public.driver_profiles add column if not exists weight_kg    numeric(5,2);
+alter table public.driver_profiles add column if not exists age          integer;
+alter table public.driver_profiles add column if not exists height_cm    numeric(5,2);
+alter table public.driver_profiles add column if not exists gender       text;
+alter table public.driver_profiles add column if not exists created_at   timestamptz not null default now();
+alter table public.driver_profiles add column if not exists updated_at   timestamptz not null default now();
+
 create index if not exists idx_profiles_custom_id
   on public.driver_profiles (custom_id);
 
@@ -38,6 +52,14 @@ create table if not exists public.drive_sessions (
   status           text not null default 'completed',
   uploaded_at      timestamptz not null default now()
 );
+
+-- Same for an older drive_sessions.
+alter table public.drive_sessions add column if not exists profile_id       uuid;
+alter table public.drive_sessions add column if not exists started_at       timestamptz;
+alter table public.drive_sessions add column if not exists ended_at         timestamptz;
+alter table public.drive_sessions add column if not exists duration_seconds integer;
+alter table public.drive_sessions add column if not exists status           text not null default 'completed';
+alter table public.drive_sessions add column if not exists uploaded_at      timestamptz not null default now();
 
 create index if not exists idx_sessions_profile
   on public.drive_sessions (profile_id);
@@ -64,6 +86,32 @@ create table if not exists public.telemetry_events (
   -- scoped per session. This is what makes a repeated upload harmless.
   unique (session_id, sequence_number)
 );
+
+-- Same for an older telemetry_events. The (session_id, sequence_number)
+-- uniqueness is what makes a repeated upload harmless, so add it if the older
+-- table lacks it - unless existing rows already break it, in which case say so
+-- and carry on rather than failing the whole migration.
+alter table public.telemetry_events add column if not exists sequence_number integer;
+alter table public.telemetry_events add column if not exists event_type      text;
+alter table public.telemetry_events add column if not exists bpm             integer;
+alter table public.telemetry_events add column if not exists spo2            integer;
+alter table public.telemetry_events add column if not exists signal_quality  integer;
+alter table public.telemetry_events add column if not exists battery         integer;
+alter table public.telemetry_events add column if not exists received_at     timestamptz not null default now();
+alter table public.telemetry_events add column if not exists uploaded_at     timestamptz not null default now();
+do $$
+begin
+  if not exists (select 1 from pg_constraint
+                  where conrelid = 'public.telemetry_events'::regclass
+                    and contype = 'u'
+                    and pg_get_constraintdef(oid) like '%(session_id, sequence_number)%') then
+    alter table public.telemetry_events
+      add constraint telemetry_events_session_id_sequence_number_key
+      unique (session_id, sequence_number);
+  end if;
+exception when others then
+  raise notice 'could not add the (session_id, sequence_number) uniqueness: %', sqlerrm;
+end $$;
 
 create index if not exists idx_telemetry_session
   on public.telemetry_events (session_id);
