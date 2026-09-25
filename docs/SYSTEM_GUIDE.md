@@ -1111,7 +1111,7 @@ cd website && npm ci && cd ..
 | `mobile-app/tests/signal.test.ts` | clean pulse accepted; motion, noise and estimator disagreement rejected; 10-s window reset on gaps |
 | `mobile-app/tests/safetyController.test.ts` | demo: fabricated readings → warning → emergency → voice check, with nothing saved or learned |
 | `mobile-app/tests/shared-sync.test.ts` | the website's copy of the codec is byte-identical |
-| SQL | `apply_all.sql` and `revert_all.sql` round-trip on Postgres 18 (PGlite): apply twice, insert a drive, read all three views, revert twice, and the object and policy lists match the original database exactly (`cd mobile-app && npm run test:sql`) |
+| SQL | 18 checks on Postgres 18 (PGlite), `cd mobile-app && npm run test:sql`: `apply_all.sql` twice then `revert_all.sql` twice returns the object and policy lists to the original database exactly, keeping `test_readings` and other storage buckets; with `legacy_samantha.sql` the older `samantha/mobile-app-setup` app's own queries (profile without an id, free-text gender, telemetry read, incident insert, realtime membership) run both alongside our schema and after a full revert |
 
 CI runs the app typecheck and unit tests on every build.
 

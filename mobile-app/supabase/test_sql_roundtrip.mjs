@@ -1,98 +1,169 @@
-// Proves apply_all.sql and revert_all.sql do what they claim, on real Postgres
+// Proves the Supabase scripts do what they claim, on real Postgres
 // (PGlite = Postgres 18 compiled to WebAssembly, no server to install).
 //
 //   cd mobile-app && npm i -D @electric-sql/pglite && npm run test:sql
 //
-// It stands up a database the way the team had it (their test_readings table,
-// the storage schema, the realtime publication, the anon/authenticated roles),
-// applies everything twice, inserts a drive and reads the views, then reverts
-// twice and checks the database is byte-for-byte back to the original object
-// list -- with the team's table and any other storage bucket untouched.
+// Three scenarios, each on a fresh database that starts the way the team's
+// did (their test_readings table, the storage schema, the realtime
+// publication, the anon/authenticated roles):
+//
+//   A  apply_all twice -> use the app's tables and views -> revert_all twice,
+//      and the database is back to the original object and policy list.
+//   B  apply_all -> legacy_samantha: the OLD app's own queries run, and ours
+//      still work. This is the "both apps on one database" case.
+//   C  apply_all -> revert_all -> legacy_samantha: the OLD app's queries run
+//      on a database rolled all the way back. This is the "go back to the old
+//      version" case.
+//
+// The old app's queries are copied from branch samantha/mobile-app-setup
+// (App.tsx, lib/profiles.ts, lib/monitoring.ts), not invented here.
 import { PGlite } from '@electric-sql/pglite'
 import { readFileSync } from 'node:fs'
 
 const SQL = new URL('.', import.meta.url).pathname
-const db = await PGlite.create()
-const q = async (s) => (await db.query(s)).rows
-const objects = async () => (await q(`
-  select table_name as n, table_type as t from information_schema.tables
-   where table_schema in ('public') order by 1`)).map(r => `${r.t === 'VIEW' ? 'view' : 'table'} ${r.n}`)
-const policies = async () => (await q(
-  `select schemaname||'.'||tablename||': '||policyname as p from pg_policies order by 1`)).map(r => r.p)
-
-// ---- the database as the team had it, before anything of ours
-await db.exec(`
-  create role anon; create role authenticated;
-  create schema storage;
-  create table storage.buckets (id text primary key, name text, public boolean);
-  create table storage.objects (id serial primary key, bucket_id text, name text);
-  alter table storage.objects enable row level security;
-  create publication supabase_realtime;
-  create table public.test_readings (
-    id serial primary key, value numeric, device_name text,
-    created_at timestamptz not null default now());
-  insert into public.test_readings (value, device_name) values (72, 'team bench');
-`)
-const before = { obj: await objects(), pol: await policies() }
-console.log('ORIGINAL   :', before.obj.join(', '))
-
-// ---- apply, twice (it must be safe to re-run)
-const apply = readFileSync(`${SQL}/apply_all.sql`, 'utf8')
-for (const pass of [1, 2]) {
-  try { await db.exec(apply) } catch (e) { console.error(`APPLY pass ${pass} FAILED:`, e.message); process.exit(1) }
+const read = (f) => readFileSync(`${SQL}/${f}`, 'utf8')
+const fails = []
+const check = (name, ok, detail = '') => {
+  console.log(`   ${ok ? 'PASS' : 'FAIL'}  ${name}${ok || !detail ? '' : ' -> ' + detail}`)
+  if (!ok) fails.push(name)
 }
-const after = { obj: await objects(), pol: await policies() }
-console.log('AFTER APPLY:', after.obj.join(', '))
-console.log('POLICIES   :', after.pol.length, 'rows')
 
-// ---- does it actually work? insert a drive and read the views
-try { await db.exec(`
-  insert into public.driver_profiles (id, custom_id, display_name)
-    values ('11111111-1111-1111-1111-111111111111', 'luis', 'Luis');
-  insert into public.drive_sessions (id, profile_id, started_at, status)
-    values ('22222222-2222-2222-2222-222222222222',
-            '11111111-1111-1111-1111-111111111111', now(), 'completed');
-  insert into public.telemetry_events
-      (id, session_id, event_type, received_at, sequence_number, bpm, spo2, finger, quality, sqi_good)
-    values (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', 'vitals', now(), 1, 72, 98, true, 90, true),
-           (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', 'vitals', now(), 2, 74, 97, true, 88, true);
-  insert into public.threshold_history
-      (id, profile_id, at, reason, drives, learned, mean, sd, high_warn, low_warn, spo2_warn)
-    values (gen_random_uuid(), '11111111-1111-1111-1111-111111111111', now(), 'drive',
-            3, 0.300, 74.0, 6.0, 110, 45, 92);
-`) } catch (e) { console.error('SAMPLE DATA FAILED:', e.message); process.exit(1) }
-const cols = async (v) => (await q(`select column_name from information_schema.columns
-   where table_schema='public' and table_name='${v}' order by ordinal_position`)).map(r => r.column_name)
-const s = await q('select count(*)::int as n from public.session_summaries')
-const b = await q('select count(*)::int as n from public.driver_baselines')
-const a = await q('select count(*)::int as n from public.active_sessions')
-console.log('VIEW COLS  : session_summaries', (await cols('session_summaries')).length,
-            '| driver_baselines', (await cols('driver_baselines')).length,
-            '| active_sessions', (await cols('active_sessions')).length)
-console.log('VIEW ROWS  : summaries', s[0].n, 'baselines', b[0].n, 'active', a[0].n)
-await db.exec(`insert into storage.buckets (id, name, public) values ('x','x',false) on conflict do nothing;
-               insert into storage.objects (bucket_id, name) values ('session-archives','a.ppga');`)
-
-// ---- revert, twice
-const revert = readFileSync(`${SQL}/revert_all.sql`, 'utf8')
-for (const pass of [1, 2]) {
-  try { await db.exec(revert) } catch (e) { console.error(`REVERT pass ${pass} FAILED:`, e.message); process.exit(1) }
+async function freshDb() {
+  const db = await PGlite.create()
+  await db.exec(`
+    create role anon; create role authenticated;
+    create schema storage;
+    create table storage.buckets (id text primary key, name text, public boolean);
+    create table storage.objects (id serial primary key, bucket_id text, name text);
+    alter table storage.objects enable row level security;
+    create publication supabase_realtime;
+    create table public.test_readings (
+      id bigint generated by default as identity primary key,
+      value numeric, device_name text,
+      created_at timestamptz not null default now());
+    insert into public.test_readings (value, device_name) values (72, 'team bench');
+  `)
+  return db
 }
-const end = { obj: await objects(), pol: await policies() }
-console.log('AFTER REVRT:', end.obj.join(', '))
+const q = (db) => async (s) => (await db.query(s)).rows
+const objects = async (db) => (await q(db)(`select table_name n, table_type t
+  from information_schema.tables where table_schema='public' order by 1`))
+  .map(r => `${r.t === 'VIEW' ? 'view' : 'table'} ${r.n}`)
+const policies = async (db) => (await q(db)(
+  `select schemaname||'.'||tablename||': '||policyname p from pg_policies order by 1`)).map(r => r.p)
+const run = async (db, file, label) => {
+  try { await db.exec(read(file)); return true }
+  catch (e) { check(`${label} (${file})`, false, e.message); return false }
+}
 
-// ---- verdicts
-const same = JSON.stringify(end.obj) === JSON.stringify(before.obj)
-const polSame = JSON.stringify(end.pol) === JSON.stringify(before.pol)
-const team = await q(`select count(*)::int as n from public.test_readings`)
-const bucket = await q(`select count(*)::int as n from storage.buckets where id='session-archives'`)
-const files = await q(`select count(*)::int as n from storage.objects where bucket_id='session-archives'`)
-const other = await q(`select count(*)::int as n from storage.buckets where id='x'`)
-console.log('\nRESULTS')
-console.log(' objects back to original :', same ? 'PASS' : 'FAIL ' + JSON.stringify(end.obj))
-console.log(' policies back to original:', polSame ? 'PASS' : 'FAIL ' + JSON.stringify(end.pol))
-console.log(' team test_readings kept  :', team[0].n === 1 ? 'PASS (1 row)' : 'FAIL ' + team[0].n)
-console.log(' archive bucket removed   :', bucket[0].n === 0 ? 'PASS' : 'FAIL')
-console.log(' archive files removed    :', files[0].n === 0 ? 'PASS' : 'FAIL')
-console.log(' other buckets untouched  :', other[0].n === 1 ? 'PASS' : 'FAIL')
-process.exit(same && polSame && team[0].n === 1 && !bucket[0].n && !files[0].n && other[0].n === 1 ? 0 : 1)
+// Our app's own use: it supplies UUIDs itself and reads the summary views.
+async function ourAppWorks(db, tag) {
+  const Q = q(db)
+  try {
+    await db.exec(`
+      insert into public.driver_profiles (id, custom_id, display_name, weight_kg, height_cm)
+        values ('11111111-1111-1111-1111-111111111111', 'luis', 'Luis', 80, 180)
+        on conflict (id) do nothing;
+      insert into public.drive_sessions (id, profile_id, started_at, status)
+        values ('22222222-2222-2222-2222-222222222222',
+                '11111111-1111-1111-1111-111111111111', now(), 'completed')
+        on conflict (id) do nothing;
+      insert into public.telemetry_events
+        (id, session_id, event_type, received_at, sequence_number, bpm, spo2, finger, quality, sqi_good)
+        values (gen_random_uuid(), '22222222-2222-2222-2222-222222222222', 'vitals', now(), 1, 72, 98, true, 90, true)
+        on conflict do nothing;`)
+    const s = await Q('select count(*)::int n from public.session_summaries')
+    const b = await Q('select count(*)::int n from public.driver_baselines')
+    check(`${tag}: our app inserts and reads its views`, s[0].n >= 1 && b[0].n >= 1)
+  } catch (e) { check(`${tag}: our app inserts and reads its views`, false, e.message) }
+}
+
+// The old app's queries, as that branch writes them.
+async function oldAppWorks(db, tag) {
+  const Q = q(db)
+  try {
+    // App.tsx: send a test reading
+    await db.exec(`insert into public.test_readings (value, device_name) values (77, 'test-iphone');`)
+    // lib/profiles.ts: save a profile with NO id, and free-text gender
+    const prof = await Q(`insert into public.driver_profiles
+      (display_name, age, height_cm, weight_kg, gender, emergency_contact_name, emergency_contact_phone)
+      values ('Samantha', 22, 165, 60, 'Female', 'Mom', '+13055550123')
+      returning id, display_name, age, height_cm, weight_kg, gender,
+                emergency_contact_name, emergency_contact_phone`)
+    check(`${tag}: old app saves a profile without an id, free-text gender`,
+          prof.length === 1 && prof[0].gender === 'Female')
+    // lib/profiles.ts: load the list with its exact column set
+    await Q(`select id, display_name, age, height_cm, weight_kg, gender,
+                    emergency_contact_name, emergency_contact_phone
+               from public.driver_profiles order by id`)
+    // lib/monitoring.ts: a vitals event arrives, then an incident is logged
+    const sess = await Q(`insert into public.drive_sessions (id, profile_id, started_at, status)
+      values (gen_random_uuid(), '${prof[0].id}', now(), 'active') returning id`)
+    const ev = await Q(`insert into public.telemetry_events
+      (session_id, event_type, received_at, bpm, spo2, signal_quality)
+      values ('${sess[0].id}', 'vitals', now(), 132, 91, 80) returning id, session_id, event_type, bpm, spo2, signal_quality, received_at`)
+    check(`${tag}: old app reads a telemetry row with its column set`, ev.length === 1 && ev[0].bpm === 132)
+    await db.exec(`insert into public.incidents
+      (telemetry_event_id, session_id, heart_rate, spo2, status, severity,
+       driver_reply, response, action, asked_emergency_call, call_placed)
+      values ('${ev[0].id}', '${sess[0].id}', 132, 91, 'HIGH_HR', 'warning',
+              'I am fine', 'Keep an eye on it', 'log', false, false);`)
+    const inc = await Q(`select count(*)::int n from public.incidents`)
+    check(`${tag}: old app logs an incident`, inc[0].n === 1)
+    const pub = await Q(`select count(*)::int n from pg_publication_tables
+      where pubname='supabase_realtime' and tablename='telemetry_events'`)
+    check(`${tag}: telemetry inserts are broadcast for the old app's alerts`, pub[0].n === 1)
+  } catch (e) { check(`${tag}: old app queries`, false, e.message) }
+}
+
+// ---------------------------------------------------------------- A -------
+console.log('\nA. apply_all -> use -> revert_all, twice each')
+{
+  const db = await freshDb()
+  const before = { obj: await objects(db), pol: await policies(db) }
+  for (const pass of [1, 2]) if (!await run(db, 'apply_all.sql', `apply pass ${pass}`)) break
+  check('A: our tables and views exist', (await objects(db)).length === 10)
+  await ourAppWorks(db, 'A')
+  await db.exec(`insert into storage.buckets (id,name,public) values ('other','other',false) on conflict do nothing;
+                 insert into storage.objects (bucket_id,name) values ('session-archives','a.ppga');`)
+  for (const pass of [1, 2]) if (!await run(db, 'revert_all.sql', `revert pass ${pass}`)) break
+  const end = { obj: await objects(db), pol: await policies(db) }
+  check('A: objects back to the original list', JSON.stringify(end.obj) === JSON.stringify(before.obj),
+        JSON.stringify(end.obj))
+  check('A: policies back to the original list', JSON.stringify(end.pol) === JSON.stringify(before.pol))
+  const t = await q(db)(`select count(*)::int n from public.test_readings`)
+  check("A: the team's test_readings kept", t[0].n === 1)
+  const bk = await q(db)(`select count(*)::int n from storage.buckets where id='session-archives'`)
+  const fl = await q(db)(`select count(*)::int n from storage.objects where bucket_id='session-archives'`)
+  const ot = await q(db)(`select count(*)::int n from storage.buckets where id='other'`)
+  check('A: archive bucket and its files removed', bk[0].n === 0 && fl[0].n === 0)
+  check('A: other storage buckets untouched', ot[0].n === 1)
+}
+
+// ---------------------------------------------------------------- B -------
+console.log('\nB. current schema + legacy script: both apps on one database')
+{
+  const db = await freshDb()
+  await run(db, 'apply_all.sql', 'apply')
+  await run(db, 'legacy_samantha.sql', 'legacy')
+  await ourAppWorks(db, 'B')
+  await oldAppWorks(db, 'B')
+  await run(db, 'legacy_samantha.sql', 'legacy re-run')
+  check('B: legacy script is safe to re-run', true)
+}
+
+// ---------------------------------------------------------------- C -------
+console.log('\nC. rolled all the way back, then the legacy script')
+{
+  const db = await freshDb()
+  await run(db, 'apply_all.sql', 'apply')
+  await run(db, 'revert_all.sql', 'revert')
+  await run(db, 'legacy_samantha.sql', 'legacy')
+  await oldAppWorks(db, 'C')
+  const ours = await q(db)(`select count(*)::int n from information_schema.tables
+    where table_schema='public' and table_name in ('drive_alerts','threshold_history','session_archives')`)
+  check('C: our extra tables are gone', ours[0].n === 0)
+}
+
+console.log(`\n${fails.length ? fails.length + ' CHECK(S) FAILED: ' + fails.join('; ') : 'ALL CHECKS PASSED'}`)
+process.exit(fails.length ? 1 : 0)

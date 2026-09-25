@@ -26,7 +26,7 @@ MAX30102 --I2C--> ESP32 --BLE--> Raspberry Pi 5 --BLE--> iPhone app --cellular--
 | `system/pi/` | Raspberry Pi relay (Python/asyncio), terminal dashboard, one-shot installer | `cd system && python3 -m unittest discover -s tests` |
 | `system/laptop/` | Bench viewer (PySide6) | — |
 | `mobile-app/` | Expo / React Native app: drivers, drives, flag engine, voice check, learning, sync | `cd mobile-app && npm test && npm run typecheck` |
-| `mobile-app/supabase/` | Database migrations — run in order: `schema` → `live` → `v3_dashboard` → `v4_flags` → `v5_delete` → `v6_quality` → `v7_history`. Or run **`apply_all.sql`** (all seven in one file) and **`revert_all.sql`** (removes everything we added, keeps the team's `test_readings`) | `npm run test:sql` proves the round trip on Postgres 18 |
+| `mobile-app/supabase/` | Database migrations — run in order: `schema` → `live` → `v3_dashboard` → `v4_flags` → `v5_delete` → `v6_quality` → `v7_history`. Or run **`apply_all.sql`** (all seven in one file), **`revert_all.sql`** (removes everything we added, keeps the team's `test_readings`) and **`legacy_samantha.sql`** (makes the database serve the older `samantha/mobile-app-setup` app, alongside ours or after a revert) | `npm run test:sql` proves the round trip on Postgres 18 |
 | `mobile-app/tools/` | `intent/` trains the offline yes/no voice model · `tuning/` team tuning report (`npm run tune`) | — |
 | `website/` | Vite dashboard: live drives, history, drivers and how their thresholds adapted, waveform unfolding | `npm run build` |
 | `docs/` | Team guide (Markdown + PDF) and the PDF builder | — |
