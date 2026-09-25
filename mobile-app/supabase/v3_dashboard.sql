@@ -73,7 +73,10 @@ group by s.id, p.display_name, p.custom_id;
 -- Needs >= 60 readings (one minute) before it is reported as established.
 -- Mirrors lib/analysis/baseline.ts on the phone, which computes the same
 -- thing offline for in-car alerts. Not a medical reference range.
-create or replace view public.driver_baselines
+-- dropped first: a later migration changes the columns, and
+-- "create or replace view" cannot remove a column on a re-run.
+drop view if exists public.driver_baselines;
+create view public.driver_baselines
 with (security_invoker = true) as
 select
   s.profile_id,
@@ -92,7 +95,10 @@ group by s.profile_id;
 
 -- Active right now: an open session whose phone checked in recently. A session
 -- whose phone died without ending it drops off after 2 minutes on its own.
-create or replace view public.active_sessions
+-- dropped first: a later migration changes the columns, and
+-- "create or replace view" cannot remove a column on a re-run.
+drop view if exists public.active_sessions;
+create view public.active_sessions
 with (security_invoker = true) as
 select s.id as session_id, s.profile_id, p.display_name, p.custom_id,
        s.started_at, s.last_seen_at, s.link_state, s.storage_mode, s.sample_rate_hz

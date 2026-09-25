@@ -72,7 +72,10 @@ create index if not exists idx_telemetry_received
 
 -- ------------------------------------------------------- convenience views --
 -- Per-session physiological summary, for the dashboard.
-create or replace view public.session_summaries as
+-- dropped first: a later migration changes the columns, and
+-- "create or replace view" cannot remove a column on a re-run.
+drop view if exists public.session_summaries;
+create view public.session_summaries as
 select
   s.id                         as session_id,
   s.profile_id,

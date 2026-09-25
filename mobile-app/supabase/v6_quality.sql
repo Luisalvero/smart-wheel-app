@@ -27,7 +27,10 @@ alter table public.driver_profiles add column if not exists cal_at   timestamptz
 -- Baselines from clean seconds only: the view now ignores readings the phone
 -- judged unreliable (sqi_good = false). Rows from older app versions have no
 -- label (null) and still count.
-create or replace view public.driver_baselines
+-- dropped first: a later migration changes the columns, and
+-- "create or replace view" cannot remove a column on a re-run.
+drop view if exists public.driver_baselines;
+create view public.driver_baselines
 with (security_invoker = true) as
 select
   s.profile_id,
